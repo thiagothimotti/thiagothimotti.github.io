@@ -5,6 +5,84 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Saturno Pedais</title>
     <style>
+        header {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background-color: #121212;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            width: 42vh;
+            height: auto;
+            position: fixed;
+            top: 3.6vh;
+            left: 11vh;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .saturno-links {
+            list-style: none;
+            display: flex;
+            margin: 0;
+            padding: 0;
+            position: fixed;
+            top: 6.3vh;
+            right: 20vh;
+        }
+
+        .saturno-links li {
+            margin-right: 50px;
+        }
+
+        a {
+            text-decoration: none;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .dropdown {
+            position: relative;
+        }
+        
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #121212;
+            min-width: 160px;
+            z-index: 1;
+            left: 50%;
+            transform: translateX(-30%);
+        }
+
+        .dropdown-content a {
+            color: #fff;
+            font-size: 13px;
+            padding: 15px 10px;
+            display: block;
+            border: 1px solid transparent;
+            border-color: #575757;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #575757;
+        }
+
         body {
             margin: 0;
             display: flex;
@@ -13,7 +91,7 @@
             align-items: center;
             height: 100vh;
             background: #121212;
-            color: #9f18fd;
+            color: #fff;
             font-family: 'Arial', sans-serif;
         }
 
@@ -24,12 +102,47 @@
 
         p {
             font-size: 2rem;
-            margin-top: 10rem;
+            margin-top: 8rem;
+        }
+
+        main {
+            margin-top: 80px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
     </style>
 </head>
+
 <body>
-    <h1>Editor Saturno Pedais</h1>
-    <p>Em breve</p>
+    <header>
+        <nav>
+            <a href="https://saturnopedais.com.br/" target="_blank" rel="noopener noreferrer">
+                <img src="images/Saturno-Logo-006-White-01.png" alt="Logo Saturno" class="logo">
+            </a>
+            <ul class="saturno-links">
+                <li><a href="https://saturnopedais.com.br/">Home</a></li>
+                <li><a href="https://saturnopedais.com.br/sobre-nos/">Sobre Nós</a></li>
+                <li><a href="https://saturnopedais.com.br/loja/">Produtos</a></li>
+                <li class="dropdown">
+                    <a href="javascript:void(0);">Suporte</a>
+                    <div class="dropdown-content">
+                        <a href="https://saturnopedais.com.br/manuais-e-atualizacoes/">Manuais e Atualizações</a>
+                        <a href="https://saturnopedais.com.br/politicas-da-loja/">Políticas da Loja</a>
+                        <a href="https://saturnopedais.com.br/board-planner/">Board Planner</a>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <h1>Editor Saturno Pedais</h1>
+        <p id="blink">Em manutenção</p>
+    </main>
+
+    <script src="script.js"></script>
+
 </body>
 </html>
