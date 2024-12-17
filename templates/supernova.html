@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Saturno Pedais</title>
+    <title>Supernova</title>
     <style>
         header {
             display: flex;
@@ -55,7 +55,7 @@
         .dropdown {
             position: relative;
         }
-
+        
         .dropdown:hover .dropdown-content {
             display: block;
         }
@@ -111,16 +111,6 @@
             align-items: center;
         }
 
-        #device {
-            background-color: #121212;
-            color: #fff;
-            display: none;
-            text-align: center;
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 5px;
-        }
-
         button {
             padding: 10px 20px;
             background-color: #575757;
@@ -160,16 +150,15 @@
     </header>
 
     <main>
-        <h1>Editor Saturno Pedais</h1>
-        <button id="select" onclick="getUsbDevice()">Selecione seu controlador</button>
-        <div id="device">
-            <h3>Produto selecionado:</h3>
-            <div id="usbDevice"></div><br>
-            <button id="confirmButton" onclick="confirmSelection()">Confirmar seleção</button>
-        </div>
+        <h1>Controladora Supernova</h1>
+        <button onclick="acenderLed()">Acender led 1</button>
     </main>
 
-    <script src="script.js"></script>
-    
+    <script>
+        function acenderLed() {
+            alert("Led 1 aceso!");
+
+        }
+    </script>
 </body>
 </html>
