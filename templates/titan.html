@@ -151,13 +151,28 @@
 
     <main>
         <h1>Controladora Titan</h1>
-        <button onclick="acenderLed()">Acender led 1</button>
+        <button onclick="programChange(1, 0)">Program Change 1</button>
+        <button onclick="programChange(1, 1)">Program Change 2</button>
     </main>
 
     <script>
-        function acenderLed() {
-            alert("Led 1 aceso!");
+        async function programChange(channel, program) {
+            try {
+                const midiAccess = await navigator.requestMIDIAccess();
+                const outputs = Array.from(midiAccess.outputs.values());
+                if (outputs.length === 0) {
+                    alert("Nenhum dispositivo MIDI encontrado.");
+                    return;
+                }
 
+                const output = outputs[0];
+                const statusByte = 0xC0 | channel;
+
+                output.send([statusByte, program]);
+                alert(`Program Change enviado para Canal ${channel + 1}, Programa ${program}`);
+            } catch (error) {
+                alert("Erro ao enviar mensagem MIDI: " + error);
+            }
         }
     </script>
 </body>
