@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Titan</title>
+    <script>
+        if (location.protocol === 'http:') {
+            location.replace(`https://${location.host}${location.pathname}${location.search}`);
+        }
+    </script>
     <style>
         header {
             display: flex;
