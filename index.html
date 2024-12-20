@@ -1,21 +1,30 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Saturno Pedais</title>
+    <title>Saturno Web Editor</title>
     <script>
-        // Redireciona de HTTP para HTTPS
         if (location.protocol === 'http:') {
             location.replace(`https://${location.host}${location.pathname}${location.search}`);
         }
     </script>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #121212;
+            color: #fff;
+            overflow: hidden;
+        }
+
         header {
             display: flex;
             align-items: center;
-            padding: 10px;
-            background-color: #121212;
+            text-align: center;
+            padding: 4vh;
+            background-color: #9f18fd;
             position: fixed;
             top: 0;
             left: 0;
@@ -24,158 +33,302 @@
         }
 
         .logo {
-            width: 42vh;
+            width: 30vh;
             height: auto;
             position: fixed;
-            top: 3.6vh;
-            left: 11vh;
+            top: 1vh;
+            left: 7vh;
         }
 
-        nav {
+        header p {
+            font-size: 25px;
+            font-weight: 600;
+            position: fixed;
+            left: 80vh;
+        }
+
+        .container {
+            display: flex;
+            margin-top: 7vh;
+        }
+
+        .fundo {
+            width: 80vh;
+            height: auto;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 50%;
+            z-index: -1;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #121212;
+            padding: 10px;
+            height: 90vh;
+            overflow-y: auto;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .bank {
+            cursor: pointer;
+            padding: 5px;
+            margin-bottom: 0px;
+            background-color: #242424;
+            border: 1px solid #000;
+            border-radius: 10px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            width: 100%;
-        }
-
-        .saturno-links {
-            list-style: none;
-            display: flex;
-            margin: 0;
-            padding: 0;
-            position: fixed;
-            top: 6.3vh;
-            right: 20vh;
-        }
-
-        .saturno-links li {
-            margin-right: 50px;
-        }
-
-        a {
-            text-decoration: none;
-            color: #fff;
-            font-size: 16px;
-        }
-
-        .dropdown {
+            gap: 5px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
             position: relative;
         }
 
-        .dropdown:hover .dropdown-content {
-            display: block;
-        }
-
-        .dropdown-content {
-            display: none;
+        .bank span:last-child {
             position: absolute;
-            background-color: #121212;
-            min-width: 160px;
-            z-index: 1;
-            left: 50%;
-            transform: translateX(-30%);
+            right: 20px;
         }
 
-        .dropdown-content a {
-            color: #fff;
-            font-size: 13px;
-            padding: 15px 10px;
-            display: block;
-            border: 1px solid transparent;
-            border-color: #575757;
+        .bank:hover {
+            background-color: #363636;
+            transform: scale(1.05);
         }
 
-        .dropdown-content a:hover {
-            background-color: #575757;
+        .bank.active {
+            background-color: rgba(0, 0, 0, 0.5);
         }
 
-        body {
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: #121212;
-            color: #fff;
-            font-family: 'Arial', sans-serif;
-        }
-
-        h1 {
-            font-size: 4rem;
-            text-align: center;
-            padding: 10px;
-            position: fixed;
-            top: 5vh;
-        }
-
-        main {
-            margin-top: 80px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        #device {
-            background-color: #121212;
-            color: #fff;
-            display: none;
-            text-align: center;
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 5px;
-        }
-
-        button {
-            padding: 10px 20px;
-            background-color: #575757;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+        .bank span {
             font-size: 16px;
         }
 
-        button:hover {
-            background-color: #444;
+        .bank-details {
+            display: none;
+            background-color: #242424;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 8px;
+        }
+
+        .bank-details ul {
+            list-style: none;
+            font-weight: 600;
+            margin-top: 0px;
+            margin-bottom: 0px;
+            padding: 0;
+        }
+
+        .bank-details li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .bank-details input[type="text"] {
+            width: 100px;
+            padding: 5px;
+            position: fixed;
+            left: 50px;
+            background-color: #242424;
+            color: #7a7a7a;
+            font-weight: 600;
+            border: 1px solid #000;
+            border-radius: 5px;
+        }
+
+        .bank-details button {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            text-align: left;
+            padding: 5px;
+            font-size: 12px;
+            text-decoration: underline;
+        }
+        
+        .preset-options {
+            display: none;
+            position: absolute;
+            left: 150px;
+            max-width: 120px;
+            background-color: #242424;
+            border: 1px solid #000;
+            border-radius: 5px;
+            padding: 5px;
+            z-index: 1;
+        }
+
+        .preset-options button {
+            background-color: #242424;
+            text-decoration: none;
+            border: none;
+            color: #fff;
+            padding: 5px 10px;
+            text-align: left;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .preset-options button:hover {
+            background-color: #555;
         }
     </style>
 </head>
 
-<body>
+<body>  
     <header>
         <nav>
             <a href="https://saturnopedais.com.br/" target="_blank" rel="noopener noreferrer">
                 <img src="https://i.imgur.com/4igc5oJ.png" alt="Logo Saturno" class="logo">
             </a>
-            <ul class="saturno-links">
-                <li><a href="https://saturnopedais.com.br/">Home</a></li>
-                <li><a href="https://saturnopedais.com.br/sobre-nos/">Sobre Nós</a></li>
-                <li><a href="https://saturnopedais.com.br/loja/">Produtos</a></li>
-                <li class="dropdown">
-                    <a href="javascript:void(0);">Suporte</a>
-                    <div class="dropdown-content">
-                        <a href="https://saturnopedais.com.br/manuais-e-atualizacoes/">Manuais e Atualizações</a>
-                        <a href="https://saturnopedais.com.br/politicas-da-loja/">Políticas da Loja</a>
-                        <a href="https://saturnopedais.com.br/board-planner/">Board Planner</a>
-                    </div>
-                </li>
-            </ul>
         </nav>
+        <p>Web Editor - Titan</p>
     </header>
 
-    <main>
-        <h1>Editor Saturno Pedais</h1>
-        <button id="select" onclick="getUsbDevice()">Selecione seu controlador</button>
-        <div id="device">
-            <h3>Produto selecionado:</h3>
-            <div id="usbDevice"></div><br>
-            <button id="confirmButton" onclick="confirmSelection()">Confirmar seleção</button>
+    <div class="container">
+        <div class="sidebar" id="sidebar">
         </div>
-    </main>
+        <div class="main-content" id="mainContent">
+            <img src="https://i.imgur.com/U7eh8SX.png" alt="Fundo Saturno" class="fundo">
+        </div>
+    </div>
 
-    <script src="script.js"></script>
-    
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        for (let i = 65; i <= 90; i++) {
+            const letter = String.fromCharCode(i);
+
+            const bank = document.createElement('div');
+            bank.className = 'bank';
+
+            const ball = document.createElement('span');
+            ball.textContent = '\u2B24';
+            ball.style.marginRight = '10px';
+            bank.appendChild(ball);
+
+            const bankText = document.createTextNode(`Bank ${letter}`);
+            bank.appendChild(bankText);
+
+            const arrow = document.createElement('span');
+            arrow.textContent = '\u276E';
+            arrow.style.transform = `rotate(-90deg) scale(1.8)`;
+            bank.appendChild(arrow);
+            
+            const bankDetails = document.createElement('div');
+            bankDetails.className = 'bank-details';
+
+            const patchList = document.createElement('ul');
+            for (let j = 1; j <= 8; j++) {
+                const patchItem = document.createElement('li');
+
+                const patchLabel = document.createElement('span');
+                patchLabel.textContent = `${letter}${j}`;
+
+                const patchName = document.createElement('input');
+                patchName.type = 'text';
+                patchName.placeholder = `Patch ${letter}${j}`;
+                patchName.value = localStorage.getItem(`${letter}${j}_name`) || '';
+                patchName.placeholder = 'Nome';
+                patchName.maxLength = 5;
+
+                patchName.addEventListener('input', () => {
+                    localStorage.setItem(`${letter}${j}_name`, patchName.value);
+                });
+
+                const patchTypeButton = document.createElement('button');
+                patchTypeButton.textContent = localStorage.getItem(`${letter}${j}_type`) || 'Preset';
+                patchTypeButton.style.textDecoration = 'none';
+                
+                const span = bank.querySelector('span');
+
+                if (i % 2 === 1){
+                    patchItem.style.color = '#9f18fd';
+                    patchTypeButton.style.color = '#9f18fd';
+                    arrow.style.color = '#9f18fd'
+                    ball.style.color = '#9f18fd'
+                }else{
+                    patchTypeButton.style.color = '#53bfeb';
+                    patchItem.style.color = '#53bfeb';
+                    arrow.style.color = '#53bfeb'
+                    ball.style.color = '#53bfeb'
+                }
+                
+
+                const presetOptions = document.createElement('div');
+                presetOptions.className = 'preset-options';
+
+                ['Preset', 'Action', 'Toggle Action', 'Momentary', 'Tap', 'Tuner'].forEach((preset) => {
+                    const optionButton = document.createElement('button');
+                    optionButton.textContent = preset;
+
+                    const hoverColor = (i % 2 === 1) ? '#9f18fd' : '#53bfeb';
+                    optionButton.addEventListener('mouseover', () => {
+                        optionButton.style.color = hoverColor;
+                    });
+                    optionButton.addEventListener('mouseout', () => {
+                        optionButton.style.color = '#fff';
+                    });
+
+                    optionButton.addEventListener('click', () => {
+                        patchTypeButton.textContent = preset;
+                        localStorage.setItem(`${letter}${j}_type`, preset);
+                        presetOptions.style.display = 'none';
+                    });
+                    presetOptions.appendChild(optionButton);
+                });
+
+                patchTypeButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    presetOptions.style.display = presetOptions.style.display === 'block' ? 'none' : 'block';
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!patchTypeButton.contains(e.target) && !presetOptions.contains(e.target)) {
+                        presetOptions.style.display = 'none';
+                    }
+                });
+
+                patchItem.appendChild(patchLabel);
+                patchItem.appendChild(patchName);
+                patchItem.appendChild(patchTypeButton);
+                patchItem.appendChild(presetOptions);
+                patchList.appendChild(patchItem);
+            }
+
+            bankDetails.appendChild(patchList);
+
+            bank.addEventListener('click', () => {
+                const isActive = bank.classList.contains('active');
+
+                document.querySelectorAll('.bank').forEach(b => {
+                    b.classList.remove('active');
+                    b.style.backgroundColor = '';
+                });
+                document.querySelectorAll('.bank-details').forEach(details => details.style.display = 'none');
+                
+                if (!isActive) {
+                    if (i % 2 === 0) {
+                        bank.style.backgroundColor = 'rgba(83, 191, 235, 0.5)'
+                    } else {
+                        bank.style.backgroundColor = 'rgba(159, 24, 253, 0.5)'
+                    }
+                    bank.classList.add('active');
+                    bankDetails.style.display = 'block';
+                }
+            });
+
+            sidebar.appendChild(bank);
+            sidebar.appendChild(bankDetails);
+        }
+    </script>
 </body>
 </html>
