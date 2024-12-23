@@ -109,11 +109,7 @@
 
         .bank:hover {
             background-color: #363636;
-            transform: scale(1.05);
-        }
-
-        .bank.active {
-            background-color: rgba(0, 0, 0, 0.5);
+            transform: scale(1.01);
         }
 
         .bank span {
@@ -149,9 +145,9 @@
         }
 
         .bank-details input[type="text"] {
-            width: 100px;
+            width: 110px;
             padding: 5px;
-            margin-left: 10px;
+            margin-left: 4px;
             background-color: #242424;
             color: #fff;
             font-weight: 600;
@@ -254,7 +250,7 @@
                 patchName.type = 'text';
                 patchName.placeholder = `Patch ${letter}${j}`;
                 patchName.value = localStorage.getItem(`${letter}${j}_name`) || '';
-                patchName.placeholder = 'Nome';
+                patchName.placeholder = 'Name your patch';
                 patchName.maxLength = 5;
 
                 patchName.addEventListener('input', () => {
@@ -346,28 +342,6 @@
             sidebar.appendChild(bank);
             sidebar.appendChild(bankDetails);
         }
-        document.addEventListener("DOMContentLoaded", () => {
-        const bankDetailsList = document.querySelector(".bank-details ul");
-        const detailsItems = bankDetailsList.querySelectorAll("li");
-        const selectedCode = document.getElementById("selected-code");
-        const selectedName = document.getElementById("selected-name");
-
-        // Itera por cada item (li) no bank-details
-        detailsItems.forEach((item) => {    
-            item.addEventListener("click", () => {
-            // Remove a classe "selected" de todos os itens
-            detailsItems.forEach((detail) => detail.classList.remove("selected"));
-
-            // Adiciona a classe "selected" ao item clicado
-            item.classList.add("selected");
-
-            // Atualiza o painel com os dados da linha
-            selectedCode.textContent = `Código: ${item.dataset.code}`;
-            selectedName.textContent = `Nome: ${item.dataset.name}`;
-            });
-        });
-        });
-
     </script>
 </body>
 </html>
