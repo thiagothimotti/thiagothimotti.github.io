@@ -73,7 +73,20 @@ function createBankPatches(letter, index) {
 
     const patchList = document.createElement('ul');
     for (let j = 1; j <= 8; j++) {
+        const patchId = `${letter}${j}`; // Identificador do patch
         const patchItem = createPatch(letter, j, index);
+        patchItem.dataset.patchId = patchId;
+
+        patchItem.addEventListener('click', () => {
+            const patchNameValue = patchItem.querySelector('input').value || `Patch ${patchId}`;
+            const selectedPatchText = document.getElementById('selectedPatch');
+            if (patchItem.querySelector('input').value)
+                selectedPatchText.textContent = `${patchId} - ${patchNameValue}`;
+            else selectedPatchText.textContent = `Patch ${patchId}`;
+
+            createLoopTable(patchId, index);
+        });
+
         patchList.appendChild(patchItem);
     }
 
@@ -92,15 +105,13 @@ function createPatch(letter, number, index) {
     const patchName = createNameInput(letter, number);
     patchItem.appendChild(patchName);
 
-    const patchTypeButton = createPatchTypeButton(letter, number, index);
+    const patchTypeButton = createPatchTypeButton(letter, number);
     patchItem.appendChild(patchTypeButton);
 
     const presetOptions = createPresetOptions(patchTypeButton, letter, number, index);
     patchItem.appendChild(presetOptions);
 
     setPatchColor(patchItem, patchTypeButton, index);
-
-    patchSelection(patchItem, patchName, letter, number, index);
 
     return patchItem;
 }
@@ -121,7 +132,7 @@ function createNameInput(letter, number) {
 }
 
 // Cria o botão de tipo
-function createPatchTypeButton(letter, number, index) {
+function createPatchTypeButton(letter, number) {
     const patchTypeButton = document.createElement('button');
     patchTypeButton.textContent = localStorage.getItem(`${letter}${number}_type`) || 'Preset';
     return patchTypeButton;
@@ -134,27 +145,51 @@ function setPatchColor(patchItem, patchTypeButton, index) {
     patchTypeButton.style.color = color;
 }
 
-// Lida com a seleção de um patch
-function patchSelection(patchItem, patchName, letter, number, index) {
-    patchItem.addEventListener('click', () => {
-        const selectedPatchText = document.getElementById('selectedPatch');
-        const patchNameValue = patchName.value || `Patch ${letter}${number}`;
-        if (patchName.value) {
-            selectedPatchText.textContent = `${letter}${number} - ${patchNameValue}`;
-        } else {
-            selectedPatchText.textContent = `${patchNameValue}`;
-        }
-        createLoopTable(index);
-    });
-}
-
 // Revela a tabela de loops
-function createLoopTable(index) {
+function createLoopTable(patchId, index) {
     const loopTable = document.getElementById('loop-table');
-    loopTable.style.display = 'flex';
+
+    const states = loadLoopStates(patchId);
+
+    loopTable.innerHTML = '';
+    loopTable.style.display = 'grid';
+    loopTable.style.gridTemplateColumns = '1fr 1fr'; // Duas colunas
+    loopTable.style.columnGap = '70px';
+    loopTable.style.rowGap = '20px';
     loopTable.style.backgroundColor = index % 2 === 0
         ? 'rgba(83, 191, 235, 0.5)'
         : 'rgba(159, 24, 253, 0.5)';
+    loopTable.style.fontWeight = 'bold';
+    loopTable.style.padding = '20px';
+    loopTable.style.marginTop = '20px';
+    loopTable.style.marginLeft = '20vh';
+    loopTable.style.borderRadius = '10px';
+    loopTable.style.width = '40vh';
+
+    // Cria as linhas da tabela de loops
+    for (let i = 0; i < 8; i++) {
+        const loopContainer = document.createElement('div');
+        loopContainer.style.display = 'flex';
+        loopContainer.style.justifyContent = 'space-between';
+        loopContainer.style.alignItems = 'center';
+    
+        const loopLabel = document.createElement('span');
+        loopLabel.textContent = `Loop ${i + 1}`;
+        loopLabel.style.color = '#fff';
+        loopLabel.style.marginRight = '10px';
+    
+        const loopButton = document.createElement('span');
+        loopButton.textContent = states[i] ? 'ON' : 'OFF';
+        loopButton.style.color = states[i] ? 'lime' : 'red';
+        loopButton.style.cursor = 'pointer';
+        loopButton.style.fontWeight = 'bold';
+    
+        loopButton.addEventListener('click', () => toggleState(loopButton, patchId, i));
+    
+        loopContainer.appendChild(loopLabel);
+        loopContainer.appendChild(loopButton);
+        loopTable.appendChild(loopContainer);
+    }
 }
 
 // Revela as opções de tipos do patch
@@ -203,14 +238,31 @@ function configurePresetOptionEvents(optionButton, patchTypeButton, presetOption
 }
 
 // Alterna os valores da tabela loops
-function toggleState(button) {
-    if (button.textContent === "OFF") {
+function toggleState(button, index, loopIndex) {
+    const states = loadLoopStates(index);
+
+    states[loopIndex] = !states[loopIndex];
+
+    if (states[loopIndex]) {
         button.textContent = "ON";
         button.style.color = 'lime';
     } else {
         button.textContent = "OFF";
         button.style.color = 'red';
     }
+
+    saveLoopStates(index, states);
+}
+
+// Salva os estados dos loops
+function saveLoopStates(index, states) {
+    localStorage.setItem(`${index}_loops`, JSON.stringify(states));
+}
+
+// Carrega os estados dos loops
+function loadLoopStates(index) {
+    const savedStates = localStorage.getItem(`${index}_loops`);
+    return savedStates ? JSON.parse(savedStates) : Array(8).fill(false);
 }
 
 initializeSite();

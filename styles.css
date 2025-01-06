@@ -180,44 +180,11 @@ header p {
     background-color: #555;
 }
 
-#loop-table {
-    display: none;
-    flex-direction: column;
-    margin-top: 20px;
-    margin-left: 20vh;
-    padding: 10px;
-    border-radius: 10px;
-}
-
-#loop-table p {
-    position: relative;
-    left: 8vh;
-    font-size: 20px;
-    font-weight: 600;
-}
-
 #selectedPatch {
     font-size: 30px;
-    font-weight: 400;
+    font-weight: 600;
     text-align: center;
     margin-top: 20px;
-}
-
-.table {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    margin-top: 20px;
-    width: 100%; 
-}
-
-.column {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    font-size: 18px;
-    font-weight: bold;
-    color: white;
 }
 
 .toggle {
