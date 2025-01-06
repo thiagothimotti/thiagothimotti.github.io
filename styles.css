@@ -180,11 +180,33 @@ header p {
     background-color: #555;
 }
 
+#patchTitle {
+    display: flex;
+    justify-content: space-between;
+    width: 70%;
+    font-weight: 600;
+    align-items: center;
+    margin-left: 20vh;
+}
+
 #selectedPatch {
     font-size: 30px;
-    font-weight: 600;
-    text-align: center;
-    margin-top: 20px;
+}
+
+#patchType {
+    font-size: 15px;
+}
+
+#table-1 {
+    display: none;
+}
+
+#table-1 p {
+    font-size: 20px;
+    font-weight: bolder;
+    margin-left: 50px;
+    margin-bottom: 20px;
+    margin-top: 0px;
 }
 
 .toggle {

@@ -80,9 +80,12 @@ function createBankPatches(letter, index) {
         patchItem.addEventListener('click', () => {
             const patchNameValue = patchItem.querySelector('input').value || `Patch ${patchId}`;
             const selectedPatchText = document.getElementById('selectedPatch');
+            const selectedPatchType = document.getElementById('patchType');
             if (patchItem.querySelector('input').value)
                 selectedPatchText.textContent = `${patchId} - ${patchNameValue}`;
             else selectedPatchText.textContent = `Patch ${patchId}`;
+            const type = localStorage.getItem(`${letter}${j}_type`) || 'Preset';
+            selectedPatchType.textContent = `(${type})`;
 
             createLoopTable(patchId, index);
         });
@@ -148,33 +151,35 @@ function setPatchColor(patchItem, patchTypeButton, index) {
 // Revela a tabela de loops
 function createLoopTable(patchId, index) {
     const loopTable = document.getElementById('loop-table');
+    const loopTableFull = document.getElementById('table-1');
 
     const states = loadLoopStates(patchId);
+    loopTableFull.style.display = 'grid';
+    loopTableFull.style.backgroundColor = index % 2 === 0
+        ? 'rgba(83, 191, 235, 0.5)'
+        : 'rgba(159, 24, 253, 0.5)';
+    loopTableFull.style.fontWeight = 'bold';
+    loopTableFull.style.padding = '20px';
+    loopTableFull.style.marginLeft = '20vh';
+    loopTableFull.style.borderRadius = '10px';
+    loopTableFull.style.width = '50vh';
 
     loopTable.innerHTML = '';
     loopTable.style.display = 'grid';
     loopTable.style.gridTemplateColumns = '1fr 1fr'; // Duas colunas
-    loopTable.style.columnGap = '70px';
+    loopTable.style.columnGap = '80px';
     loopTable.style.rowGap = '20px';
-    loopTable.style.backgroundColor = index % 2 === 0
-        ? 'rgba(83, 191, 235, 0.5)'
-        : 'rgba(159, 24, 253, 0.5)';
-    loopTable.style.fontWeight = 'bold';
-    loopTable.style.padding = '20px';
-    loopTable.style.marginTop = '20px';
-    loopTable.style.marginLeft = '20vh';
-    loopTable.style.borderRadius = '10px';
-    loopTable.style.width = '40vh';
+    
 
     // Cria as linhas da tabela de loops
-    for (let i = 0; i < 8; i++) {
+    ['1', '5', '2', '6', '3', '7', '4', '8'].forEach((i) => {
         const loopContainer = document.createElement('div');
         loopContainer.style.display = 'flex';
         loopContainer.style.justifyContent = 'space-between';
         loopContainer.style.alignItems = 'center';
     
         const loopLabel = document.createElement('span');
-        loopLabel.textContent = `Loop ${i + 1}`;
+        loopLabel.textContent = `Loop ${i}`;
         loopLabel.style.color = '#fff';
         loopLabel.style.marginRight = '10px';
     
@@ -189,7 +194,7 @@ function createLoopTable(patchId, index) {
         loopContainer.appendChild(loopLabel);
         loopContainer.appendChild(loopButton);
         loopTable.appendChild(loopContainer);
-    }
+    });
 }
 
 // Revela as opções de tipos do patch
