@@ -75,6 +75,7 @@ function createBankPatches(letter, index) {
     for (let j = 1; j <= 8; j++) {
         const patchId = `${letter}${j}`; // Identificador do patch
         const patchItem = createPatch(letter, j, index);
+        const inputElement = patchItem.querySelector('input');
         patchItem.dataset.patchId = patchId;
 
         patchItem.addEventListener('click', () => {
@@ -88,6 +89,15 @@ function createBankPatches(letter, index) {
             selectedPatchType.textContent = `(${type})`;
 
             createLoopTable(patchId, index);
+        });
+
+        inputElement.addEventListener('input', () => {
+            const selectedPatchText = document.getElementById('selectedPatch');
+            if (inputElement.value.trim() === "") {
+                selectedPatchText.textContent = `Patch ${patchId}`;
+            } else {
+                selectedPatchText.textContent = `${patchId} - ${inputElement.value}`;
+            }
         });
 
         patchList.appendChild(patchItem);
@@ -198,6 +208,7 @@ function createLoopTable(patchId, index) {
 }
 
 // Revela as opções de tipos do patch
+let currentOpenPresetOptions = null;
 function createPresetOptions(patchTypeButton, letter, number, index) {
     const presetOptions = document.createElement('div');
     presetOptions.className = 'preset-options';
@@ -211,7 +222,22 @@ function createPresetOptions(patchTypeButton, letter, number, index) {
 
     patchTypeButton.addEventListener('click', (e) => {
         e.stopPropagation();
-        presetOptions.style.display = presetOptions.style.display === 'block' ? 'none' : 'block';
+
+        if (currentOpenPresetOptions && currentOpenPresetOptions !== presetOptions) {
+            currentOpenPresetOptions.style.display = 'none';
+        }
+
+        if (presetOptions.style.display === 'block') {
+            presetOptions.style.display = 'none';
+            currentOpenPresetOptions = null;
+        } else {
+            presetOptions.style.display = 'block';
+            presetOptions.style.position = 'absolute';
+            presetOptions.style.left = `${e.clientX}px`;
+            presetOptions.style.top = `${e.clientY}px`;
+
+            currentOpenPresetOptions = presetOptions;
+        }
     });
 
     document.addEventListener('click', (e) => {
