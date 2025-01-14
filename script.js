@@ -88,6 +88,10 @@ function createBankPatches(letter, index) {
             const type = localStorage.getItem(`${letter}${j}_type`) || 'Preset';
             selectedPatchType.textContent = `(${type})`;
 
+            const valorASCII = letter.charCodeAt(0);
+            const pc = (valorASCII - 65)*8 + j-1
+            programChange(1, pc)
+
             createLoopTable(patchId, index);
             createMidiTable(patchId, index);
         });
@@ -106,6 +110,26 @@ function createBankPatches(letter, index) {
 
     bankDetails.appendChild(patchList);
     return bankDetails;
+}
+
+// Troca de programa (so vai ate program 127)
+async function programChange(channel, program) {
+    try {
+        const midiAccess = await navigator.requestMIDIAccess();
+        const outputs = Array.from(midiAccess.outputs.values());
+        if (outputs.length === 0) {
+            alert("Nenhum dispositivo MIDI encontrado.");
+            return;
+        }
+
+        const output = outputs[0];
+        const statusByte = 0xC0 | channel;
+
+        output.send([statusByte, program]);
+        alert(`Program Change enviado para Canal ${channel + 1}, Programa ${program}`);
+    } catch (error) {
+        alert("Erro ao enviar mensagem MIDI: " + error);
+    }
 }
 
 // Cria um patch
@@ -314,8 +338,7 @@ function createMidiTable(patchId, index) {
     midiTableFull.style.borderRadius = '10px';
     midiTableFull.style.width = '50vh';
     
-    // Limpa a tabela MIDI
-    midiTable.innerHTML = '';
+    midiTable.innerHTML = ''; // Limpa a tabela MIDI
     midiTable.style.display = 'grid';
     midiTable.style.gridTemplateColumns = '1fr 1fr'; // Divide em duas colunas
     midiTable.style.columnGap = '30px';
@@ -446,7 +469,7 @@ function createMidiPopup(midiButton, patchId, index) {
         midiButton.appendChild(midiPopup);
     }
 
-    // MOstra o popup
+    // Mostra o popup
     midiPopup.style.display = 'block';
     currentOpenMidiPopup = midiPopup;
 
