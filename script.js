@@ -11,6 +11,8 @@ function initializeSite() {
         sidebar.appendChild(bank);
         sidebar.appendChild(bankDetails);
     }
+    
+    setupMidiListener();
 }
 
 // Cria um banco
@@ -62,8 +64,38 @@ function bankSelect(bank, bankDetails, index) {
                 : 'rgba(159, 24, 253, 0.5)';
             bank.classList.add('active');
             bankDetails.style.display = 'block';
+            
+            //createGear(bank);
         }
     });
+}
+
+// Cria a engrenagem
+let currentConfig = null;
+function createGear(bank) {
+    if (currentConfig) {
+        currentConfig.remove();
+        currentConfig = null;
+    }
+
+    const gear = document.createElement('button');
+    //gear.innerHTML = 'Gear';
+    gear.textContent = 'Gear';
+    gear.style.position = 'absolute';
+    gear.style.right = '30vh';
+    gear.style.top = `${bank.getBoundingClientRect().top}`;
+    gear.style.zIndex = '1000';
+    gear.style.border = 'none';
+    gear.style.background = 'transparent';
+    gear.style.cursor = 'pointer';
+    gear.style.fontSize = '20px';
+
+    gear.addEventListener('click', () => {
+        alert('click');
+    })
+
+    document.body.appendChild(gear);
+    currentConfig = gear;
 }
 
 // Base para a criação dos patches
@@ -88,9 +120,7 @@ function createBankPatches(letter, index) {
             const type = localStorage.getItem(`${letter}${j}_type`) || 'Preset';
             selectedPatchType.textContent = `(${type})`;
 
-            const valorASCII = letter.charCodeAt(0);
-            const pc = (valorASCII - 65)*8 + j-1
-            programChange(1, pc)
+            programChange(0, letter, j)
 
             createLoopTable(patchId, index);
             createMidiTable(patchId, index);
@@ -113,9 +143,16 @@ function createBankPatches(letter, index) {
 }
 
 // Troca de programa (so vai ate program 127)
-async function programChange(channel, program) {
+async function programChange(channel, letter, j) {
+    if (!navigator.requestMIDIAccess) {
+        alert("Seu navegador não suporta a API Web MIDI.");
+        return;
+    }
+
+    const valorASCII = letter.charCodeAt(0);
+    const pc = (valorASCII - 65)*8 + j-1
     try {
-        const midiAccess = await navigator.requestMIDIAccess();
+        const midiAccess = await navigator.requestMIDIAccess({ sysex: true });
         const outputs = Array.from(midiAccess.outputs.values());
         if (outputs.length === 0) {
             alert("Nenhum dispositivo MIDI encontrado.");
@@ -125,10 +162,50 @@ async function programChange(channel, program) {
         const output = outputs[0];
         const statusByte = 0xC0 | channel;
 
-        output.send([statusByte, program]);
-        alert(`Program Change enviado para Canal ${channel + 1}, Programa ${program}`);
+        output.send([statusByte, pc]);
+        //alert(`Program Change enviado para Canal ${channel + 1}, Banco ${letter}, Programa ${j}`);
+        //output.send([0xF0,0x7A,0x7B, 0x7C, 0x7D, 0x7E, 0x7F, 0x7A,0x7B, 0x7C, 0x7D, 0x7E, 0x7A, 0xF7]);
+        output.send([0xF0,0x7A, 0x70,0xF7]);
     } catch (error) {
         alert("Erro ao enviar mensagem MIDI: " + error);
+    }
+}
+
+async function setupMidiListener() {
+    try {
+        console.log("Solicitando acesso aos dispositivos MIDI...");
+
+        // Solicita o acesso ao MIDI
+        const midiAccess = await navigator.requestMIDIAccess();
+        console.log("Acesso ao MIDI concedido.");
+
+        // Obtém as entradas MIDI
+        const inputs = Array.from(midiAccess.inputs.values());
+
+        if (inputs.length === 0) {
+            console.log("Nenhum dispositivo MIDI de entrada encontrado.");
+            return;
+        }
+
+        // Seleciona o primeiro dispositivo MIDI
+        const input = inputs[0];
+        console.log(`Conectado ao dispositivo MIDI: ${input.name}`);
+
+        // Configura o evento para escutar as mensagens MIDI
+        input.onmidimessage = (message) => {
+            // Verifica se a mensagem é SysEx
+            if (message.data[0] === 0xF0) {
+                console.log("Mensagem SysEx recebida:", message.data);
+
+                // Exibe a mensagem SysEx completa
+                const sysexData = message.data.slice(1, -1); // Remove o 0xF0 de início e 0xF7 de fim
+                console.log("Dados SysEx:", sysexData);
+            } else {
+                console.log("Mensagem MIDI não SysEx recebida:", message.data);
+            }
+        };
+    } catch (error) {
+        console.error("Erro ao configurar o listener MIDI:", error);
     }
 }
 
