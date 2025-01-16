@@ -1,5 +1,30 @@
+let midiAccess;
+
+let lastMessage = null;
+
+let loops = [];
+
+let remotes = [];
+
+let patchName;
+
 // Função base da inicialização do site
-function initializeSite() {
+async function initializeSite() {
+
+    midiAccess = await navigator.requestMIDIAccess({ sysex: true });
+    
+    setupMidiListener();
+    sendMessage([0xF0,0x01,0x00,0xF7])
+
+    while (nomeControladora === null) {
+        console.log('Aguardando nomeControladora...');
+        
+        // Aqui você pode aguardar algum tempo antes de verificar novamente
+        await new Promise(resolve => setTimeout(resolve, 100)); // espera 1 segundo
+    }
+
+    
+
     const sidebar = document.getElementById('sidebar');
     for (let i = 65; i <= 90; i++) {
         const letter = String.fromCharCode(i);
@@ -12,7 +37,7 @@ function initializeSite() {
         sidebar.appendChild(bankDetails);
     }
     
-    setupMidiListener();
+    
 }
 
 // Cria um banco
@@ -64,38 +89,8 @@ function bankSelect(bank, bankDetails, index) {
                 : 'rgba(159, 24, 253, 0.5)';
             bank.classList.add('active');
             bankDetails.style.display = 'block';
-            
-            //createGear(bank);
         }
     });
-}
-
-// Cria a engrenagem
-let currentConfig = null;
-function createGear(bank) {
-    if (currentConfig) {
-        currentConfig.remove();
-        currentConfig = null;
-    }
-
-    const gear = document.createElement('button');
-    //gear.innerHTML = 'Gear';
-    gear.textContent = 'Gear';
-    gear.style.position = 'absolute';
-    gear.style.right = '30vh';
-    gear.style.top = `${bank.getBoundingClientRect().top}`;
-    gear.style.zIndex = '1000';
-    gear.style.border = 'none';
-    gear.style.background = 'transparent';
-    gear.style.cursor = 'pointer';
-    gear.style.fontSize = '20px';
-
-    gear.addEventListener('click', () => {
-        alert('click');
-    })
-
-    document.body.appendChild(gear);
-    currentConfig = gear;
 }
 
 // Base para a criação dos patches
@@ -104,7 +99,12 @@ function createBankPatches(letter, index) {
     bankDetails.className = 'bank-details';
 
     const patchList = document.createElement('ul');
-    for (let j = 1; j <= 8; j++) {
+
+    let size = 8;
+    if (nomeControladora === 'supernova'){
+        size = 5;
+    }
+    for (let j = 1; j <= size; j++) {
         const patchId = `${letter}${j}`; // Identificador do patch
         const patchItem = createPatch(letter, j, index);
         const inputElement = patchItem.querySelector('input');
@@ -122,8 +122,12 @@ function createBankPatches(letter, index) {
 
             programChange(0, letter, j)
 
-            createLoopTable(patchId, index);
-            createMidiTable(patchId, index);
+            sendMessage([0xF0,0x06,0x00,0xF7]) // Nome do patch
+
+
+            //createLoopTable(patchId, index);
+            //createTableRemoteSwitch(patchId, index)
+            //createMidiTable(patchId, index);
         });
 
         inputElement.addEventListener('input', () => {
@@ -143,16 +147,33 @@ function createBankPatches(letter, index) {
 }
 
 // Troca de programa (so vai ate program 127)
-async function programChange(channel, letter, j) {
-    if (!navigator.requestMIDIAccess) {
-        alert("Seu navegador não suporta a API Web MIDI.");
-        return;
+
+async function sendMessage(message) {
+
+    lastMessage = message[1];
+    console.log(lastMessage)
+
+    try {
+        const outputs = Array.from(midiAccess.outputs.values());
+        if (outputs.length === 0) {
+            alert("Nenhum dispositivo MIDI encontrado.");
+            return;
+        }
+
+        const output = outputs[0];
+
+        output.send(message); 
+    } catch (error) {
+        alert("Erro ao enviar mensagem MIDI: " + error);
     }
+}
+
+async function programChange(channel, letter, j) {
+
 
     const valorASCII = letter.charCodeAt(0);
     const pc = (valorASCII - 65)*8 + j-1
     try {
-        const midiAccess = await navigator.requestMIDIAccess({ sysex: true });
         const outputs = Array.from(midiAccess.outputs.values());
         if (outputs.length === 0) {
             alert("Nenhum dispositivo MIDI encontrado.");
@@ -162,21 +183,20 @@ async function programChange(channel, letter, j) {
         const output = outputs[0];
         const statusByte = 0xC0 | channel;
 
-        output.send([statusByte, pc]);
+        output.send([statusByte, pc]); // Muda patch
         //alert(`Program Change enviado para Canal ${channel + 1}, Banco ${letter}, Programa ${j}`);
-        //output.send([0xF0,0x7A,0x7B, 0x7C, 0x7D, 0x7E, 0x7F, 0x7A,0x7B, 0x7C, 0x7D, 0x7E, 0x7A, 0xF7]);
-        output.send([0xF0,0x7A, 0x70,0xF7]);
     } catch (error) {
         alert("Erro ao enviar mensagem MIDI: " + error);
     }
 }
 
+let nomeControladora = null
 async function setupMidiListener() {
     try {
         console.log("Solicitando acesso aos dispositivos MIDI...");
 
         // Solicita o acesso ao MIDI
-        const midiAccess = await navigator.requestMIDIAccess();
+        
         console.log("Acesso ao MIDI concedido.");
 
         // Obtém as entradas MIDI
@@ -200,6 +220,74 @@ async function setupMidiListener() {
                 // Exibe a mensagem SysEx completa
                 const sysexData = message.data.slice(1, -1); // Remove o 0xF0 de início e 0xF7 de fim
                 console.log("Dados SysEx:", sysexData);
+                switch (lastMessage) {
+                    case 1:
+                        if (sysexData["0"] === 2 || sysexData["0"] === 0){
+                            nomeControladora = "supernova";
+                        } else {
+                            nomeControladora = "titan";
+                        }
+                        break;
+                    case 2:
+                        loops = Array.from(sysexData);
+                        console.log('loops ', loops)
+                        break;
+                    case 4:
+                        remotes = Array.from(sysexData);
+                        console.log('remotes ', remotes)
+                        break;
+                    case 6:
+                        patchName = sysexData;
+                        document.getElementById('selectedPatch').textContent = Array.from(sysexData).map(num => String.fromCharCode(num)).join('');
+                        break;
+                }
+                
+            } else {
+                console.log("Mensagem MIDI não SysEx recebida:", message.data);
+            }
+            lastMessage = null;
+        };
+    } catch (error) {
+        console.error("Erro ao configurar o listener MIDI:", error);
+    }
+}
+
+function arrayToAsciiString(array) {
+    return array.map(num => String.fromCharCode(num)).join('');
+}
+
+/*async function setupMidiListener() {
+    try {
+        console.log("Solicitando acesso aos dispositivos MIDI...");
+
+        // Solicita o acesso ao MIDI
+        const midiAccess = await navigator.requestMIDIAccess({ sysex: true });
+        console.log("Acesso ao MIDI concedido.");
+
+        // Obtém as entradas MIDI
+        const inputs = Array.from(midiAccess.inputs.values());
+
+        if (inputs.length === 0) {
+            console.log("Nenhum dispositivo MIDI de entrada encontrado.");
+            return;
+        }
+
+        // Seleciona o primeiro dispositivo MIDI
+        const input = inputs[0];
+        console.log(`Conectado ao dispositivo MIDI: ${input.name}`);
+
+        // Configura o evento para escutar as mensagens MIDI
+        input.onmidimessage = (message) => {
+            // Verifica se a mensagem é SysEx
+            if (message.data[0] === 0xF0) {
+                console.log("Mensagem SysEx recebida:", message.data);
+
+                // Exibe a mensagem SysEx completa
+                const sysexData = message.data.slice(1, -1); // Remove o 0xF0 de início e 0xF7 de fim
+                console.log("Dados SysEx:", sysexData);
+                if (sysexData["0"] === 2 || sysexData["0"] === 0){
+                    nomeControladora = "supernova";
+                }
             } else {
                 console.log("Mensagem MIDI não SysEx recebida:", message.data);
             }
@@ -207,7 +295,7 @@ async function setupMidiListener() {
     } catch (error) {
         console.error("Erro ao configurar o listener MIDI:", error);
     }
-}
+}*/
 
 // Cria um patch
 function createPatch(letter, number, index) {
@@ -237,10 +325,21 @@ function createNameInput(letter, number) {
     patchName.type = 'text';
     patchName.placeholder = `Patch ${letter}${number}`;
     patchName.value = localStorage.getItem(`${letter}${number}_name`) || '';
-    patchName.maxLength = 5;
+    patchName.maxLength = 6;
 
     patchName.addEventListener('input', () => {
         localStorage.setItem(`${letter}${number}_name`, patchName.value);
+    });
+
+    patchName.addEventListener('blur', () => {
+        // Ação ao clicar fora do campo de entrada
+        sendMessage([0xF0,0x07, patchName,0xF7])
+    });
+
+    patchName.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            patchName.blur(); // Sai do campo de entrada
+        }
     });
 
     return patchName;
@@ -261,11 +360,17 @@ function setPatchColor(patchItem, patchTypeButton, index) {
 }
 
 // Revela a tabela de loops
-function createLoopTable(patchId, index) {
+async function createLoopTable(patchId, index) {
+
+    sendMessage([0xF0, 0x02, 0x00, 0xF7]);
+
     const loopTable = document.getElementById('loop-table');
     const loopTableFull = document.getElementById('table-1');
 
-    const states = loadLoopStates(patchId);
+    await delay(200);
+
+    let states = loops;
+
     loopTableFull.style.display = 'grid';
     loopTableFull.style.backgroundColor = index % 2 === 0
         ? 'rgba(83, 191, 235, 0.5)'
@@ -275,38 +380,133 @@ function createLoopTable(patchId, index) {
     loopTableFull.style.marginLeft = '20vh';
     loopTableFull.style.borderRadius = '10px';
     loopTableFull.style.width = '50vh';
+    loopTableFull.style.justifyContent = 'space-evenly';
 
     loopTable.innerHTML = '';
     loopTable.style.display = 'grid';
-    loopTable.style.gridTemplateColumns = '1fr 1fr'; // Duas colunas
+
     loopTable.style.columnGap = '80px';
     loopTable.style.rowGap = '10px';
-    
 
-    // Cria as linhas da tabela de loops
-    ['1', '5', '2', '6', '3', '7', '4', '8'].forEach((i) => {
+    // Verificar a resposta MIDI e determinar a quantidade de loops
+    let loopNumbers = ['1', '5', '2', '6', '3', '7', '4', '8'];
+    if (nomeControladora === "supernova") {
+        loopNumbers = ['1', '2', '3', '4']; // Ajuste para 4 loops
+        loopTable.style.gridTemplateColumns = '1fr';
+    } else {
+        loopTable.style.gridTemplateColumns = '1fr 1fr'; // Duas colunas
+    }
+
+    loopNumbers.forEach((i) => {
+        switch (states[i - 1]) {
+            case 0:
+                states[i - 1] = 'OFF';
+                break;
+            case 1:
+                states[i - 1] = 'ON';
+                break;
+            case 2:
+                states[i - 1] = 'NUL';
+                break;
+            case 3:
+                states[i - 1] = 'TGL';
+                break;
+        }
+
         const loopContainer = document.createElement('div');
         loopContainer.style.display = 'flex';
-        loopContainer.style.justifyContent = 'space-between';
+        if (nomeControladora === "supernova") {
+            loopContainer.style.justifyContent = 'space-evenly';
+            loopContainer.style.width = '30vh';
+        } else {
+            loopContainer.style.justifyContent = 'space-between';
+        }
+
         loopContainer.style.alignItems = 'center';
-    
+
         const loopLabel = document.createElement('span');
         loopLabel.textContent = `Loop ${i}`;
         loopLabel.style.color = '#fff';
         loopLabel.style.marginRight = '10px';
-    
-        const loopButton = document.createElement('span');
-        loopButton.textContent = states[i] ? 'ON' : 'OFF';
-        loopButton.style.color = states[i] ? 'lime' : 'red';
+
+        const loopButton = document.createElement('span-button');
+        loopButton.textContent = states[i - 1];
+        loopButton.style.color =
+            states[i - 1] === 'ON' ? 'lime' :
+            states[i - 1] === 'NUL' ? 'yellow' :
+            states[i - 1] === 'TGL' ? 'white' :
+            'red';
         loopButton.style.cursor = 'pointer';
         loopButton.style.fontWeight = 'bold';
-    
-        loopButton.addEventListener('click', () => toggleState(loopButton, patchId, i));
-    
+
+        loopButton.addEventListener('click', () => {
+            toggleState(loopButton, patchId, i);
+            states = updateStates()
+            console.log(states);
+            sendMessage(states)
+        });
+
         loopContainer.appendChild(loopLabel);
         loopContainer.appendChild(loopButton);
         loopTable.appendChild(loopContainer);
     });
+
+   
+}
+
+function updateStates() {
+    let updatedStates = [0xF0, 0x03];
+
+    // Percorrer os botões de loop para obter os estados
+    let loopButtons = document.querySelectorAll('#loop-table span-button');
+
+    loopButtons.forEach((loopButton, index) => {
+        let state;
+
+        // Verifica o texto do botão e atribui o valor correspondente
+        switch (loopButton.textContent) {
+            case 'ON':
+                state = 1;
+                break;
+            case 'NUL':
+                state = 2;
+                break;
+            case 'TGL':
+                state = 3;
+                break;
+            default: // Quando for 'OFF' ou qualquer outro valor
+                state = 0;
+                break;
+        }
+        // Atualiza o array states com o valor numérico
+        updatedStates[index+2] = state;
+    });
+
+    if (nomeControladora === 'titan') {
+        updatedStates = reorganizeArray(updatedStates)
+    }
+    updatedStates.push(0xF7);
+    console.log(updateStates)
+
+    // Sobrescreve o array 'states' com os novos valores numéricos
+    return updatedStates;
+}
+
+function reorganizeArray(arr) {
+    const result = [];
+    result.push(arr[0]);
+    result.push(arr[1]);
+    // 1,3,5,7, 2,4,6,8
+    result.push(arr[2]); // 1
+    result.push(arr[4]); // 5
+    result.push(arr[6]); // 2
+    result.push(arr[8]); // 6
+    result.push(arr[3]); // 3
+    result.push(arr[5]); // 7
+    result.push(arr[7]); // 4
+    result.push(arr[9]); // 8
+
+    return result;
 }
 
 // Revela as opções de tipos do patch
@@ -397,6 +597,204 @@ function loadLoopStates(index) {
     const savedStates = localStorage.getItem(`${index}_loops`);
     return savedStates ? JSON.parse(savedStates) : Array(8).fill(false);
 }
+
+// Remote Switch
+async function createTableRemoteSwitch(patchId, index) {
+    sendMessage([0xF0, 0x04, 0x00, 0xF7]);
+
+    const loopTable = document.getElementById('remote-table');
+    const loopTableFull = document.getElementById('table-3');
+
+    await delay(300);
+
+    let states = remotes;
+
+    loopTableFull.style.display = 'grid';
+    loopTableFull.style.backgroundColor = index % 2 === 0
+        ? 'rgba(83, 191, 235, 0.5)'
+        : 'rgba(159, 24, 253, 0.5)';
+    loopTableFull.style.fontWeight = 'bold';
+    loopTableFull.style.padding = '10px';
+    loopTableFull.style.marginLeft = '20vh';
+    loopTableFull.style.marginTop = '30px';
+    loopTableFull.style.borderRadius = '10px';
+    loopTableFull.style.width = '50vh';
+    loopTableFull.style.justifyContent = 'space-evenly';
+
+    loopTable.innerHTML = '';
+    loopTable.style.display = 'grid';
+
+    loopTable.style.columnGap = '80px';
+    loopTable.style.rowGap = '10px';
+
+    const loopNumbers = ['1', '2', '3', '4']; // Ajuste para 4 loops
+
+    loopNumbers.forEach((i) => {
+        switch (states[i - 1]) {
+            case 0:
+                states[i - 1] = 'OFF';
+                break;
+            case 1:
+                states[i - 1] = 'ON';
+                break;
+            case 2:
+                states[i - 1] = 'NUL';
+                break;
+            case 3:
+                states[i - 1] = 'TGL';
+                break;
+        }
+        console.log(states)
+
+        const loopContainer = document.createElement('div');
+        loopContainer.style.display = 'flex';
+        if (nomeControladora === "supernova") {
+            loopContainer.style.justifyContent = 'space-evenly';
+            loopContainer.style.width = '30vh';
+        } else {
+            loopContainer.style.justifyContent = 'space-between';
+        }
+
+        loopContainer.style.alignItems = 'center';
+
+        const loopLabel = document.createElement('span');
+        switch (i) {
+            case '1':
+                loopLabel.textContent = 'Rmt Switch 1 Tip:';
+                break;
+            case '2':
+                loopLabel.textContent = 'Rmt Switch 1 Ring:';
+                break;
+            case '3':
+                loopLabel.textContent = 'Rmt Switch 2 Tip:';
+                break;
+            default:
+                loopLabel.textContent = 'Rmt Switch 2 Ring:';
+                break;
+        }
+        loopLabel.style.color = '#fff';
+        loopLabel.style.marginRight = '10px';
+
+        const loopButton = document.createElement('span-button');
+        loopButton.textContent = states[i - 1];
+        loopButton.style.color =
+            states[i - 1] === 'ON' ? 'lime' :
+            states[i - 1] === 'NUL' ? 'yellow' :
+            states[i - 1] === 'TGL' ? 'white' :
+            'red';
+        loopButton.style.cursor = 'pointer';
+        loopButton.style.fontWeight = 'bold';
+
+        loopButton.addEventListener('click', () => {
+            toggleState(loopButton, patchId, i);
+            states = updateStatesRemote()
+            console.log(states);
+            sendMessage(states)
+        });
+
+        loopContainer.appendChild(loopLabel);
+        loopContainer.appendChild(loopButton);
+        loopTable.appendChild(loopContainer);
+    });
+}
+
+function updateStatesRemote() {
+    let updatedStates = [0xF0, 0x05];
+
+    // Percorrer os botões de loop para obter os estados
+    let loopButtons = document.querySelectorAll('#remote-table span-button');
+
+    loopButtons.forEach((loopButton, index) => {
+        let state;
+
+        // Verifica o texto do botão e atribui o valor correspondente
+        switch (loopButton.textContent) {
+            case 'ON':
+                state = 1;
+                break;
+            case 'NUL':
+                state = 2;
+                break;
+            case 'TGL':
+                state = 3;
+                break;
+            default: // Quando for 'OFF' ou qualquer outro valor
+                state = 0;
+                break;
+        }
+        // Atualiza o array states com o valor numérico
+        updatedStates[index+2] = state;
+    });
+
+    updatedStates.push(0xF7);
+
+    // Sobrescreve o array 'states' com os novos valores numéricos
+    return updatedStates;
+}
+
+// Trava a controladora para evitar problemas
+let intervalId = null; // Variável para armazenar o ID do intervalo
+function toggleConnection(button) {
+    if (intervalId === null) {
+        // Iniciar a execução repetida
+        intervalId = setInterval(() => {
+            heartBeat()
+        }, 200);
+
+        // Alterar o texto do botão
+        button.textContent = "Desconectar";
+    } else {
+        // Parar a execução repetida
+        clearInterval(intervalId);
+        intervalId = null;
+
+        // Alterar o texto do botão
+        button.textContent = "Conectar";
+    }
+}
+
+async function heartBeat() {
+    try {
+        const outputs = Array.from(midiAccess.outputs.values());
+        if (outputs.length === 0) {
+            alert("Nenhum dispositivo MIDI encontrado.");
+            return;
+        }
+
+        const output = outputs[0];
+        console.log('foi')
+        output.send([0xF0,0x08,0x00,0xF7]); 
+        
+    } catch (error) {
+        alert("Erro ao enviar mensagem MIDI: " + error);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Cria a tabela MIDI
 let currentOpenMidiPopup = null;
@@ -721,6 +1119,10 @@ function loadMidiStates(patchId) {
     return savedStates
         ? JSON.parse(savedStates)
         : Array(10).fill({ type: 'OFF', values: [] });
+}
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 initializeSite();
