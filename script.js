@@ -8,11 +8,11 @@ let remotes = [];
 
 let patchName;
 
+let patchesNames = [];
+
 // Função base da inicialização do site
 async function initializeSite() {
 
-    midiAccess = await navigator.requestMIDIAccess({ sysex: true });
-    
     setupMidiListener();
     sendMessage([0xF0,0x01,0x00,0xF7])
 
@@ -22,8 +22,6 @@ async function initializeSite() {
         // Aqui você pode aguardar algum tempo antes de verificar novamente
         await new Promise(resolve => setTimeout(resolve, 100)); // espera 1 segundo
     }
-
-    
 
     const sidebar = document.getElementById('sidebar');
     for (let i = 65; i <= 90; i++) {
@@ -75,6 +73,9 @@ function setBankColor(bank, ball, arrow, index) {
 function bankSelect(bank, bankDetails, index) {
     bank.addEventListener('click', () => {
         const isActive = bank.classList.contains('active');
+        
+        sendMessage([0xF0,0x09,index-65,0,0xF7])
+        sendMessage([0xF0,0x0A,index-65,0xF7])
 
         document.querySelectorAll('.bank').forEach(b => {
             b.classList.remove('active');
@@ -90,6 +91,7 @@ function bankSelect(bank, bankDetails, index) {
             bank.classList.add('active');
             bankDetails.style.display = 'block';
         }
+        writeAllNames(patchesNames)
     });
 }
 
@@ -124,7 +126,6 @@ function createBankPatches(letter, index) {
 
             sendMessage([0xF0,0x06,0x00,0xF7]) // Nome do patch
 
-
             createLoopTable(patchId, index);
             createTableRemoteSwitch(patchId, index)
             //createMidiTable(patchId, index);
@@ -146,11 +147,36 @@ function createBankPatches(letter, index) {
     return bankDetails;
 }
 
+
+function writeAllNames(array) {
+    const inputs = document.querySelectorAll('.bank-details input'); // Seleciona todos os inputs dentro de `.bank-details`
+
+    inputs.forEach((input, index) => {
+        if (index < array.length && array[index].replace(/\s+/g, '') != '') {
+            input.value = array[index]; // Preenche o input com o valor do array
+        } else {
+            input.value = ""; // Limpa o input se não houver mais valores no array
+        }
+    });
+}
+
 async function sendMessage(message) {
 
     lastMessage.push(message[1]);
-    console.log(lastMessage)
+    
     console.log(message)
+
+    if (message[1] == 10) {
+        let numPatches = 8;
+        if (nomeControladora === 'supernova') {
+            numPatches = 5;
+        }
+        for (let i = 1; i < numPatches; i++) {
+            lastMessage.push(message[1]);
+        }
+    }
+
+    console.log(lastMessage)
 
     try {
         const outputs = Array.from(midiAccess.outputs.values());
@@ -202,7 +228,8 @@ async function patchChange(letter, j) {
 
         const output = outputs[0];
 
-        sendMessage([0xF0,0x09,valorASCII,j,0xF7]); // Muda patch
+        sendMessage([0xF0,0x09,valorASCII - 65,j,0xF7]); // Muda patch
+        //alert([0xF0,0x09,valorASCII - 65,j,0xF7])
     } catch (error) {
         alert("Erro ao enviar mensagem MIDI: " + error);
     }
@@ -231,13 +258,19 @@ async function setupMidiListener() {
 
         // Configura o evento para escutar as mensagens MIDI
         input.onmidimessage = (message) => {
+
+            // Impede que o heartbeat interfira no funcionamento do site
+            if (message.data[1] == 8){
+                return;
+            }
+
             // Verifica se a mensagem é SysEx
             if (message.data[0] === 0xF0) {
-                console.log("Mensagem SysEx recebida:", message.data);
+                console.log("Mensagem SysEx recebida:", message.data, message.data[1] != 8);
 
                 // Exibe a mensagem SysEx completa
                 const sysexData = message.data.slice(1, -1); // Remove o 0xF0 de início e 0xF7 de fim
-                console.log("Dados SysEx:", sysexData);
+                //console.log("Dados SysEx:", sysexData);
                 switch (lastMessage[0]) {
                     case 1:
                         if (sysexData["0"] === 2 || sysexData["0"] === 0){
@@ -260,6 +293,15 @@ async function setupMidiListener() {
                         console.log('patchname ', patchName )
                         document.getElementById('selectedPatch').textContent = Array.from(sysexData).map(num => String.fromCharCode(num)).join('');
                         break;
+                    case 10:
+                        console.log(Array.from(sysexData).map(num => String.fromCharCode(num)).join(''));
+                        patchesNames.push(Array.from(sysexData.slice(2)).map(num => String.fromCharCode(num)).join(''));
+                        console.log(patchesNames)
+                        writeAllNames(patchesNames)
+                        if (lastMessage[1] != 10){
+                            patchesNames = [];
+                        }
+                        break;
                     default:
                         break;
                 }
@@ -274,9 +316,6 @@ async function setupMidiListener() {
     }
 }
 
-function arrayToAsciiString(array) {
-    return array.map(num => String.fromCharCode(num)).join('');
-}
 
 /*async function setupMidiListener() {
     try {
@@ -355,7 +394,15 @@ function createNameInput(letter, number) {
 
     patchName.addEventListener('blur', () => {
         // Ação ao clicar fora do campo de entrada
-        sendMessage([0xF0,0x07, patchName,0xF7])
+        let asciiValues = [];
+        for (let i = 0; i < 6; i++) {
+            if (i < patchName.value.length){
+                asciiValues.push(patchName.value.charCodeAt(i));
+            } else {
+                asciiValues.push(32)
+            }
+        }
+        sendMessage([0xF0,0x07, asciiValues[0], asciiValues[1], asciiValues[2], asciiValues[3], asciiValues[4], asciiValues[5],0xF7])
     });
 
     patchName.addEventListener('keydown', (event) => {
@@ -628,7 +675,7 @@ async function createTableRemoteSwitch(patchId, index) {
     const loopTable = document.getElementById('remote-table');
     const loopTableFull = document.getElementById('table-3');
 
-    await delay(300);
+    await delay(200);
 
     let states = remotes;
 
@@ -757,24 +804,26 @@ function updateStatesRemote() {
 let intervalId = null; // Variável para armazenar o ID do intervalo
 let isExecuting = false; // Flag para garantir que não execute em paralelo
 
-function toggleConnection(button) {
+async function toggleConnection(button) {
     if (intervalId === null) {
+        midiAccess = await navigator.requestMIDIAccess({ sysex: true });
+        initializeSite();
         // Iniciar a execução repetida
         intervalId = setInterval(() => {
             if (!isExecuting) {
                 heartBeat();
             }
         }, 200);
-
+        
         // Alterar o texto do botão
-        button.textContent = "Desconectar";
+        button.textContent = "Disconnect";
     } else {
         // Parar a execução repetida
         clearInterval(intervalId);
         intervalId = null;
 
         // Alterar o texto do botão
-        button.textContent = "Conectar";
+        button.textContent = "Connect";
     }
 }
 
@@ -1153,5 +1202,3 @@ function loadMidiStates(patchId) {
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-initializeSite();
