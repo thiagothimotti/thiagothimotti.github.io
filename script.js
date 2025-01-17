@@ -1,6 +1,6 @@
 let midiAccess;
 
-let lastMessage = null;
+let lastMessage = [];
 
 let loops = [];
 
@@ -120,13 +120,13 @@ function createBankPatches(letter, index) {
             const type = localStorage.getItem(`${letter}${j}_type`) || 'Preset';
             selectedPatchType.textContent = `(${type})`;
 
-            programChange(0, letter, j)
+            patchChange(letter, j)
 
             sendMessage([0xF0,0x06,0x00,0xF7]) // Nome do patch
 
 
-            //createLoopTable(patchId, index);
-            //createTableRemoteSwitch(patchId, index)
+            createLoopTable(patchId, index);
+            createTableRemoteSwitch(patchId, index)
             //createMidiTable(patchId, index);
         });
 
@@ -146,12 +146,11 @@ function createBankPatches(letter, index) {
     return bankDetails;
 }
 
-// Troca de programa (so vai ate program 127)
-
 async function sendMessage(message) {
 
-    lastMessage = message[1];
+    lastMessage.push(message[1]);
     console.log(lastMessage)
+    console.log(message)
 
     try {
         const outputs = Array.from(midiAccess.outputs.values());
@@ -168,7 +167,8 @@ async function sendMessage(message) {
     }
 }
 
-async function programChange(channel, letter, j) {
+// Troca de programa (so vai ate program 127)
+/*async function programChange(channel, letter, j) {
 
 
     const valorASCII = letter.charCodeAt(0);
@@ -185,6 +185,24 @@ async function programChange(channel, letter, j) {
 
         output.send([statusByte, pc]); // Muda patch
         //alert(`Program Change enviado para Canal ${channel + 1}, Banco ${letter}, Programa ${j}`);
+    } catch (error) {
+        alert("Erro ao enviar mensagem MIDI: " + error);
+    }
+}*/
+
+async function patchChange(letter, j) {
+
+    const valorASCII = letter.charCodeAt(0);
+    try {
+        const outputs = Array.from(midiAccess.outputs.values());
+        if (outputs.length === 0) {
+            alert("Nenhum dispositivo MIDI encontrado.");
+            return;
+        }
+
+        const output = outputs[0];
+
+        sendMessage([0xF0,0x09,valorASCII,j,0xF7]); // Muda patch
     } catch (error) {
         alert("Erro ao enviar mensagem MIDI: " + error);
     }
@@ -220,13 +238,14 @@ async function setupMidiListener() {
                 // Exibe a mensagem SysEx completa
                 const sysexData = message.data.slice(1, -1); // Remove o 0xF0 de início e 0xF7 de fim
                 console.log("Dados SysEx:", sysexData);
-                switch (lastMessage) {
+                switch (lastMessage[0]) {
                     case 1:
                         if (sysexData["0"] === 2 || sysexData["0"] === 0){
                             nomeControladora = "supernova";
                         } else {
                             nomeControladora = "titan";
                         }
+                        console.log(nomeControladora)
                         break;
                     case 2:
                         loops = Array.from(sysexData);
@@ -238,14 +257,17 @@ async function setupMidiListener() {
                         break;
                     case 6:
                         patchName = sysexData;
+                        console.log('patchname ', patchName )
                         document.getElementById('selectedPatch').textContent = Array.from(sysexData).map(num => String.fromCharCode(num)).join('');
                         break;
+                    default:
+                        break;
                 }
-                
             } else {
                 console.log("Mensagem MIDI não SysEx recebida:", message.data);
             }
-            lastMessage = null;
+            console.log('removendo ', lastMessage[0])
+            lastMessage.shift()
         };
     } catch (error) {
         console.error("Erro ao configurar o listener MIDI:", error);
@@ -411,6 +433,9 @@ async function createLoopTable(patchId, index) {
             case 3:
                 states[i - 1] = 'TGL';
                 break;
+            default:
+                states[i - 1] = 'erro'
+                break;
         }
 
         const loopContainer = document.createElement('div');
@@ -442,7 +467,6 @@ async function createLoopTable(patchId, index) {
         loopButton.addEventListener('click', () => {
             toggleState(loopButton, patchId, i);
             states = updateStates()
-            console.log(states);
             sendMessage(states)
         });
 
@@ -486,7 +510,6 @@ function updateStates() {
         updatedStates = reorganizeArray(updatedStates)
     }
     updatedStates.push(0xF7);
-    console.log(updateStates)
 
     // Sobrescreve o array 'states' com os novos valores numéricos
     return updatedStates;
@@ -644,7 +667,6 @@ async function createTableRemoteSwitch(patchId, index) {
                 states[i - 1] = 'TGL';
                 break;
         }
-        console.log(states)
 
         const loopContainer = document.createElement('div');
         loopContainer.style.display = 'flex';
@@ -688,7 +710,6 @@ async function createTableRemoteSwitch(patchId, index) {
         loopButton.addEventListener('click', () => {
             toggleState(loopButton, patchId, i);
             states = updateStatesRemote()
-            console.log(states);
             sendMessage(states)
         });
 
@@ -734,11 +755,15 @@ function updateStatesRemote() {
 
 // Trava a controladora para evitar problemas
 let intervalId = null; // Variável para armazenar o ID do intervalo
+let isExecuting = false; // Flag para garantir que não execute em paralelo
+
 function toggleConnection(button) {
     if (intervalId === null) {
         // Iniciar a execução repetida
         intervalId = setInterval(() => {
-            heartBeat()
+            if (!isExecuting) {
+                heartBeat();
+            }
         }, 200);
 
         // Alterar o texto do botão
@@ -755,6 +780,8 @@ function toggleConnection(button) {
 
 async function heartBeat() {
     try {
+        isExecuting = true;  // Marcar a execução em andamento
+
         const outputs = Array.from(midiAccess.outputs.values());
         if (outputs.length === 0) {
             alert("Nenhum dispositivo MIDI encontrado.");
@@ -762,13 +789,15 @@ async function heartBeat() {
         }
 
         const output = outputs[0];
-        console.log('foi')
-        output.send([0xF0,0x08,0x00,0xF7]); 
-        
+        output.send([0xF0, 0x08, 0x00, 0xF7]); // Envia mensagem MIDI para o dispositivo
+
     } catch (error) {
         alert("Erro ao enviar mensagem MIDI: " + error);
+    } finally {
+        isExecuting = false;  // Marcar a execução como finalizada
     }
 }
+
 
 
 
