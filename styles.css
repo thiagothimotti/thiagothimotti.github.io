@@ -1,42 +1,62 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Futura', sans-serif;
     margin: 0;
-    background-color: #121212;
-    color: #fff;
+    background-color: #1e1e2f;
+    color: #ffffff;
     overflow: hidden;
 }
 
 header {
     display: flex;
     align-items: center;
-    text-align: center;
-    padding: 4vh;
-    background-color: #9f18fd;
+    justify-content: space-between;
+    padding: 2vh 4vh;
+    background-color: #6c2ca7;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.saturno-links {
+    list-style: none;
+    display: flex;
+    margin: 0;
+    padding: 0;
+    position: fixed;
+    top: 6.3vh;
+    right: 20vh;
+}
+
+.saturno-links li {
+    margin-right: 50px;
 }
 
 .logo {
-    width: 30vh;
+    width: 10%;
     height: auto;
-    position: fixed;
-    top: 1vh;
-    left: 7vh;
 }
 
 header p {
     font-size: 25px;
     font-weight: 600;
     position: fixed;
+    top: -15px;
     left: 80vh;
 }
 
 .container {
     display: flex;
-    margin-top: 7vh;
+    margin-top: 10vh;
 }
 
 .fundo {
@@ -51,107 +71,102 @@ header p {
 }
 
 .sidebar {
-    width: 250px;
-    background-color: #121212;
-    padding: 30px;
-    height: 88vh;
+    width: 280px;
+    background-color: #2a2a40;
+    padding: 20px;
+    height: calc(100vh - 10vh);
     overflow-y: auto;
-    background-color: transparent;
+    border-right: 2px solid #6c2ca7;
 }
 
 .sidebar::-webkit-scrollbar {
-    display: none;
+    width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background-color: #6c2ca7;
+    border-radius: 10px;
 }
 
 .bank {
     cursor: pointer;
-    padding: 5px;
-    margin-bottom: 0px;
-    background-color: #242424;
-    border: 1px solid #000;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    background-color: #3a3a57;
+    border-radius: 8px;
     display: flex;
     align-items: center;
-    gap: 5px;
+    justify-content: space-between;
     transition: background-color 0.3s ease, transform 0.2s ease;
-    position: relative;
-}
-
-.bank:first-child {
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-}
-
-.bank:last-child {
-    border-bottom-left-radius: 10px;
-    border-bottom-right-radius: 10px;
-}
-
-.bank:not(:first-child) {
-    margin-top: -1px;
-}
-
-.bank span:last-child {
-    position: absolute;
-    right: 20px;
 }
 
 .bank:hover {
-    background-color: #363636;
-    transform: scale(1.01);
+    background-color: #4a4a67;
+    transform: translateY(-3px);
 }
 
 .bank span {
     font-size: 16px;
+    font-weight: 500;
 }
 
 .bank-details {
     display: none;
-    background-color: #242424;
+    background-color: #3a3a57;
     padding: 10px;
-    border: 1px solid #000;
-    border-top: none;
+    border-radius: 8px;
+    margin-top: -10px;
+    margin-bottom: 10px;
 }
 
 .bank-details ul {
     list-style: none;
-    font-weight: 600;
-    margin-top: 0px;
-    margin-bottom: 0px;
     padding: 0;
+    margin: 0;
 }
 
 .bank-details li {
+    margin-bottom: 8px;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
     display: flex;
     align-items: center;
-    justify-content: start;
-    margin-bottom: 5px;
-    transition: background-color 0.3s ease;
+    gap: 10px;
 }
 
 .bank-details li:hover {
-    background-color: #363636;
+    background-color: #4a4a67;
 }
 
 .bank-details input[type="text"] {
-    width: 80px;
-    padding: 5px;
-    margin-left: 4px;
-    background-color: #242424;
-    color: #fff;
-    font-weight: 600;
-    border: 1px solid #000;
+    width: 120px;
+    padding: 8px;
+    background-color: #2a2a40;
+    color: #ffffff;
+    border: 1px solid #6c2ca7;
     border-radius: 5px;
+    transition: border-color 0.3s ease;
+}
+
+.bank-details input[type="text"]:focus {
+    border-color: #7d3cd3;
+    outline: none;
 }
 
 .bank-details button {
-    background: none;
+    background-color: transparent;
     border: none;
-    margin-left: auto;
+    color: white;
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 5px;
     cursor: pointer;
-    text-align: left;
-    padding: 5px;
-    font-size: 12px;
-    text-decoration: underline;
+    transition: background-color 0.3s ease;
+}
+
+.bank-details button:hover {
+    transform: scale(1.1);
 }
 
 .popup-options {
@@ -190,48 +205,40 @@ header p {
     margin-left: 20vh;
 }
 
+#mainContent {
+    overflow-y: auto;
+    height: calc(100vh - 12vh);
+    padding: 20px;
+}
+
+#mainContent::-webkit-scrollbar {
+    width: 0px;
+}
+
 #selectedPatch {
-    font-size: 30px;
+    font-size: 22px;
 }
 
 #patchType {
-    font-size: 15px;
+    font-size: 12px;
 }
 
-#table-1 {
+#table-1, #table-2, #table-3 {
     display: none;
+    margin: 20px;
+    background-color: #2a2a40;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 20px;
 }
 
-#table-1 p {
+#table-1 p, #table-2 p, #table-3 p {
     font-size: 20px;
-    font-weight: bolder;
+    font-weight: bold;
     text-align: center;
-    margin-bottom: 20px;
-    margin-top: 0px;
-}
-
-#table-2 {
-    display: none;
-}
-
-#table-2 p {
-    font-size: 20px;
-    font-weight: bolder;
-    text-align: center;
-    margin-bottom: 20px;
-    margin-top: 0px;
-}
-
-#table-3 {
-    display: none;
-}
-
-#table-3 p {
-    font-size: 20px;
-    font-weight: bolder;
-    text-align: center;
-    margin-bottom: 20px;
-    margin-top: 0px;
+    margin: 0 0 20px 0;
+    color: #f1e6ff;
+    padding-bottom: 10px;
 }
 
 .midi-detail {
@@ -252,16 +259,6 @@ header p {
     color: yellow;
 }
 
-.value-popup {
-    position: absolute;
-    left: 150px;
-    max-width: 120px;
-    background-color: #242424;
-    border: 1px solid #000;
-    border-radius: 5px;
-    z-index: 1;
-}
-
 .value-popup button {
     background-color: #242424;
     text-decoration: none;
@@ -276,27 +273,25 @@ header p {
     background-color: #555;
 }
 
-.toggle {
-    color: red;
-    font-weight: bold;
-    cursor: pointer;
-}
-
 #connectButton {
     position: absolute;
-    top: 100px; /* Distância do topo */
-    right: 50px; /* Distância da direita */
-    padding: 10px 20px;
-    background-color: #4CAF50;
+    top: 100px;
+    right: 50px;
+    padding: 12px 24px;
+    background-color: #9f18fd;
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 16px;
     font-weight: bold;
-    z-index: 1000; /* Para garantir que esteja sobre outros elementos */
+    z-index: 1000;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-#connectButton:active {
-    background-color: #45a049;
+#connectButton:hover {
+    background-color: #9e18fdd8;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
 }

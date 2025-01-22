@@ -91,7 +91,7 @@ function bankSelect(bank, bankDetails, index) {
             bank.classList.add('active');
             bankDetails.style.display = 'block';
         }
-        writeAllNames(patchesNames)
+        //writeAllNames(patchesNames)
     });
 }
 
@@ -128,7 +128,7 @@ function createBankPatches(letter, index) {
 
             createLoopTable(patchId, index);
             createTableRemoteSwitch(patchId, index)
-            //createMidiTable(patchId, index);
+            createMidiTable(patchId, index);
         });
 
         inputElement.addEventListener('input', () => {
@@ -147,7 +147,6 @@ function createBankPatches(letter, index) {
     return bankDetails;
 }
 
-
 function writeAllNames(array) {
     const inputs = document.querySelectorAll('.bank-details input'); // Seleciona todos os inputs dentro de `.bank-details`
 
@@ -159,6 +158,7 @@ function writeAllNames(array) {
         }
     });
 }
+
 
 async function sendMessage(message) {
 
@@ -275,8 +275,11 @@ async function setupMidiListener() {
                     case 1:
                         if (sysexData["0"] === 2 || sysexData["0"] === 0){
                             nomeControladora = "supernova";
+                            document.getElementById('editor-title').textContent = 'Web Editor - Supernova';
+
                         } else {
                             nomeControladora = "titan";
+                            document.getElementById('editor-title').textContent = 'Web Editor - Titan';
                         }
                         console.log(nomeControladora)
                         break;
@@ -521,8 +524,6 @@ async function createLoopTable(patchId, index) {
         loopContainer.appendChild(loopButton);
         loopTable.appendChild(loopContainer);
     });
-
-   
 }
 
 function updateStates() {

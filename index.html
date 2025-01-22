@@ -10,52 +10,58 @@
         if (location.protocol === 'http:') {
             location.replace(`https://${location.host}${location.pathname}${location.search}`);
         }
+        window.onload = () => {
+            window.scrollTo(0, 0); // Garante que a página seja rolada para o topo
+        };
     </script>
 </head>
 
 <body>  
-    <header>
-        <nav>
+    <header class="header">
+        <nav class="nav-bar">
             <a href="https://saturnopedais.com.br/" target="_blank" rel="noopener noreferrer">
                 <img src="https://i.imgur.com/4igc5oJ.png" alt="Logo Saturno" class="logo">
             </a>
+            <p id="editor-title">Saturno Web Editor</p>
         </nav>
-        <p>Web Editor - Titan</p>
     </header>
 
+    <img src="https://i.imgur.com/U7eh8SX.png" alt="Fundo Saturno" class="fundo">
+
     <div class="container">
-        <div class="sidebar" id="sidebar">
-        </div>
-        <div class="main-content" id="mainContent">
-            <img src="https://i.imgur.com/U7eh8SX.png" alt="Fundo Saturno" class="fundo">
-            <div id="patchTitle">    
-                <p id="selectedPatch"></p>
-                <p id="patchType"></p>
-            </div>
-            <div id="table-1">    
-                <p>Loop Selector</p>
-                <div id="loop-table">    
-                
-                </div>
-            </div>
-            <div id="table-2">    
-                <p>MIDI Over USB</p>
-                <div id="midi-table">    
-                
-                </div>
-            </div>
-            <div id="table-3">    
-                <p>Remote Switch</p>
-                <div id="remote-table">    
-                
-                </div>
-            </div>
+        <aside class="sidebar" id="sidebar">
+        </aside>
+
+        <main class="main-content" id="mainContent">
             
-        </div>
-        <button id="connectButton" onclick="toggleConnection(this)">Connect</button>
+            <section class="patch-title" id="patchTitle">    
+                <p class="selected-patch" id="selectedPatch"></p>
+                <p class="patch-type" id="patchType"></p>
+            </section>
+
+            <section class="table-section" id="table-1">    
+                <p class="table-title">Loop Selector</p>
+                <div class="table" id="loop-table">    
+                </div>
+            </section>
+            
+            <section class="table-section" id="table-3">    
+                <p class="table-title">Remote Switch</p>
+                <div class="table" id="remote-table">    
+                </div>
+            </section>
+            
+            <section class="table-section" id="table-2">    
+                <p class="table-title">MIDI Over USB</p>
+                <div class="table" id="midi-table">    
+                </div>
+            </section>
+        </main>
+
+        <button class="connect-button" id="connectButton" onclick="toggleConnection(this)">Connect</button>
     </div>
 
     <script src="script.js"></script>
-    
 </body>
+
 </html>
