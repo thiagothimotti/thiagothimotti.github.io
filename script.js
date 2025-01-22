@@ -10,6 +10,8 @@ let patchName;
 
 let patchesNames = [];
 
+let currentBankLetter = null;
+
 // Função base da inicialização do site
 async function initializeSite() {
 
@@ -42,6 +44,7 @@ async function initializeSite() {
 function createBank(letter, index) {
     const bank = document.createElement('div');
     bank.className = 'bank';
+    bank.dataset.letter = letter; // Define o atributo data-letter
 
     const ball = document.createElement('span');
     ball.textContent = '\u2B24';
@@ -74,16 +77,28 @@ function bankSelect(bank, bankDetails, index) {
     bank.addEventListener('click', () => {
         const isActive = bank.classList.contains('active');
         
-        sendMessage([0xF0,0x09,index-65,0,0xF7])
-        sendMessage([0xF0,0x0A,index-65,0xF7])
+        // Atualiza a variável global com a letra do banco atual
+        if (!isActive) {
+            currentBankLetter = bank.dataset.letter; // Atribui a letra do banco atual
+            console.log(`Banco selecionado: ${currentBankLetter}`);
+        } else {
+            currentBankLetter = null; // Nenhum banco ativo
+        }
 
+        // Envia mensagens MIDI relacionadas ao banco
+        sendMessage([0xF0, 0x09, index - 65, 0, 0xF7]);
+        sendMessage([0xF0, 0x0A, index - 65, 0xF7]);
+
+        // Remove a classe 'active' de todos os bancos
         document.querySelectorAll('.bank').forEach(b => {
             b.classList.remove('active');
             b.style.backgroundColor = '';
         });
 
+        // Esconde os detalhes de todos os bancos
         document.querySelectorAll('.bank-details').forEach(details => details.style.display = 'none');
 
+        // Ativa ou desativa o banco clicado
         if (!isActive) {
             bank.style.backgroundColor = index % 2 === 0
                 ? 'rgba(83, 191, 235, 0.5)'
@@ -91,7 +106,6 @@ function bankSelect(bank, bankDetails, index) {
             bank.classList.add('active');
             bankDetails.style.display = 'block';
         }
-        //writeAllNames(patchesNames)
     });
 }
 
@@ -147,14 +161,20 @@ function createBankPatches(letter, index) {
     return bankDetails;
 }
 
-function writeAllNames(array) {
-    const inputs = document.querySelectorAll('.bank-details input'); // Seleciona todos os inputs dentro de `.bank-details`
+function writeAllNames(array, bankLetter) {
+    // Seleciona os inputs do banco selecionado
+    const inputs = document.querySelectorAll(`.bank[data-letter="${bankLetter}"] + .bank-details input`);
+
+    if (inputs.length === 0) {
+        console.error(`Nenhum input encontrado para o banco ${bankLetter}`);
+        return;
+    }
 
     inputs.forEach((input, index) => {
-        if (index < array.length && array[index].replace(/\s+/g, '') != '') {
-            input.value = array[index]; // Preenche o input com o valor do array
+        if (index < array.length && array[index].trim() !== '') {
+            input.value = array[index];
         } else {
-            input.value = ""; // Limpa o input se não houver mais valores no array
+            input.value = "";
         }
     });
 }
@@ -300,7 +320,7 @@ async function setupMidiListener() {
                         console.log(Array.from(sysexData).map(num => String.fromCharCode(num)).join(''));
                         patchesNames.push(Array.from(sysexData.slice(2)).map(num => String.fromCharCode(num)).join(''));
                         console.log(patchesNames)
-                        writeAllNames(patchesNames)
+                        writeAllNames(patchesNames, currentBankLetter)
                         if (lastMessage[1] != 10){
                             patchesNames = [];
                         }
