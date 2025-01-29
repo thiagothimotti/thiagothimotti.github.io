@@ -161,18 +161,31 @@ function addGearToBank(bank) {
         // Criar a tabela bnkCfg
         const bnkCfg = document.createElement('div');
         bnkCfg.id = 'bnkCfg';
-        bnkCfg.style.position = 'absolute';
-        bnkCfg.style.backgroundColor = '#6c2ca7'; // Fundo roxo
-        bnkCfg.style.borderRadius = '8px';
-        bnkCfg.style.padding = '10px';
-        bnkCfg.style.color = '#fff';
-        bnkCfg.style.width = '200px';
-        bnkCfg.style.zIndex = '0z   '; // Garantir que esteja acima de outros elementos
+        bnkCfg.style.position = 'fixed'; // Mudando de absolute para fixed
+        bnkCfg.style.backgroundColor = bank.dataset.letter.charCodeAt(0) % 2 === 0
+        ? 'rgba(83, 191, 235, 0.5)'
+        : 'rgba(159, 24, 253, 0.5)';
 
-        // Posiciona a tabela ao lado da engrenagem
-        const gearRect = gearIcon.getBoundingClientRect();
-        bnkCfg.style.left = `${gearRect.right + 10}px`;
-        bnkCfg.style.top = `${gearRect.top + window.scrollY}px`;
+        bnkCfg.style.borderRadius = '8px';
+        bnkCfg.style.padding = '20px';
+        bnkCfg.style.color = '#fff';
+        bnkCfg.style.width = '300px'; // Tamanho fixo para centralização
+        bnkCfg.style.textAlign = 'center';
+        bnkCfg.style.top = '40%';
+        bnkCfg.style.left = '48%';
+        bnkCfg.style.transform = 'translate(-50%, -50%)'; // Centraliza exatamente no meio
+        bnkCfg.style.zIndex = '0';
+
+        // Criar a linha de título
+        const titleRow = document.createElement('div');
+        titleRow.textContent = 'Bank Configuration';
+        titleRow.style.fontSize = '18px';
+        titleRow.style.fontWeight = 'bold';
+        titleRow.style.textAlign = 'center';
+        titleRow.style.marginBottom = '10px';
+
+        // Adicionar a linha ao bnkCfg antes das outras configurações
+        bnkCfg.appendChild(titleRow);
 
         // Criar as linhas da tabela
         for (let i = 1; i <= 4; i++) {
@@ -204,7 +217,7 @@ function addGearToBank(bank) {
             rowButton.textContent = 'OFF';
             rowButton.style.backgroundColor = 'transparent';
             rowButton.style.color = '#fff';
-            rowButton.style.border = '1px solid #fff';
+            rowButton.style.border = 'none';
             rowButton.style.borderRadius = '5px';
             rowButton.style.cursor = 'pointer';
             rowButton.style.padding = '5px 10px';
@@ -1065,6 +1078,7 @@ async function toggleConnection(button) {
         document.querySelectorAll('.bank').forEach(bank => bank.remove());
         document.querySelectorAll('.bank-details').forEach(details => details.style.display = 'none');
         document.querySelector('.gear-icon').remove();
+        document.getElementById('bnkCfg').remove();
         document.querySelectorAll('.table-section').forEach(details => details.style.display = 'none');
         document.getElementById('patchTitle').style.display = 'none';
         

@@ -70,7 +70,7 @@ header p {
 }
 
 .sidebar {
-    width: 280px;
+    width: 305px;
     background-color: #2a2a40;
     padding: 20px;
     height: calc(100vh - 10vh);
@@ -85,6 +85,12 @@ header p {
 .sidebar::-webkit-scrollbar-thumb {
     background-color: #6c2ca7;
     border-radius: 10px;
+}
+
+.bank, .bank-details {
+    width: 100%; /* Mantém a largura total dentro do sidebar */
+    max-width: 280px; /* Mantém o tamanho esperado */
+    box-sizing: border-box; /* Impede que padding e borda aumentem o tamanho */
 }
 
 .bank {
@@ -278,6 +284,13 @@ header p {
 
 .value-popup button:hover {
     background-color: #555;
+}
+
+#bnkCfg {
+    margin: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 20px;
 }
 
 #connectButton {
