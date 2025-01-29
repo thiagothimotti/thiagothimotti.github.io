@@ -12,6 +12,8 @@ let patchesNames = [];
 
 let currentBankLetter = null;
 
+let activePatch = null;
+
 // Função base da inicialização do site
 async function initializeSite() {
 
@@ -347,6 +349,8 @@ function createBankPatches(letter, index) {
         patchItem.dataset.patchId = patchId;
 
         patchItem.addEventListener('click', () => {
+            activePatch = letter + j;
+
             document.getElementById('patchTitle').style.display = 'flex';
             const patchNameValue = patchItem.querySelector('input').value || `Patch ${patchId}`;
             const selectedPatchText = document.getElementById('selectedPatch');
@@ -536,7 +540,12 @@ async function setupMidiListener() {
                     case 6:
                         patchName = sysexData;
                         console.log('patchname ', patchName )
-                        document.getElementById('selectedPatch').textContent = Array.from(sysexData).map(num => String.fromCharCode(num)).join('');
+                        const selectedPatchElement = document.getElementById('selectedPatch');
+                        const textContent = Array.from(sysexData).map(num => String.fromCharCode(num)).join('').trim();
+                        if (textContent)
+                            selectedPatchElement.textContent = `${activePatch} - ${textContent.trim()}`;
+                        else selectedPatchElement.textContent = `Patch ${activePatch}`;
+                        
                         break;
                     case 10:
                         console.log(Array.from(sysexData).map(num => String.fromCharCode(num)).join(''));
