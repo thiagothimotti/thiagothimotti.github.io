@@ -66,7 +66,7 @@ header p {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    opacity: 30%;
+    opacity: 5%;
     z-index: -1;
 }
 
@@ -102,7 +102,11 @@ header p {
 
 .bank:hover {
     background-color: #4a4a67;
-    transform: translateY(-3px);
+    /*transform: translateY(-3px);*/
+}
+
+.gear-icon:hover {
+    transform: scale(1.1);
 }
 
 .bank span {
@@ -279,6 +283,7 @@ header p {
     right: 50px;
     padding: 12px 24px;
     background-color: #9f18fd;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
     color: white;
     border: none;
     border-radius: 8px;
@@ -286,12 +291,12 @@ header p {
     font-size: 16px;
     font-weight: bold;
     z-index: 1000;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+    transition: all 0.3s ease;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 #connectButton:hover {
     background-color: #9e18fdd8;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-    transform: translateY(-2px);
+    transform: scale(1.05);
 }

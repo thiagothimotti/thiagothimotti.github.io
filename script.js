@@ -36,8 +36,6 @@ async function initializeSite() {
         sidebar.appendChild(bank);
         sidebar.appendChild(bankDetails);
     }
-    
-    
 }
 
 // Cria um banco
@@ -105,9 +103,234 @@ function bankSelect(bank, bankDetails, index) {
                 : 'rgba(159, 24, 253, 0.5)';
             bank.classList.add('active');
             bankDetails.style.display = 'block';
+            addGearToBank(bank);
         }
     });
 }
+
+// Adicionar evento para criar engrenagem clicável ao lado de um bank
+function addGearToBank(bank) {
+    // Remove qualquer engrenagem existente
+    const existingGear = document.querySelector('.gear-icon');
+    if (existingGear) {
+        existingGear.remove();
+    }
+
+    // Criar o elemento da engrenagem
+    const gearIcon = document.createElement('div');
+    gearIcon.className = 'gear-icon';
+    gearIcon.innerHTML = '⚙️'; // Código unicode para uma engrenagem
+
+    // Posicionar a engrenagem relativa ao sidebar
+    const sidebar = document.querySelector('.sidebar');
+    sidebar.style.position = 'relative';
+    const bankRect = bank.getBoundingClientRect();
+    const sidebarRect = sidebar.getBoundingClientRect();
+
+    gearIcon.style.cursor = 'pointer';
+    gearIcon.style.position = 'absolute';
+    gearIcon.style.left = `${bankRect.right - sidebarRect.left - 32}px`;
+    gearIcon.style.top = `${bankRect.top - sidebarRect.top + sidebar.scrollTop + 4}px`;
+    gearIcon.style.fontSize = '22px';
+    gearIcon.style.zIndex = '1000'
+
+    // Adicionar evento ao clicar na engrenagem
+    gearIcon.addEventListener('click', () => {
+        alert(`Engrenagem do Bank ${bank.dataset.letter} clicada!`);
+
+        sendMessage([0xF0, 0x09, bank.dataset.letter.charCodeAt(0) - 65, 0, 0xF7]);
+        
+        // Esconde as tabelas MIDI, Loops e Remote
+        document.getElementById('mainContent').style.display = 'none';
+
+
+
+
+
+        // Remove tabela bnkCfg se já existir
+        const existingTable = document.getElementById('bnkCfg');
+        if (existingTable) {
+            existingTable.remove();
+        }
+
+        // Criar a tabela bnkCfg
+        const bnkCfg = document.createElement('div');
+        bnkCfg.id = 'bnkCfg';
+        bnkCfg.style.position = 'absolute';
+        bnkCfg.style.backgroundColor = '#6c2ca7'; // Fundo roxo
+        bnkCfg.style.borderRadius = '8px';
+        bnkCfg.style.padding = '10px';
+        bnkCfg.style.color = '#fff';
+        bnkCfg.style.width = '200px';
+        bnkCfg.style.zIndex = '0z   '; // Garantir que esteja acima de outros elementos
+
+        // Posiciona a tabela ao lado da engrenagem
+        const gearRect = gearIcon.getBoundingClientRect();
+        bnkCfg.style.left = `${gearRect.right + 10}px`;
+        bnkCfg.style.top = `${gearRect.top + window.scrollY}px`;
+
+        // Criar as linhas da tabela
+        for (let i = 1; i <= 4; i++) {
+            const row = document.createElement('div');
+            row.style.display = 'flex';
+            row.style.justifyContent = 'space-between';
+            row.style.alignItems = 'center';
+            row.style.marginBottom = '10px';
+
+            const rowLabel = document.createElement('span');
+            switch (i) {
+                case 1:
+                    rowLabel.textContent = 'Reclick';
+                    break;
+                case 2:
+                    rowLabel.textContent = 'Hold';
+                    break;
+                case 3:
+                    rowLabel.textContent = 'BnkUp';
+                    break;
+                case 4:
+                    rowLabel.textContent = 'BnkDown';
+                    break;
+            }
+            
+            row.appendChild(rowLabel);
+
+            const rowButton = document.createElement('button');
+            rowButton.textContent = 'OFF';
+            rowButton.style.backgroundColor = 'transparent';
+            rowButton.style.color = '#fff';
+            rowButton.style.border = '1px solid #fff';
+            rowButton.style.borderRadius = '5px';
+            rowButton.style.cursor = 'pointer';
+            rowButton.style.padding = '5px 10px';
+
+            // Adiciona popup ao clicar no botão
+            rowButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+            
+                // Verifica se o botão pertence aos dois primeiros (índice 1 ou 2)
+                if (i <= 2) {
+                    // Popup com opções "Load from B" até "Load from Z"
+                    const options = Array.from({ length: 25 }, (_, idx) => `Load from ${String.fromCharCode(66 + idx)}`);
+                    createConfigPopup(rowButton, null, null, (selectedValue) => {
+                        rowButton.textContent = selectedValue; // Atualiza texto do botão
+                    }, options);
+                } else {
+                    // Popup com opções "Load from B" até "Load from Z8"
+                    const options = [];
+                    for (let letter = 66; letter <= 90; letter++) { // De B a Z (ASCII 66 a 90)
+                        options.push(`Load from ${String.fromCharCode(letter)}`); // Adiciona "Load from B", "Load from C", ...
+                        for (let num = 1; num <= 8; num++) { // De 1 a 8
+                            options.push(`Load from ${String.fromCharCode(letter)}${num}`); // Adiciona "Load from B1", "Load from B2", ...
+                        }
+                    }
+                    createConfigPopup(rowButton, null, null, (selectedValue) => {
+                        rowButton.textContent = selectedValue; // Atualiza texto do botão
+                    }, options);
+                }
+            });
+            
+            row.appendChild(rowButton);
+            bnkCfg.appendChild(row);
+        }
+
+        // Adiciona a tabela ao body para não ser cortada pelo sidebar
+        document.body.appendChild(bnkCfg);
+    });
+    
+    // Adicionar ao sidebar
+    sidebar.appendChild(gearIcon);
+
+    // Atualizar posição da engrenagem ao rolar o sidebar
+    sidebar.addEventListener('scroll', () => {
+        gearIcon.style.top = `${bank.getBoundingClientRect().top - sidebarRect.top + sidebar.scrollTop + 4}px`;
+    });
+}
+
+function createConfigPopup(detailButton, rangeStart, rangeEnd, onSelectCallback, customOptions = null) {
+    // Fecha popups abertos
+    const existingPopup = document.querySelector('.value-popup');
+    if (existingPopup) existingPopup.remove();
+
+    // Cria o popup
+    const valuePopup = document.createElement('div');
+    valuePopup.className = 'value-popup';
+    valuePopup.style.position = 'absolute';
+    valuePopup.style.backgroundColor = '#242424';
+    valuePopup.style.borderRadius = '5px';
+    valuePopup.style.maxHeight = '200px';
+    valuePopup.style.overflowY = 'auto';
+    valuePopup.style.scrollbarWidth = 'none';
+    valuePopup.style.width = '100px';
+    valuePopup.style.textAlign = 'center';
+
+    // Impede popup de "sair" da tela
+    const rect = detailButton.getBoundingClientRect();
+    const popupHeight = 200;
+
+    let top = rect.bottom;
+    let left = rect.left;
+
+    if (top + popupHeight > window.innerHeight) {
+        top = Math.max(rect.top - popupHeight, 0);
+    }
+
+    valuePopup.style.top = `${top}px`;
+    valuePopup.style.left = `${left}px`;
+
+    // Adiciona valores personalizados, se fornecidos
+    if (customOptions) {
+        customOptions.forEach((option) => {
+            const valueButton = document.createElement('button');
+            valueButton.textContent = option;
+            valueButton.style.display = 'block';
+            valueButton.style.width = '100%';
+            valueButton.style.marginBottom = '5px';
+            valueButton.style.padding = '5px';
+            valueButton.style.cursor = 'pointer';
+
+            valueButton.addEventListener('click', () => {
+                onSelectCallback(option);
+                valuePopup.remove();
+            });
+
+            valuePopup.appendChild(valueButton);
+        });
+    } else {
+        // Adiciona valores numéricos (rangeStart a rangeEnd)
+        for (let i = rangeStart; i <= rangeEnd; i++) {
+            const valueButton = document.createElement('button');
+            valueButton.textContent = i.toString();
+            valueButton.style.display = 'block';
+            valueButton.style.width = '100%';
+            valueButton.style.marginBottom = '5px';
+            valueButton.style.padding = '5px';
+            valueButton.style.cursor = 'pointer';
+
+            valueButton.addEventListener('click', () => {
+                onSelectCallback(i);
+                valuePopup.remove();
+            });
+
+            valuePopup.appendChild(valueButton);
+        }
+    }
+
+    // Adiciona popup ao documento
+    document.body.appendChild(valuePopup);
+
+    // Fecha o popup ao clicar fora
+    document.addEventListener(
+        'click',
+        (e) => {
+            if (!valuePopup.contains(e.target)) {
+                valuePopup.remove();
+            }
+        },
+        { once: true }
+    );
+}
+
 
 // Base para a criação dos patches
 function createBankPatches(letter, index) {
@@ -143,6 +366,7 @@ function createBankPatches(letter, index) {
             createLoopTable(patchId, index);
             createTableRemoteSwitch(patchId, index)
             createMidiTable(patchId, index);
+            document.getElementById('mainContent').style.display = 'grid';
         });
 
         inputElement.addEventListener('input', () => {
