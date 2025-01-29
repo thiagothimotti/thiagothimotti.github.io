@@ -7,11 +7,12 @@ body {
 }
 
 header {
+    font-family: 'Futura', sans-serif;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 2vh 4vh;
-    background-color: #6c2ca7;
+    background-color: #121212;
     position: fixed;
     top: 0;
     left: 0;
@@ -56,17 +57,17 @@ header p {
 
 .container {
     display: flex;
-    margin-top: 10vh;
+    margin-top: 7vh;
 }
 
 .fundo {
-    width: 100vh;
+    width: 180vh;
     height: auto;
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    opacity: 5%;
+    transform: translate(-35%, -50%);
+    opacity: 50%;
     z-index: -1;
 }
 
