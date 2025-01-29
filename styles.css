@@ -48,9 +48,11 @@ nav {
 
 header p {
     font-size: 25px;
-    position: fixed;
-    top: -15px;
-    left: 80vh;
+    position: absolute;
+    top: 0%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Move o texto para o centro */
+    text-align: center;
 }
 
 .container {
@@ -260,7 +262,8 @@ header p {
     border-radius: 5px;
     background-color: transparent;
     border: none;
-    font-weight: bold;
+    font-weight: 600;
+    font-size: 16px;
     cursor: pointer;
 }
 

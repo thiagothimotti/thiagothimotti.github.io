@@ -74,6 +74,18 @@ function setBankColor(bank, ball, arrow, index) {
 function bankSelect(bank, bankDetails, index) {
     bank.addEventListener('click', () => {
         const isActive = bank.classList.contains('active');
+        const existingTable = document.getElementById('bnkCfg');
+        const connectButton = document.getElementById('connectButton');
+
+        if (!isActive) {
+            const bankColor = bank.dataset.color;
+            connectButton.style.backgroundColor = bankColor;
+        }
+
+        if (existingTable) {
+            existingTable.remove();
+            createBnkCfg(bank);
+        }
         
         // Atualiza a variável global com a letra do banco atual
         if (!isActive) {
@@ -124,7 +136,7 @@ function addGearToBank(bank) {
     // Criar o elemento da engrenagem
     const gearIcon = document.createElement('div');
     gearIcon.className = 'gear-icon';
-    gearIcon.innerHTML = '⚙️'; // Código unicode para uma engrenagem
+    gearIcon.innerHTML = '⚙️'; // Código unicode para engrenagem
 
     // Posicionar a engrenagem relativa ao sidebar
     const sidebar = document.querySelector('.sidebar');
@@ -137,132 +149,99 @@ function addGearToBank(bank) {
     gearIcon.style.left = `${bankRect.right - sidebarRect.left + 5}px`;
     gearIcon.style.top = `${bankRect.top - sidebarRect.top + sidebar.scrollTop + 4}px`;
     gearIcon.style.fontSize = '22px';
-    gearIcon.style.zIndex = '1000'
+    gearIcon.style.zIndex = '1000';
 
     // Adicionar evento ao clicar na engrenagem
     gearIcon.addEventListener('click', () => {
-        alert(`Engrenagem do Bank ${bank.dataset.letter} clicada!`);
-
-        sendMessage([0xF0, 0x09, bank.dataset.letter.charCodeAt(0) - 65, 0, 0xF7]);
-        
-        // Esconde as tabelas MIDI, Loops e Remote
-        document.getElementById('mainContent').style.display = 'none';
-
-
-
-
-
         // Remove tabela bnkCfg se já existir
         const existingTable = document.getElementById('bnkCfg');
         if (existingTable) {
             existingTable.remove();
+            return;
         }
+        createBnkCfg(bank)
+        });
+    
+    // Adicionar engrenagem ao sidebar
+    sidebar.appendChild(gearIcon);
+}
 
-        // Criar a tabela bnkCfg
-        const bnkCfg = document.createElement('div');
-        bnkCfg.id = 'bnkCfg';
-        bnkCfg.style.position = 'fixed'; // Mudando de absolute para fixed
-        bnkCfg.style.backgroundColor = bank.dataset.letter.charCodeAt(0) % 2 === 0
+function createBnkCfg(bank) {
+    const bnkCfg = document.createElement('div');
+    bnkCfg.id = 'bnkCfg';
+    bnkCfg.style.position = 'absolute';
+    bnkCfg.style.right = '20px';
+    bnkCfg.style.top = '50%';
+    bnkCfg.style.transform = 'translateY(-50%)';
+    bnkCfg.style.backgroundColor = bank.dataset.letter.charCodeAt(0) % 2 === 0
         ? 'rgba(83, 191, 235, 0.5)'
         : 'rgba(159, 24, 253, 0.5)';
+    bnkCfg.style.borderRadius = '8px';
+    bnkCfg.style.padding = '20px';
+    bnkCfg.style.color = '#fff';
+    bnkCfg.style.width = '250px';
+    bnkCfg.style.textAlign = 'center';
+    bnkCfg.style.zIndex = '0';
 
-        bnkCfg.style.borderRadius = '8px';
-        bnkCfg.style.padding = '20px';
-        bnkCfg.style.color = '#fff';
-        bnkCfg.style.width = '300px'; // Tamanho fixo para centralização
-        bnkCfg.style.textAlign = 'center';
-        bnkCfg.style.top = '40%';
-        bnkCfg.style.left = '48%';
-        bnkCfg.style.transform = 'translate(-50%, -50%)'; // Centraliza exatamente no meio
-        bnkCfg.style.zIndex = '0';
+    // Criar título
+    const titleRow = document.createElement('div');
+    titleRow.textContent = `Bank Configuration - ${bank.dataset.letter}`;
+    titleRow.style.fontSize = '18px';
+    titleRow.style.fontWeight = '600';
+    titleRow.style.marginBottom = '20px';
+    bnkCfg.appendChild(titleRow);
 
-        // Criar a linha de título
-        const titleRow = document.createElement('div');
-        titleRow.textContent = 'Bank Configuration';
-        titleRow.style.fontSize = '18px';
-        titleRow.style.fontWeight = 'bold';
-        titleRow.style.textAlign = 'center';
-        titleRow.style.marginBottom = '10px';
+    // Criar botões
+    const labels = ['Reclick', 'Hold', 'BnkUp', 'BnkDown'];
+    labels.forEach((label, i) => {
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.justifyContent = 'space-between';
+        row.style.alignItems = 'center';
+        row.style.marginBottom = '10px';
 
-        // Adicionar a linha ao bnkCfg antes das outras configurações
-        bnkCfg.appendChild(titleRow);
+        const rowLabel = document.createElement('span');
+        rowLabel.textContent = label;
+        row.appendChild(rowLabel);
 
-        // Criar as linhas da tabela
-        for (let i = 1; i <= 4; i++) {
-            const row = document.createElement('div');
-            row.style.display = 'flex';
-            row.style.justifyContent = 'space-between';
-            row.style.alignItems = 'center';
-            row.style.marginBottom = '10px';
+        const rowButton = document.createElement('button');
+        rowButton.textContent = 'OFF';
+        rowButton.style.backgroundColor = 'transparent';
+        rowButton.style.color = 'red';
+        rowButton.style.fontSize = '16px';
+        rowButton.style.fontWeight = '600';
+        rowButton.style.border = 'none';
+        rowButton.style.cursor = 'pointer';
+        rowButton.style.fontWeight = 'bold';
 
-            const rowLabel = document.createElement('span');
-            switch (i) {
-                case 1:
-                    rowLabel.textContent = 'Reclick';
-                    break;
-                case 2:
-                    rowLabel.textContent = 'Hold';
-                    break;
-                case 3:
-                    rowLabel.textContent = 'BnkUp';
-                    break;
-                case 4:
-                    rowLabel.textContent = 'BnkDown';
-                    break;
-            }
-            
-            row.appendChild(rowLabel);
+        rowButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const options = [];
 
-            const rowButton = document.createElement('button');
-            rowButton.textContent = 'OFF';
-            rowButton.style.backgroundColor = 'transparent';
-            rowButton.style.color = '#fff';
-            rowButton.style.border = 'none';
-            rowButton.style.borderRadius = '5px';
-            rowButton.style.cursor = 'pointer';
-            rowButton.style.padding = '5px 10px';
-
-            // Adiciona popup ao clicar no botão
-            rowButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-            
-                // Verifica se o botão pertence aos dois primeiros (índice 1 ou 2)
-                if (i <= 2) {
-                    // Popup com opções "Load from B" até "Load from Z"
-                    const options = Array.from({ length: 25 }, (_, idx) => `Load from ${String.fromCharCode(66 + idx)}`);
-                    createConfigPopup(rowButton, null, null, (selectedValue) => {
-                        rowButton.textContent = selectedValue; // Atualiza texto do botão
-                    }, options);
-                } else {
-                    // Popup com opções "Load from B" até "Load from Z8"
-                    const options = [];
-                    for (let letter = 66; letter <= 90; letter++) { // De B a Z (ASCII 66 a 90)
-                        options.push(`Load from ${String.fromCharCode(letter)}`); // Adiciona "Load from B", "Load from C", ...
-                        for (let num = 1; num <= 8; num++) { // De 1 a 8
-                            options.push(`Load from ${String.fromCharCode(letter)}${num}`); // Adiciona "Load from B1", "Load from B2", ...
-                        }
-                    }
-                    createConfigPopup(rowButton, null, null, (selectedValue) => {
-                        rowButton.textContent = selectedValue; // Atualiza texto do botão
-                    }, options);
+            options.push('OFF');
+            if (i <= 1) {
+                for (let letter = 66; letter <= 90; letter++) {
+                    options.push(`Load from ${String.fromCharCode(letter)}`);
                 }
-            });
-            
-            row.appendChild(rowButton);
-            bnkCfg.appendChild(row);
-        }
+            } else {
+                for (let letter = 66; letter <= 90; letter++) {
+                    options.push(`Load from ${String.fromCharCode(letter)}`);
+                    for (let num = 1; num <= 8; num++) {
+                        options.push(`Load from ${String.fromCharCode(letter)}${num}`);
+                    }
+                }
+            }
+            createConfigPopup(rowButton, null, null, (selectedValue) => {
+                rowButton.textContent = selectedValue;
+                rowButton.style.color = selectedValue === 'OFF' ? 'red' : 'lime';
+            }, options);
+        });
 
-        // Adiciona a tabela ao body para não ser cortada pelo sidebar
-        document.body.appendChild(bnkCfg);
+        row.appendChild(rowButton);
+        bnkCfg.appendChild(row);
     });
-    
-    // Adicionar ao sidebar
-    sidebar.appendChild(gearIcon);
 
-    // Atualizar posição da engrenagem ao rolar o sidebar
-    sidebar.addEventListener('scroll', () => {
-        gearIcon.style.top = `${bank.getBoundingClientRect().top - sidebarRect.top + sidebar.scrollTop + 4}px`;
-    });
+    document.body.appendChild(bnkCfg);
 }
 
 function createConfigPopup(detailButton, rangeStart, rangeEnd, onSelectCallback, customOptions = null) {
@@ -385,7 +364,6 @@ function createBankPatches(letter, index) {
             createLoopTable(patchId, index);
             createTableRemoteSwitch(patchId, index)
             createMidiTable(patchId, index);
-            document.getElementById('bnkCfg').style.display = 'none';
             document.getElementById('mainContent').style.display = 'grid';
         });
 
@@ -631,6 +609,7 @@ function createPatch(letter, number, index) {
 
     const patchLabel = document.createElement('span');
     patchLabel.textContent = `${letter}${number}`;
+    patchLabel.style.cursor = 'pointer';
     patchItem.appendChild(patchLabel);
 
     const patchName = createNameInput(letter, number);
@@ -697,7 +676,6 @@ function setPatchColor(patchItem, patchTypeButton, index) {
 
 // Revela a tabela de loops
 async function createLoopTable(patchId, index) {
-
     sendMessage([0xF0, 0x02, 0x00, 0xF7]);
 
     const loopTable = document.getElementById('loop-table');
@@ -711,7 +689,7 @@ async function createLoopTable(patchId, index) {
     loopTableFull.style.backgroundColor = index % 2 === 0
         ? 'rgba(83, 191, 235, 0.5)'
         : 'rgba(159, 24, 253, 0.5)';
-    loopTableFull.style.fontWeight = 'bold';
+    loopTableFull.style.fontWeight = '500';
     loopTableFull.style.padding = '10px';
     loopTableFull.style.marginLeft = '20vh';
     loopTableFull.style.borderRadius = '10px';
@@ -721,7 +699,7 @@ async function createLoopTable(patchId, index) {
     loopTable.innerHTML = '';
     loopTable.style.display = 'grid';
 
-    loopTable.style.columnGap = '80px';
+    loopTable.style.columnGap = '70px';
     loopTable.style.rowGap = '10px';
 
     // Verificar a resposta MIDI e determinar a quantidade de loops
@@ -735,38 +713,24 @@ async function createLoopTable(patchId, index) {
 
     loopNumbers.forEach((i) => {
         switch (states[i - 1]) {
-            case 0:
-                states[i - 1] = 'OFF';
-                break;
-            case 1:
-                states[i - 1] = 'ON';
-                break;
-            case 2:
-                states[i - 1] = 'NUL';
-                break;
-            case 3:
-                states[i - 1] = 'TGL';
-                break;
-            default:
-                states[i - 1] = 'erro'
-                break;
+            case 0: states[i - 1] = 'OFF'; break;
+            case 1: states[i - 1] = 'ON'; break;
+            case 2: states[i - 1] = 'NUL'; break;
+            case 3: states[i - 1] = 'TGL'; break;
+            default: states[i - 1] = 'erro'; break;
         }
 
         const loopContainer = document.createElement('div');
         loopContainer.style.display = 'flex';
-        if (nomeControladora === "supernova") {
-            loopContainer.style.justifyContent = 'space-evenly';
-            loopContainer.style.width = '30vh';
-        } else {
-            loopContainer.style.justifyContent = 'space-between';
-        }
-
         loopContainer.style.alignItems = 'center';
+        loopContainer.style.justifyContent = 'flex-start';
+        loopContainer.style.width = '100%';
 
         const loopLabel = document.createElement('span');
         loopLabel.textContent = `Loop ${i}`;
         loopLabel.style.color = '#fff';
-        loopLabel.style.marginRight = '10px';
+        loopLabel.style.textAlign = 'left';
+        loopLabel.style.marginRight = '30px';
 
         const loopButton = document.createElement('span-button');
         loopButton.textContent = states[i - 1];
@@ -776,12 +740,13 @@ async function createLoopTable(patchId, index) {
             states[i - 1] === 'TGL' ? 'white' :
             'red';
         loopButton.style.cursor = 'pointer';
-        loopButton.style.fontWeight = 'bold';
+        loopButton.style.fontWeight = '600';
+        loopButton.style.textAlign = 'left';
 
         loopButton.addEventListener('click', () => {
             toggleState(loopButton, patchId, i);
-            states = updateStates()
-            sendMessage(states)
+            states = updateStates();
+            sendMessage(states);
         });
 
         loopContainer.appendChild(loopLabel);
@@ -948,7 +913,7 @@ async function createTableRemoteSwitch(patchId, index) {
     loopTableFull.style.backgroundColor = index % 2 === 0
         ? 'rgba(83, 191, 235, 0.5)'
         : 'rgba(159, 24, 253, 0.5)';
-    loopTableFull.style.fontWeight = 'bold';
+    loopTableFull.style.fontWeight = '500';
     loopTableFull.style.padding = '10px';
     loopTableFull.style.marginLeft = '20vh';
     loopTableFull.style.marginTop = '30px';
@@ -1053,34 +1018,51 @@ let isExecuting = false; // Flag para garantir que não execute em paralelo
 
 async function toggleConnection(button) {
     if (intervalId === null) {
-        midiAccess = await navigator.requestMIDIAccess({ sysex: true });
-        initializeSite();
-        // Iniciar a execução repetida
-        intervalId = setInterval(() => {
-            if (!isExecuting) {
-                heartBeat();
+        try {
+            midiAccess = await navigator.requestMIDIAccess({ sysex: true });
+
+            // Verifica se há dispositivos MIDI disponíveis
+            const outputs = Array.from(midiAccess.outputs.values());
+            if (outputs.length === 0) {
+                alert("Nenhum dispositivo MIDI encontrado. Abortando conexão.");
+                return; // Sai da função e impede a conexão
             }
-        }, 200);
 
-        //document.getElementById('sidebar').style.display = 'grid';
-        //document.getElementById('mainContent').style.display = 'grid';
+            initializeSite();
 
-        // Alterar o texto do botão
-        button.textContent = "Disconnect";
+            // Iniciar a execução repetida
+            intervalId = setInterval(() => {
+                if (!isExecuting) {
+                    heartBeat();
+                }
+            }, 200);
+
+            // Alterar o texto do botão
+            button.textContent = "Disconnect";
+
+        } catch (error) {
+            alert("Erro ao tentar conectar ao MIDI: " + error);
+        }
     } else {
-        // Parar a execução repetida
+        // Desconectar se já estiver conectado
         clearInterval(intervalId);
         intervalId = null;
 
-        //document.getElementById('sidebar').style.display = 'none';
-        //document.getElementById('mainContent').style.display = 'none';
-    
+        // Fechar conexão MIDI explicitamente
+        if (midiAccess) {
+            midiAccess.inputs.forEach(input => input.onmidimessage = null); // Remove listeners
+            midiAccess = null;
+        }
+
+        // Remover elementos visuais
         document.querySelectorAll('.bank').forEach(bank => bank.remove());
         document.querySelectorAll('.bank-details').forEach(details => details.style.display = 'none');
-        document.querySelector('.gear-icon').remove();
-        document.getElementById('bnkCfg').remove();
+        document.querySelector('.gear-icon')?.remove();
         document.querySelectorAll('.table-section').forEach(details => details.style.display = 'none');
         document.getElementById('patchTitle').style.display = 'none';
+        if (document.getElementById('bnkCfg')) {
+            document.getElementById('bnkCfg')?.remove();
+          }
         
         // Alterar o texto do botão
         button.textContent = "Connect";
