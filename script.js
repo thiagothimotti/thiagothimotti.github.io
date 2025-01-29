@@ -350,6 +350,7 @@ function createBankPatches(letter, index) {
         patchItem.dataset.patchId = patchId;
 
         patchItem.addEventListener('click', () => {
+            document.getElementById('patchTitle').style.display = 'flex';
             const patchNameValue = patchItem.querySelector('input').value || `Patch ${patchId}`;
             const selectedPatchText = document.getElementById('selectedPatch');
             const selectedPatchType = document.getElementById('patchType');
@@ -366,6 +367,7 @@ function createBankPatches(letter, index) {
             createLoopTable(patchId, index);
             createTableRemoteSwitch(patchId, index)
             createMidiTable(patchId, index);
+            document.getElementById('bnkCfg').style.display = 'none';
             document.getElementById('mainContent').style.display = 'grid';
         });
 
@@ -938,7 +940,6 @@ async function createTableRemoteSwitch(patchId, index) {
 
     loopTable.innerHTML = '';
     loopTable.style.display = 'grid';
-
     loopTable.style.columnGap = '80px';
     loopTable.style.rowGap = '10px';
 
@@ -946,48 +947,29 @@ async function createTableRemoteSwitch(patchId, index) {
 
     loopNumbers.forEach((i) => {
         switch (states[i - 1]) {
-            case 0:
-                states[i - 1] = 'OFF';
-                break;
-            case 1:
-                states[i - 1] = 'ON';
-                break;
-            case 2:
-                states[i - 1] = 'NUL';
-                break;
-            case 3:
-                states[i - 1] = 'TGL';
-                break;
+            case 0: states[i - 1] = 'OFF'; break;
+            case 1: states[i - 1] = 'ON'; break;
+            case 2: states[i - 1] = 'NUL'; break;
+            case 3: states[i - 1] = 'TGL'; break;
         }
 
         const loopContainer = document.createElement('div');
         loopContainer.style.display = 'flex';
-        if (nomeControladora === "supernova") {
-            loopContainer.style.justifyContent = 'space-evenly';
-            loopContainer.style.width = '30vh';
-        } else {
-            loopContainer.style.justifyContent = 'space-between';
-        }
-
         loopContainer.style.alignItems = 'center';
+        loopContainer.style.justifyContent = 'space-between';
+        loopContainer.style.width = '100%';
 
         const loopLabel = document.createElement('span');
-        switch (i) {
-            case '1':
-                loopLabel.textContent = 'Rmt Switch 1 Tip:';
-                break;
-            case '2':
-                loopLabel.textContent = 'Rmt Switch 1 Ring:';
-                break;
-            case '3':
-                loopLabel.textContent = 'Rmt Switch 2 Tip:';
-                break;
-            default:
-                loopLabel.textContent = 'Rmt Switch 2 Ring:';
-                break;
-        }
+        loopLabel.textContent = [
+            'Rmt Switch 1 Tip:',
+            'Rmt Switch 1 Ring:',
+            'Rmt Switch 2 Tip:',
+            'Rmt Switch 2 Ring:'
+        ][i - 1]; 
         loopLabel.style.color = '#fff';
-        loopLabel.style.marginRight = '10px';
+        loopLabel.style.minWidth = '150px'; // Define largura fixa para alinhamento
+        loopLabel.style.textAlign = 'left';
+        loopLabel.style.marginRight = '30px';
 
         const loopButton = document.createElement('span-button');
         loopButton.textContent = states[i - 1];
@@ -998,11 +980,13 @@ async function createTableRemoteSwitch(patchId, index) {
             'red';
         loopButton.style.cursor = 'pointer';
         loopButton.style.fontWeight = 'bold';
+        loopButton.style.minWidth = '50px'; // Define tamanho fixo do botão
+        loopButton.style.textAlign = 'left';
 
         loopButton.addEventListener('click', () => {
             toggleState(loopButton, patchId, i);
-            states = updateStatesRemote()
-            sendMessage(states)
+            states = updateStatesRemote();
+            sendMessage(states);
         });
 
         loopContainer.appendChild(loopLabel);
@@ -1059,7 +1043,10 @@ async function toggleConnection(button) {
                 heartBeat();
             }
         }, 200);
-        
+
+        //document.getElementById('sidebar').style.display = 'grid';
+        //document.getElementById('mainContent').style.display = 'grid';
+
         // Alterar o texto do botão
         button.textContent = "Disconnect";
     } else {
@@ -1067,6 +1054,15 @@ async function toggleConnection(button) {
         clearInterval(intervalId);
         intervalId = null;
 
+        //document.getElementById('sidebar').style.display = 'none';
+        //document.getElementById('mainContent').style.display = 'none';
+    
+        document.querySelectorAll('.bank').forEach(bank => bank.remove());
+        document.querySelectorAll('.bank-details').forEach(details => details.style.display = 'none');
+        document.querySelector('.gear-icon').remove();
+        document.querySelectorAll('.table-section').forEach(details => details.style.display = 'none');
+        document.getElementById('patchTitle').style.display = 'none';
+        
         // Alterar o texto do botão
         button.textContent = "Connect";
     }
@@ -1205,13 +1201,12 @@ function createMidiTable(patchId, index) {
 
 // Cria o popup do comando
 function createMidiPopup(midiButton, patchId, index) {
-
-    // Fecha outros popups
+    // Fecha outros popups abertos antes de abrir um novo
     if (currentOpenMidiPopup) {
         currentOpenMidiPopup.style.display = 'none';
     }
 
-    // Cria o popup
+    // Obtém ou cria o popup
     let midiPopup = midiButton.querySelector('.popup-options');
     if (!midiPopup) {
         midiPopup = document.createElement('div');
@@ -1230,36 +1225,39 @@ function createMidiPopup(midiButton, patchId, index) {
 
         midiPopup.style.top = `${top}px`;
         midiPopup.style.left = `${left}px`;
-
         midiPopup.style.maxWidth = '100px';
         midiPopup.style.maxHeight = '200px';
         midiPopup.style.overflowY = 'auto';
         midiPopup.style.overflowX = 'hidden';
         midiPopup.style.scrollbarWidth = 'none';
 
-        // Adiciona as opções OFF e PC no popup
+        // Adiciona as opções OFF e PC
         ['OFF', 'PC'].forEach((option) => {
             const optionButton = document.createElement('button');
             optionButton.textContent = option;
             optionButton.style.marginRight = '10px';
             optionButton.style.width = '80px';
-            optionButton.addEventListener('click', () => {
+            optionButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // Impede que o clique feche o popup
                 handleMidiSelection(option, midiButton, patchId, index);
                 midiPopup.style.display = 'none';
+                currentOpenMidiPopup = null;
             });
             midiPopup.appendChild(optionButton);
         });
 
-        // Adiciona as opções CCs no popup
+        // Adiciona as opções CCs
         for (let i = 0; i <= 127; i++) {
             const optionButton = document.createElement('button');
             let option = `CC${i}`;
             optionButton.textContent = option;
             optionButton.style.marginRight = '10px';
             optionButton.style.width = '80px';
-            optionButton.addEventListener('click', () => {
+            optionButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // Impede que o clique feche o popup
                 handleMidiSelection(option, midiButton, patchId, index);
                 midiPopup.style.display = 'none';
+                currentOpenMidiPopup = null;
             });
             midiPopup.appendChild(optionButton);
         }
@@ -1272,17 +1270,16 @@ function createMidiPopup(midiButton, patchId, index) {
     currentOpenMidiPopup = midiPopup;
 
     // Fecha o popup se clicar fora
-    document.addEventListener(
-        'click',
-        (e) => {
-            if (!midiPopup.contains(e.target)) {
+    setTimeout(() => {
+        document.addEventListener('click', (e) => {
+            if (!midiPopup.contains(e.target) && e.target !== midiButton) {
                 midiPopup.style.display = 'none';
                 currentOpenMidiPopup = null;
             }
-        },
-        { once: true }
-    );
+        }, { once: true });
+    }, 100); // Pequeno atraso para evitar que o clique inicial feche o popup
 }
+
 
 // Cria botão secundario
 function createDetailButton(initialValue, index, patchId, midiIndex) {
