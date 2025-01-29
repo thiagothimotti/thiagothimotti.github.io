@@ -7,7 +7,6 @@ body {
 }
 
 header {
-    font-family: 'Futura', sans-serif;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -49,7 +48,6 @@ nav {
 
 header p {
     font-size: 25px;
-    font-weight: 600;
     position: fixed;
     top: -15px;
     left: 80vh;
