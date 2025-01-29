@@ -114,6 +114,10 @@ header p {
     font-weight: 500;
 }
 
+.bank span:last-child {
+    transition: transform 0.3s ease; /* Transição suave */
+}
+
 .bank-details {
     display: none;
     background-color: #3a3a57;

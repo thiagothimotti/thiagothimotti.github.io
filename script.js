@@ -91,6 +91,8 @@ function bankSelect(bank, bankDetails, index) {
         document.querySelectorAll('.bank').forEach(b => {
             b.classList.remove('active');
             b.style.backgroundColor = '';
+            const arrow = b.querySelector('span:last-child'); // Seleciona a arrow
+            arrow.style.transform = 'rotate(-90deg) scale(1.8)';
         });
 
         // Esconde os detalhes de todos os bancos
@@ -102,11 +104,14 @@ function bankSelect(bank, bankDetails, index) {
                 ? 'rgba(83, 191, 235, 0.5)'
                 : 'rgba(159, 24, 253, 0.5)';
             bank.classList.add('active');
+            const arrow = bank.querySelector('span:last-child');
+            arrow.style.transform = 'rotate(90deg) scale(1.8)';
             bankDetails.style.display = 'block';
             addGearToBank(bank);
         }
     });
 }
+
 
 // Adicionar evento para criar engrenagem clicável ao lado de um bank
 function addGearToBank(bank) {
@@ -129,7 +134,7 @@ function addGearToBank(bank) {
 
     gearIcon.style.cursor = 'pointer';
     gearIcon.style.position = 'absolute';
-    gearIcon.style.left = `${bankRect.right - sidebarRect.left - 32}px`;
+    gearIcon.style.left = `${bankRect.right - sidebarRect.left + 5}px`;
     gearIcon.style.top = `${bankRect.top - sidebarRect.top + sidebar.scrollTop + 4}px`;
     gearIcon.style.fontSize = '22px';
     gearIcon.style.zIndex = '1000'
