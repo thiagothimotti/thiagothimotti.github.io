@@ -214,7 +214,7 @@ header p {
 #patchTitle {
     display: flex;
     justify-content: space-between;
-    width: 70%;
+    width: 60%;
     font-weight: 600;
     align-items: center;
     margin-left: 20vh;
@@ -296,7 +296,7 @@ header p {
     padding: 20px;
 }
 
-#connectButton {
+.system-button {
     position: absolute;
     top: 100px;
     right: 50px;
@@ -314,8 +314,17 @@ header p {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-#connectButton:hover {
+.system-button:hover {
     background-color: #9e18fdd8;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
     transform: scale(1.05);
+}
+
+#saveButton {
+    top: 150px;
+    right: 170px;
+}
+#cancelButton {
+    top: 150px;
+    right: 50px;
 }

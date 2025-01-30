@@ -182,6 +182,7 @@ function createBnkCfg(bank) {
     bnkCfg.style.padding = '20px';
     bnkCfg.style.color = '#fff';
     bnkCfg.style.width = '250px';
+    bnkCfg.style.height = '143px';
     bnkCfg.style.textAlign = 'center';
     bnkCfg.style.zIndex = '0';
 
@@ -702,13 +703,13 @@ async function createLoopTable(patchId, index) {
     loopTableFull.style.padding = '10px';
     loopTableFull.style.marginLeft = '20vh';
     loopTableFull.style.borderRadius = '10px';
-    loopTableFull.style.width = '50vh';
+    loopTableFull.style.width = '38vh';
     loopTableFull.style.justifyContent = 'space-evenly';
 
     loopTable.innerHTML = '';
     loopTable.style.display = 'grid';
 
-    loopTable.style.columnGap = '70px';
+    loopTable.style.columnGap = '25px';
     loopTable.style.rowGap = '10px';
 
     // Verificar a resposta MIDI e determinar a quantidade de loops
@@ -739,7 +740,7 @@ async function createLoopTable(patchId, index) {
         loopLabel.textContent = `Loop ${i}`;
         loopLabel.style.color = '#fff';
         loopLabel.style.textAlign = 'left';
-        loopLabel.style.marginRight = '30px';
+        loopLabel.style.marginRight = '10px';
 
         const loopButton = document.createElement('span-button');
         loopButton.textContent = states[i - 1];
@@ -833,23 +834,43 @@ function createPresetOptions(patchTypeButton, letter, number, index) {
 
     patchTypeButton.addEventListener('click', (e) => {
         e.stopPropagation();
-
+    
         if (currentOpenPresetOptions && currentOpenPresetOptions !== presetOptions) {
             currentOpenPresetOptions.style.display = 'none';
         }
-
+    
         if (presetOptions.style.display === 'block') {
             presetOptions.style.display = 'none';
             currentOpenPresetOptions = null;
         } else {
             presetOptions.style.display = 'block';
-            presetOptions.style.position = 'absolute';
-            presetOptions.style.left = `${e.clientX}px`;
-            presetOptions.style.top = `${e.clientY}px`;
-
+            
+            // Obtém o botão e o sidebar
+            const rect = patchTypeButton.getBoundingClientRect();
+            const sidebar = document.querySelector('.sidebar');
+    
+            // Ajusta a posição do popup considerando o scroll do sidebar
+            const sidebarRect = sidebar.getBoundingClientRect();
+            presetOptions.style.left = `${rect.left}px`;
+            presetOptions.style.top = `${rect.bottom + sidebar.scrollTo}px`;
+    
+            // Garante que o popup fique dentro do sidebar
+            const popupWidth = presetOptions.offsetWidth;
+            const popupHeight = presetOptions.offsetHeight;
+    
+            // Se ultrapassar a largura do sidebar, ajusta para a esquerda
+            if (rect.left + popupWidth > sidebarRect.right) {
+                presetOptions.style.left = `${sidebarRect.right - popupWidth - 10}px`;
+            }
+    
+            // Se ultrapassar a altura do sidebar, ajusta para cima
+            if (rect.bottom + popupHeight > sidebarRect.bottom) {
+                presetOptions.style.top = `${rect.top - popupHeight + sidebar.scrollTo}px`;
+            }
+    
             currentOpenPresetOptions = presetOptions;
         }
-    });
+    });    
 
     document.addEventListener('click', (e) => {
         if (!patchTypeButton.contains(e.target) && !presetOptions.contains(e.target)) {
@@ -927,12 +948,11 @@ async function createTableRemoteSwitch(patchId, index) {
     loopTableFull.style.marginLeft = '20vh';
     loopTableFull.style.marginTop = '30px';
     loopTableFull.style.borderRadius = '10px';
-    loopTableFull.style.width = '50vh';
+    loopTableFull.style.width = '38vh';
     loopTableFull.style.justifyContent = 'space-evenly';
 
     loopTable.innerHTML = '';
     loopTable.style.display = 'grid';
-    loopTable.style.columnGap = '80px';
     loopTable.style.rowGap = '10px';
 
     const loopNumbers = ['1', '2', '3', '4']; // Ajuste para 4 loops
@@ -961,7 +981,7 @@ async function createTableRemoteSwitch(patchId, index) {
         loopLabel.style.color = '#fff';
         loopLabel.style.minWidth = '150px'; // Define largura fixa para alinhamento
         loopLabel.style.textAlign = 'left';
-        loopLabel.style.marginRight = '30px';
+        loopLabel.style.marginRight = '20px';
 
         const loopButton = document.createElement('span-button');
         loopButton.textContent = states[i - 1];
@@ -1090,6 +1110,7 @@ async function heartBeat() {
 
         const output = outputs[0];
         output.send([0xF0, 0x08, 0x00, 0xF7]); // Envia mensagem MIDI para o dispositivo
+        console.log('heartbeat')
 
     } catch (error) {
         alert("Erro ao enviar mensagem MIDI: " + error);
@@ -1097,6 +1118,15 @@ async function heartBeat() {
         isExecuting = false;  // Marcar a execução como finalizada
     }
 }
+
+function saveChanges(button) {
+    alert("Changes saved!");
+}
+
+function cancelChanges(button) {
+    alert("Changes canceled!");
+}
+
 
 
 
@@ -1140,13 +1170,13 @@ function createMidiTable(patchId, index) {
     midiTableFull.style.marginLeft = '20vh';
     midiTableFull.style.marginTop = '5vh';
     midiTableFull.style.borderRadius = '10px';
-    midiTableFull.style.width = '50vh';
+    midiTableFull.style.width = '38vh';
     
     midiTable.innerHTML = ''; // Limpa a tabela MIDI
     midiTable.style.display = 'grid';
     midiTable.style.gridTemplateColumns = '1fr 1fr'; // Divide em duas colunas
-    midiTable.style.columnGap = '30px';
-    midiTable.style.rowGap = '10px';
+    midiTable.style.columnGap = '1px';
+    midiTable.style.rowGap = '5px';
 
     const states = loadMidiStates(patchId);
 
@@ -1181,10 +1211,8 @@ function createMidiTable(patchId, index) {
                 const detailButton = createDetailButton(value, idx, patchId, i);
                 detailButton.textContent = value.toString();
                 detailButton.className = 'midi-detail';
-                detailButton.style.marginLeft = '10px';
-                detailButton.style.padding = '5px 10px';
-                detailButton.style.borderRadius = '5px';
                 detailButton.style.cursor = 'pointer';
+                detailButton.style.margin = '0';
         
                 detailButton.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -1206,7 +1234,6 @@ function createMidiTable(patchId, index) {
         // Adiciona a linha na tabela MIDI
         midiTable.appendChild(midiRow);
     }
-    
 }
 
 // Cria o popup do comando
@@ -1388,6 +1415,25 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
     valuePopup.style.top = `${top}px`;
     valuePopup.style.left = `${left}px`;
     
+    // Add 127 no inicio
+    if (rangeStart === 0) {
+        const valueButton = document.createElement('button');
+        valueButton.textContent = '127';
+        valueButton.style.display = 'block';
+        valueButton.style.width = '100%';
+        valueButton.style.marginBottom = '5px';
+        valueButton.style.padding = '5px';
+        valueButton.style.cursor = 'pointer';
+
+        // Salva e esconde o popup
+        valueButton.addEventListener('click', () => {
+            onSelectCallback(127);
+            valuePopup.remove();
+        });
+
+        valuePopup.appendChild(valueButton);
+    }
+
     // Adiciona numeros ao popup
     for (let i = rangeStart; i <= rangeEnd; i++) {
         const valueButton = document.createElement('button');
@@ -1407,7 +1453,7 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
         valuePopup.appendChild(valueButton);
     }
 
-    // Adiciona EXP1 e EXP2 no primeiro botão
+    // Adiciona EXP1 e EXP2 no popup (opcional, se necessário)
     if (rangeStart === 0) {
         ['EXP1', 'EXP2'].forEach((option) => {
             const valueButton = document.createElement('button');
@@ -1417,13 +1463,13 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
             valueButton.style.marginBottom = '5px';
             valueButton.style.padding = '5px';
             valueButton.style.cursor = 'pointer';
-    
+
             // Salva e esconde o popup
             valueButton.addEventListener('click', () => {
                 onSelectCallback(option);
                 valuePopup.remove();
             });
-    
+
             valuePopup.appendChild(valueButton);
         });
     }
