@@ -39,28 +39,45 @@
                 <p class="patch-type" id="patchType"></p>
             </section>
 
-            <section class="table-section" id="table-1">    
-                <p class="table-title">Loop Selector</p>
-                <div class="table" id="loop-table">    
-                </div>
-            </section>
+            <div class="table-container">
+                <section class="table-section" id="table-1">    
+                    <p class="table-title">Loop Selector</p>
+                    <div class="table" id="loop-table"></div>
+                </section>
             
-            <section class="table-section" id="table-3">    
-                <p class="table-title">Remote Switch</p>
-                <div class="table" id="remote-table">    
-                </div>
-            </section>
+                <section class="table-section" id="table-3">    
+                    <p class="table-title">Remote Switch</p>
+                    <div class="table" id="remote-table"></div>
+                </section>
+            </div>            
             
-            <section class="table-section" id="table-2">    
-                <p class="table-title">MIDI Over USB</p>
-                <div class="table" id="midi-table">    
-                </div>
-            </section>
+            <div class="table-container">
+                <section class="table-section" id="table-2">    
+                    <p class="table-title">Advanced MIDI</p>
+                    <div class="table" id="midi-table"></div>
+                </section>
+            
+                <section class="table-section" id="table-4">    
+                    <p class="table-title">MIDI Over USB</p>
+                    <div class="table" id="midi-table-2"></div>
+                </section>
+            </div>
+
+            <div class="table-section" id="table-5">    
+                <p class="table-title">MIDI Over Air</p>
+                <div class="table" id="midi-table-3"></div>
+            </div>
+
+            <div class="buttons-container">
+                <button class="system-button" id="saveButton" onclick="saveChanges(this)">Save</button>
+                <button class="system-button" id="cancelButton" onclick="cancelChanges(this)">Cancel</button>
+            </div>
         </main>
 
+        <aside class="sidebar2" id="sidebar2">
+        </aside>
+
         <button class="system-button" id="connectButton" onclick="toggleConnection(this)">Connect</button>
-        <button class="system-button" id="saveButton" onclick="saveChanges(this)">Save</button>
-        <button class="system-button" id="cancelButton" onclick="cancelChanges(this)">Cancel</button>
     </div>
 
     <script src="script.js"></script>
