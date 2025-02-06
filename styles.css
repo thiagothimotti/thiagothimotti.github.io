@@ -242,7 +242,7 @@ header p {
     justify-content: flex-start;
     overflow-y: auto;
     z-index: 0;
-    background-color: #0000003d;
+    /*background-color: #0000003d;*/
     height: calc(100vh - 6vh);
     width: calc(100vw - 700px);
     max-width: 1000px;
