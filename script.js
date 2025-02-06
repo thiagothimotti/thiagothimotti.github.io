@@ -515,11 +515,43 @@ async function setupMidiListener() {
                         console.log('suas configurações do banco: ', sysexData)
                         const buttons = document.querySelectorAll('#bnkCfg button');
                         for (let i=0; i<2; i++) {
-                            
-                            buttons[i].textContent = 'Novo Texto'; // Altere 'Novo Texto' para o valor desejado
-                            buttons[i].style.color = 'lime'; // Opcional: altera a cor para destacar a mudança
+                            if (sysexData[i] === 0){
+                                buttons[i].textContent = 'OFF';
+                                buttons[i].style.color = 'red';
+                            } else {
+                                if (currentBankLetter.charCodeAt(0) <= sysexData[i]+65) {
+                                    buttons[i].textContent = `Load from ${String.fromCharCode(sysexData[i]+64)}`;
+                                    buttons[i].style.color = 'lime';
+                                } else {
+                                    buttons[i].textContent = `Load from ${String.fromCharCode(sysexData[i]+65)}`;
+                                    buttons[i].style.color = 'lime';
+                                }
+                            }
                         }
-                        
+                        for (let i=2; i<4; i++){
+                            if (sysexData[i] === 0){
+                                buttons[i].textContent = 'OFF';
+                                buttons[i].style.color = 'red';
+                            } else {
+                                switch (sysexData[i]) {
+                                    case 0:
+                                        buttons[i].textContent = 'OFF';
+                                        buttons[i].style.color = 'red';
+                                        break;
+                                    case 1:
+                                        buttons[i].textContent = 'Locked';
+                                        buttons[i].style.color = 'lime';
+                                        break;
+                                    default:
+                                        sysexData[i] = sysexData[i] - 2;
+                                        let bankToGo = String.fromCharCode(Math.floor(sysexData[i] / 9) + 65);
+                                        let patchToGo = sysexData[i] % 9;
+                                        buttons[i].textContent = `${bankToGo} ${patchToGo}`.replace(/\s+/g, "");
+                                        buttons[i].style.color = 'lime';
+                                        break;
+                                }
+                            }
+                        }
                         
                     default:
                         break;
@@ -997,7 +1029,7 @@ async function toggleConnection(button) {
                 if (!isExecuting) {
                     heartBeat();
                 }
-            }, 2000);
+            }, 200);
 
             // Alterar o texto do botão
             button.textContent = "Disconnect";
@@ -1027,6 +1059,7 @@ async function toggleConnection(button) {
         }
         document.getElementById('saveButton').style.display = 'none';
         document.getElementById('cancelButton').style.display = 'none';
+        lastMessage = []
         
         // Alterar o texto do botão
         button.textContent = "Connect";
