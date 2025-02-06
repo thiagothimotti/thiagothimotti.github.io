@@ -76,7 +76,6 @@ function setBankColor(bank, ball, arrow, index) {
 function bankSelect(bank, bankDetails, index) {
     bank.addEventListener('click', () => {
         const isActive = bank.classList.contains('active');
-        const existingTable = document.getElementById('bnkCfg');
         const connectButton = document.getElementById('connectButton');
 
         document.querySelectorAll('.table-section').forEach(table => {
@@ -87,16 +86,11 @@ function bankSelect(bank, bankDetails, index) {
         document.getElementById('cancelButton').style.display = 'none';
 
         if (!isActive) {
-            const bankColor = bank.dataset.color;
+            const bankColor = '#9f18fd';
             connectButton.style.backgroundColor = bankColor;
             document.getElementById('saveButton').style.backgroundColor = bankColor;
             document.getElementById('cancelButton').style.backgroundColor = bankColor;
         }
-
-        if (existingTable) {
-            existingTable.remove();
-        }
-        createBnkCfg(bank);
         
         // Atualiza a variável global com a letra do banco atual
         if (!isActive) {
@@ -134,16 +128,18 @@ function bankSelect(bank, bankDetails, index) {
     });
 }
 
-function createBnkCfg(bank) {
+function createBnkCfg(letter) {
+    /*sendMessage([0xF0,0x0B,bank.dataset.letter.charCodeAt(0)-65,0xF7]);*/
     const bnkCfg = document.createElement('div');
     bnkCfg.id = 'bnkCfg';
     bnkCfg.style.position = 'absolute';
     bnkCfg.style.right = '20px';
     bnkCfg.style.top = '50%';
     bnkCfg.style.transform = 'translateY(-50%)';
-    bnkCfg.style.backgroundColor = bank.dataset.letter.charCodeAt(0) % 2 === 0
+    /*bnkCfg.style.backgroundColor = bank.dataset.letter.charCodeAt(0) % 2 === 0
         ? 'rgba(83, 191, 235, 0.5)'
-        : 'rgba(159, 24, 253, 0.5)';
+        : 'rgba(159, 24, 253, 0.5)';*/
+    bnkCfg.style.backgroundColor = 'rgba(159, 24, 253, 0.5)';
     bnkCfg.style.borderRadius = '8px';
     bnkCfg.style.padding = '20px';
     bnkCfg.style.color = '#fff';
@@ -155,9 +151,9 @@ function createBnkCfg(bank) {
     // Criar título
     const titleRow = document.createElement('div');
 
-    if (bank.dataset.letter.charCodeAt(0) % 2 === 0) {
+    /*if (bank.dataset.letter.charCodeAt(0) % 2 === 0) {
         titleRow.innerHTML = `<span style="color: #6c2ca7;">Bank ${bank.dataset.letter}</span> <span style="color: white;">Configuration</span>`;
-    } else titleRow.innerHTML = `<span style="color: #53bfeb;">Bank ${bank.dataset.letter}</span> <span style="color: white;">Configuration</span>`;
+    } else*/ titleRow.innerHTML = `<span style="color: #53bfeb;">Bank ${letter}</span> <span style="color: white;">Configuration</span>`;
     
     titleRow.style.fontSize = '18px';
     titleRow.style.fontWeight = '600';
@@ -319,7 +315,7 @@ function createBankPatches(letter, index) {
         const inputElement = patchItem.querySelector('input');
         patchItem.dataset.patchId = patchId;
 
-        patchItem.addEventListener('click', () => {
+        patchItem.addEventListener('click', async () => {
             activePatch = letter + j;
 
             document.getElementById('patchTitle').style.display = 'flex';
@@ -335,6 +331,14 @@ function createBankPatches(letter, index) {
             patchChange(letter, j)
 
             sendMessage([0xF0,0x06,0x00,0xF7]) // Nome do patch
+
+            const existingTable = document.getElementById('bnkCfg');
+            if (existingTable) {
+                existingTable.remove();
+            }
+            createBnkCfg(letter);
+            await delay(200);
+            sendMessage([0xF0,0x0B,letter.charCodeAt(0)-65,0xF7]); // Deletar em breve
 
             createLoopTable(patchId, index);
             createTableRemoteSwitch(patchId, index)
@@ -396,7 +400,7 @@ async function sendMessage(message) {
         }
     }
 
-    console.log(lastMessage)
+    console.log('Mensagens enviadas: ', lastMessage)
 
     try {
         const outputs = Array.from(midiAccess.outputs.values());
@@ -507,6 +511,17 @@ async function setupMidiListener() {
                             patchesNames = [];
                         }
                         break;
+                    case 0x0B:
+                        console.log('suas configurações do banco: ', sysexData)
+                        console.log(sysexData[1])
+                        const buttons = document.querySelectorAll('#bnkCfg button');
+                        for (let i=0; i<2; i++) {
+                            if (sysexData[1])
+                            buttons[i].textContent = 'Novo Texto'; // Altere 'Novo Texto' para o valor desejado
+                            buttons[i].style.color = 'lime'; // Opcional: altera a cor para destacar a mudança
+                        }
+                        
+                        
                     default:
                         break;
                 }
@@ -553,7 +568,7 @@ function createNameInput(letter, number) {
     patchName.maxLength = 6;
 
     // Define a cor com base na letra do banco
-    const color = (letter.charCodeAt(0) - 65) % 2 === 0 ? '#9f18fd' : '#53bfeb'; // Azul ou roxo
+    const color = /*(letter.charCodeAt(0) - 65) % 2 === 0 ? '#9f18fd' : '#53bfeb';*/ '#9f18fd'; // Azul ou roxo
     patchName.style.border = `1px solid ${color}`;
 
     patchName.addEventListener('input', () => {
@@ -590,7 +605,7 @@ function createPatchTypeButton(letter, number) {
 
 // Calcula a cor do patch
 function setPatchColor(patchItem, patchTypeButton, index) {
-    const color = index % 2 === 0 ? '#53bfeb' : '#9f18fd';
+    const color = /*index % 2 === 0 ?*/ '#53bfeb' /*: '#9f18fd'*/;
     patchItem.style.color = color;
     patchTypeButton.style.color = color;
 }
@@ -607,9 +622,9 @@ async function createLoopTable(patchId, index) {
     let states = loops;
 
     loopTableFull.style.display = 'flex';
-    loopTableFull.style.backgroundColor = index % 2 === 0
+    loopTableFull.style.backgroundColor = /*index % 2 === 0
         ? 'rgba(83, 191, 235, 0.5)'
-        : 'rgba(159, 24, 253, 0.5)';
+        :*/ 'rgba(159, 24, 253, 0.5)';
     loopTableFull.style.fontWeight = '500';
     loopTableFull.style.padding = '10px';
     loopTableFull.style.margin = 'auto';
@@ -801,7 +816,7 @@ function createPresetOptions(patchTypeButton, letter, number, index) {
 
 // Gerencia a tabela de tipos de patch
 function configurePresetOptionEvents(optionButton, patchTypeButton, presetOptions, letter, number, index) {
-    const color = index % 2 === 0 ? '#53bfeb' : '#9f18fd';
+    const color = /*index % 2 === 0 ? '#53bfeb' : '#9f18fd';*/ '#53bfeb'
 
     optionButton.addEventListener('mouseover', () => {
         optionButton.style.color = color;
@@ -861,9 +876,9 @@ async function createTableRemoteSwitch(patchId, index) {
     remoteTableFull.style.display = 'flex';
     remoteTableFull.style.flexDirection = 'column';
     remoteTableFull.style.alignItems = 'center';
-    remoteTableFull.style.backgroundColor = index % 2 === 0
+    remoteTableFull.style.backgroundColor = /*index % 2 === 0
         ? 'rgba(83, 191, 235, 0.5)'
-        : 'rgba(159, 24, 253, 0.5)';
+        :*/ 'rgba(159, 24, 253, 0.5)';
     remoteTableFull.style.fontWeight = '500';
     remoteTableFull.style.padding = '10px';
     remoteTableFull.style.borderRadius = '10px';
@@ -1089,9 +1104,9 @@ function createMidiTable(patchId, index, tableId) {
     const midiTableFull = document.getElementById(tableMapping[tableId]);
 
     midiTableFull.style.display = 'flex';
-    midiTableFull.style.backgroundColor = index % 2 === 0
+    midiTableFull.style.backgroundColor = /*index % 2 === 0
         ? 'rgba(83, 191, 235, 0.5)'
-        : 'rgba(159, 24, 253, 0.5)';
+        :*/ 'rgba(159, 24, 253, 0.5)';
     midiTableFull.style.fontWeight = 'bold';
     midiTableFull.style.padding = '10px';
     midiTableFull.style.margin = 'auto';

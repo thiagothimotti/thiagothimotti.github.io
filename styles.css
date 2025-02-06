@@ -90,7 +90,7 @@ header p {
     position: fixed;
     right: 0;
     width: 305px;
-    background-color: #2a2a4070;
+    background-color: #00000063;
     padding: 20px;
     height: calc(100vh - 10vh);
     overflow-y: auto;
