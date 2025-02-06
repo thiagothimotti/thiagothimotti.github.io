@@ -513,10 +513,9 @@ async function setupMidiListener() {
                         break;
                     case 0x0B:
                         console.log('suas configurações do banco: ', sysexData)
-                        console.log(sysexData[1])
                         const buttons = document.querySelectorAll('#bnkCfg button');
                         for (let i=0; i<2; i++) {
-                            if (sysexData[1])
+                            
                             buttons[i].textContent = 'Novo Texto'; // Altere 'Novo Texto' para o valor desejado
                             buttons[i].style.color = 'lime'; // Opcional: altera a cor para destacar a mudança
                         }
@@ -998,7 +997,7 @@ async function toggleConnection(button) {
                 if (!isExecuting) {
                     heartBeat();
                 }
-            }, 200);
+            }, 2000);
 
             // Alterar o texto do botão
             button.textContent = "Disconnect";
