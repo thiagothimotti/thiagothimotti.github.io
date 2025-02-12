@@ -257,30 +257,37 @@ function createConfigPopup(detailButton, rangeStart, rangeEnd, onSelectCallback,
 
             valueButton.addEventListener('click', () => {
                 onSelectCallback(option);
+                const selectedValues = Array.from(document.querySelectorAll('#bnkCfg button'))
+                    .map(btn => btn.textContent)
+                //alert(`Valores atuais: ${selectedValues}`);
+                let data = []; // Cria um array vazio
+
+                selectedValues.forEach((value, index) => {
+                    if (value == 'OFF'){
+                        data.push(0)
+                    } else if (value == 'Locked'){
+                        data.push(1)
+                    } else if (index < 2){
+                        const aux = value.slice(-1).charCodeAt(0);
+                        /*if (aux < currentBankLetter.charCodeAt(0)) {
+                            data.push(aux - 64)
+                        } else {
+                            data.push(aux - 65)
+                        }*/data.push(aux - 64)
+                    } else {
+                        aux = value.slice(-2);
+                        aux = (aux.charCodeAt(0)-65)*9 + parseInt(aux[1])+2;
+                        data.push(aux)
+                    }
+                });
+                //alert(data)
+                sendMessage([0xF0,0x0C,currentBankLetter.charCodeAt(0), ...data ,0xF7])
                 valuePopup.remove();
             });
 
             valuePopup.appendChild(valueButton);
         });
-    } else {
-        // Adiciona valores numéricos (rangeStart a rangeEnd)
-        for (let i = rangeStart; i <= rangeEnd; i++) {
-            const valueButton = document.createElement('button');
-            valueButton.textContent = i.toString();
-            valueButton.style.display = 'block';
-            valueButton.style.width = '100%';
-            valueButton.style.marginBottom = '5px';
-            valueButton.style.padding = '5px';
-            valueButton.style.cursor = 'pointer';
-
-            valueButton.addEventListener('click', () => {
-                onSelectCallback(i);
-                valuePopup.remove();
-            });
-
-            valuePopup.appendChild(valueButton);
-        }
-    }
+    } 
 
     // Adiciona popup ao documento
     document.body.appendChild(valuePopup);
@@ -339,6 +346,10 @@ function createBankPatches(letter, index) {
             createBnkCfg(letter);
             await delay(200);
             sendMessage([0xF0,0x0B,letter.charCodeAt(0)-65,0xF7]); // Deletar em breve
+
+            sendMessage([0xF0,0x0D,0x00,0x01,0xF7])
+            sendMessage([0xF0,0x0D,0x01,0x01,0xF7])
+            sendMessage([0xF0,0x0D,0x02,0x01,0xF7])
 
             createLoopTable(patchId, index);
             createTableRemoteSwitch(patchId, index)
@@ -546,15 +557,18 @@ async function setupMidiListener() {
                                         sysexData[i] = sysexData[i] - 2;
                                         let bankToGo = String.fromCharCode(Math.floor(sysexData[i] / 9) + 65);
                                         let patchToGo = sysexData[i] % 9;
-                                        buttons[i].textContent = `${bankToGo} ${patchToGo}`.replace(/\s+/g, "");
+                                        buttons[i].textContent = `Load from ${bankToGo}${patchToGo}`;
                                         buttons[i].style.color = 'lime';
                                         break;
                                 }
                             }
                         }
-                        
-                    default:
                         break;
+                    case 0x0D:
+                        
+                     
+                    default:
+                        break;  
                 }
             } else {
                 console.log("Mensagem MIDI não SysEx recebida:", message.data);
@@ -1136,9 +1150,7 @@ function createMidiTable(patchId, index, tableId) {
     const midiTableFull = document.getElementById(tableMapping[tableId]);
 
     midiTableFull.style.display = 'flex';
-    midiTableFull.style.backgroundColor = /*index % 2 === 0
-        ? 'rgba(83, 191, 235, 0.5)'
-        :*/ 'rgba(159, 24, 253, 0.5)';
+    midiTableFull.style.backgroundColor = 'rgba(159, 24, 253, 0.5)';
     midiTableFull.style.fontWeight = 'bold';
     midiTableFull.style.padding = '10px';
     midiTableFull.style.margin = 'auto';
@@ -1147,6 +1159,8 @@ function createMidiTable(patchId, index, tableId) {
     midiTableFull.style.marginTop = '5vh';
     midiTableFull.style.borderRadius = '10px';
     midiTableFull.style.width = '230px';
+    midiTableFull.style.height = '160px';
+    midiTableFull.style.position = 'relative'; // Para que os botões fiquem posicionados corretamente dentro dela
     
     midiTable.innerHTML = ''; // Limpa a tabela MIDI
     midiTable.style.display = 'grid';
@@ -1174,48 +1188,110 @@ function createMidiTable(patchId, index, tableId) {
         midiButton.style.minWidth = '30px';
         midiButton.style.maxWidth = '30px';
     
-        // Cria o popup ao clicar
+        // Lista para armazenar os botões secundários
+        const detailButtons = [];
+
+        const values = states[i]?.values || [0, 1];
+        values.forEach((value, idx) => {
+            const detailButton = createDetailButton(value, idx, patchId, i);
+            detailButton.textContent = value.toString();
+            detailButton.className = 'midi-detail';
+            detailButton.style.cursor = 'pointer';
+            detailButton.style.minWidth = '25px';
+            detailButton.style.maxWidth = '25px';
+            detailButton.style.opacity = '0';
+    
+            detailButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const rangeStart = idx === 0 ? 1 : 0;
+                const rangeEnd = idx === 0 ? 16 : 127;
+                createValuePopup(detailButton, rangeStart, rangeEnd, (selectedValue) => {
+                    detailButton.textContent = selectedValue.toString(); // Atualiza no front
+                    
+                    // Salva no banco
+                    states[i].values[idx] = selectedValue;
+                    localStorage.setItem(`${patchId}_${tableId}_midi`, JSON.stringify(states));
+                });
+            });
+
+            detailButtons.push(detailButton);
+            midiRow.appendChild(detailButton);
+        });
+
+        // Evento de clique do botão principal para abrir popup e mostrar botões secundários
         midiButton.addEventListener('click', (e) => {
             e.stopPropagation();
             console.log(`Clique detectado no botão ${i} da tabela ${tableId}`);
             createMidiPopup(midiButton, patchId, i, tableId);
-        });
     
+            // Atualiza a visibilidade dos botões secundários
+            if (midiButton.textContent !== 'OFF') {
+                detailButtons.forEach(btn => btn.style.opacity = '1');
+            } else {
+                detailButtons.forEach(btn => btn.style.opacity = '0');
+            }
+        });
+
         // Adiciona o botão MIDI na linha
         midiRow.appendChild(midiButton);
-    
-        if (states[i]?.type && states[i].type !== 'OFF') {
-            const values = states[i]?.values || [0, 1];
-
-            //cria botões secundarios
-            values.forEach((value, idx) => {
-                const detailButton = createDetailButton(value, idx, patchId, i);
-                detailButton.textContent = value.toString();
-                detailButton.className = 'midi-detail';
-                detailButton.style.cursor = 'pointer';
-                detailButton.style.minWidth = '25px';
-                detailButton.style.maxWidth = '25px';
-        
-                detailButton.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const rangeStart = idx === 0 ? 1 : 0;
-                    const rangeEnd = idx === 0 ? 16 : 127;
-                    createValuePopup(detailButton, rangeStart, rangeEnd, (selectedValue) => {
-                        detailButton.textContent = selectedValue.toString(); // Atualiza no front
-                        
-                        // Salva no banco
-                        states[i].values[idx] = selectedValue;
-                        localStorage.setItem(`${patchId}_${tableId}_midi`, JSON.stringify(states));
-                    });
-                });
-
-                midiButton.insertAdjacentElement('afterend', detailButton);
-            });
-        }        
         
         // Adiciona a linha na tabela MIDI
         midiTable.appendChild(midiRow);
     }
+
+    // Criar a div para os botões adicionais
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.position = 'absolute';
+    buttonContainer.style.left = '10px';
+    buttonContainer.style.bottom = '10px';
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.gap = '10px';
+
+    
+    // Definir o número de botões com base no tableId
+    const buttonCount = tableId === 'midi-table-3' ? 2 : 3;
+    
+    for (let i = 1; i <= buttonCount; i++) {
+        const button = document.createElement('button');
+        button.textContent = i;
+        button.style.minWidth = '10px';
+        button.style.padding = '5px';
+        button.style.borderRadius = '5px';
+        button.style.cursor = 'pointer';
+        button.style.border = 'none';
+        button.style.backgroundColor = 'transparent';
+        button.style.color = 'white';
+        
+        button.addEventListener('click', () => {
+            alert(`Botão ${i} pressionado na tabela ${tableId}`);
+            switch(tableId) {
+                case 'midi-table':
+                    sendMessage([0xF0,0x0D,0x00,i,0xF7])
+                    break
+                case 'midi-table-2':
+                    sendMessage([0xF0,0x0D,0x01,i,0xF7])
+                    break
+                case 'midi-table-3':
+                    sendMessage([0xF0,0x0D,0x02,i,0xF7])
+                    break
+            }
+        });
+
+        button.addEventListener('mouseenter', () => {
+            button.style.transform = 'scale(1.1)';
+            button.style.color = 'lightgray';
+        });
+        
+        button.addEventListener('mouseleave', () => {
+            button.style.transform = 'scale(1)';
+            button.style.color = 'white';
+        });
+        
+        buttonContainer.appendChild(button);
+    }
+    
+    // Adicionar o container de botões na tabela MIDI
+    midiTable.appendChild(buttonContainer);
 }
 
 // Cria o popup do comando
