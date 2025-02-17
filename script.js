@@ -103,6 +103,7 @@ function bankSelect(bank, bankDetails, index) {
         // Envia mensagens MIDI relacionadas ao banco
         sendMessage([0xF0, 0x09, index - 65, 0, 0xF7]);
         sendMessage([0xF0, 0x0A, index - 65, 0xF7]);
+        sendMessage([0xF0, 0x10, currentBankLetter.charCodeAt(0)-65, 0xF7]);
 
         // Remove a classe 'active' de todos os bancos
         document.querySelectorAll('.bank').forEach(b => {
@@ -281,7 +282,7 @@ function createConfigPopup(detailButton, rangeStart, rangeEnd, onSelectCallback,
                     }
                 });
                 //alert(data)
-                sendMessage([0xF0,0x0C,currentBankLetter.charCodeAt(0), ...data ,0xF7])
+                sendMessage([0xF0,0x0C,/*currentBankLetter.charCodeAt(0)-65,*/ ...data ,0xF7])
                 valuePopup.remove();
             });
 
@@ -347,7 +348,7 @@ function createBankPatches(letter, index) {
             await delay(200);
             sendMessage([0xF0,0x0B,letter.charCodeAt(0)-65,0xF7]); // Deletar em breve
 
-            sendMessage([0xF0,0x0D,0x00,0x01,0xF7])
+            sendMessage([0xF0,0x0D,0x00,0x01,0xF7]) /* arrumar depois, tabela 0 não responde */
             sendMessage([0xF0,0x0D,0x01,0x01,0xF7])
             sendMessage([0xF0,0x0D,0x02,0x01,0xF7])
 
@@ -566,19 +567,195 @@ async function setupMidiListener() {
                         break;
                     case 0x0D:
                         
-                     
+                        const tableMapping = {
+                            0: "midi-table",
+                            1: "midi-table-2",
+                            2: "midi-table-3"
+                        };
+                        //alert(`${sysexData.slice(3)}`)
+                        const tableId = tableMapping[sysexData[1]];
+                        if (tableId) {
+                            const values = sysexData.slice(3);
+                            fillMidiTable(values /*[...Array(30).keys()]*/, tableId);
+                        }
+                        break;
+                    
+                    case 0x10:
+                        console.log(sysexData.slice(1));
+                        updatePatchTypes(currentBankLetter, sysexData.slice(1));
+                        break;
+                        
                     default:
-                        break;  
+                        break;
                 }
+                console.log('removendo ', lastMessage[0])
+                lastMessage.shift()
             } else {
-                console.log("Mensagem MIDI não SysEx recebida:", message.data);
+                /*console.log("Mensagem MIDI não SysEx recebida:", message.data);*/
             }
-            console.log('removendo ', lastMessage[0])
-            lastMessage.shift()
         };
     } catch (error) {
         console.error("Erro ao configurar o listener MIDI:", error);
     }
+}
+
+function fillMidiTable(values, tableId) {
+    if (values.length !== 30) {
+        console.error("A função requer exatamente 30 valores.");
+        return;
+    }
+
+    const midiTable = document.getElementById(tableId);
+    if (!midiTable) {
+        console.error("Tabela não encontrada: ", tableId);
+        return;
+    }
+
+    midiTable.innerHTML = ''; // Limpa a tabela antes de preencher
+
+    for (let i = 0; i < 30; i=i+3) {
+        const midiRow = document.createElement('div');
+        midiRow.className = 'midi-row';
+        midiRow.style.display = 'flex';
+        //midiRow.style.alignItems = 'center';
+        midiRow.style.maxHeight = '17px';
+        midiRow.style.maxWidth = '120px';
+        
+        // Criar botão principal
+        const midiButton = document.createElement('span');
+        midiButton.textContent = values[i] === 0 ? 'OFF' : values[i] === 1 ? 'PC' : `CC${values[i] - 2}`;
+        midiButton.className = 'toggle';
+        midiButton.style.color = midiButton.textContent === 'OFF' ? 'red' : 'lime';
+        midiButton.style.cursor = 'pointer';
+        midiButton.style.minWidth = '30px';
+        midiButton.style.maxWidth = '30px';
+
+        midiButton.addEventListener('click', () => {
+            createMidiPopup(midiButton, values, i, tableId);
+        });
+        
+        midiRow.appendChild(midiButton);
+        
+        // Criar botões secundários
+        for (let j = 0; j < 2; j++) {
+            const detailButton = document.createElement('span');
+            detailButton.textContent = values[i+j+1];
+            detailButton.className = 'midi-detail';
+            detailButton.style.cursor = 'pointer';
+            detailButton.style.minWidth = '15px';
+            detailButton.style.maxWidth = '15px';
+            detailButton.style.visibility = values[i] === 0 ? 'hidden' : 'visible';
+            detailButton.style.textOverflow = 'ellipsis';
+        
+            // Evento de clique para abrir popup e atualizar valor
+            detailButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const rangeStart = j === 0 ? 0 : 1;
+                const rangeEnd = j === 0 ? 127 : 16;
+        
+                createValuePopup(detailButton, rangeStart, rangeEnd, (selectedValue) => {
+                    detailButton.textContent = selectedValue;
+                    values[10 + i * 2 + j] = selectedValue; // Atualiza no array
+                });
+            });
+        
+            midiRow.appendChild(detailButton);
+        }
+        
+        midiTable.appendChild(midiRow);
+    }
+
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.position = 'absolute';
+    buttonContainer.style.left = '10px';
+    buttonContainer.style.bottom = '10px';
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.gap = '10px';
+
+    const buttonCount = tableId === 'midi-table-3' ? 2 : 3;
+    
+    for (let i = 1; i <= buttonCount; i++) {
+        const button = document.createElement('button');
+        button.textContent = i;
+        button.style.minWidth = '10px';
+        button.style.padding = '5px';
+        button.style.borderRadius = '5px';
+        button.style.cursor = 'pointer';
+        button.style.border = 'none';
+        button.style.backgroundColor = 'transparent';
+        button.style.color = 'white';
+        
+        button.addEventListener('click', () => {
+            alert(`Botão ${i} pressionado na tabela ${tableId}`);
+            switch(tableId) {
+                case 'midi-table':
+                    sendMessage([0xF0,0x0D,0x00,i,0xF7])
+                    break
+                case 'midi-table-2':
+                    sendMessage([0xF0,0x0D,0x01,i,0xF7])
+                    break
+                case 'midi-table-3':
+                    sendMessage([0xF0,0x0D,0x02,i,0xF7])
+                    break
+            }
+        });
+
+        button.addEventListener('mouseenter', () => {
+            button.style.transform = 'scale(1.1)';
+            button.style.color = 'lightgray';
+        });
+        
+        button.addEventListener('mouseleave', () => {
+            button.style.transform = 'scale(1)';
+            button.style.color = 'white';
+        });
+        
+        buttonContainer.appendChild(button);
+    }
+    midiTable.appendChild(buttonContainer);
+
+}
+
+function updatePatchTypes(bankLetter, patchTypesArray) {
+    const patchItems = document.querySelectorAll(`.bank[data-letter="${bankLetter}"] + .bank-details li`);
+
+    if (patchItems.length !== patchTypesArray.length) {
+        console.error("A quantidade de patches não corresponde ao número de tipos fornecido.");
+        return;
+    }
+
+    patchItems.forEach((patchItem, index) => {
+        const patchTypeButton = patchItem.querySelector('button');
+        if (patchTypeButton) {
+            let patchText;
+            switch (patchTypesArray[index]) {
+                case 0:
+                    patchText = 'Preset';
+                    break;
+                case 1:
+                    patchText = 'Action';
+                    break;
+                case 2:
+                    patchText = 'Toggle Action';
+                    break;
+                case 3:
+                    patchText = 'Momentary';
+                    break;
+                case 4:
+                    patchText = 'Tap';
+                    break;
+                case 5:
+                    patchText = 'Tuner';
+                    break;
+                default:
+                    patchText = 'Unknown';
+            }
+            patchTypeButton.textContent = patchText;
+            localStorage.setItem(`${bankLetter}${index + 1}_type`, patchText);
+        }
+    });
+
+    console.log(`Tipos de patch do banco ${bankLetter} atualizados.`);
 }
 
 // Cria um patch
@@ -806,49 +983,44 @@ function createPresetOptions(patchTypeButton, letter, number, index) {
     ['Preset', 'Action', 'Toggle Action', 'Momentary', 'Tap', 'Tuner'].forEach((preset) => {
         const optionButton = document.createElement('button');
         optionButton.textContent = preset;
+        
+        optionButton.addEventListener('click', () => {
+            console.log(`Valor selecionado: ${preset}`);
+            switch (preset) {
+                case 'Preset':
+                    sendMessage([0xF0, 0x10, 0, 0xF7]);
+                    break;
+                case 'Action':
+                    sendMessage([0xF0, 0x10, 1, 0xF7]);
+                    break;
+                case 'Toggle Action':
+                    sendMessage([0xF0, 0x10, 2, 0xF7]);
+                    break;
+                case 'Momentary':
+                    sendMessage([0xF0, 0x10, 3, 0xF7]);
+                    break;
+                case 'Tap':
+                    sendMessage([0xF0, 0x10, 4, 0xF7]);
+                    break;
+                case 'Tuner':
+                    sendMessage([0xF0, 0x10, 5, 0xF7]);
+                    break;
+            }
+
+            patchTypeButton.textContent = preset;
+            localStorage.setItem(`${letter}${number}_type`, preset);
+            presetOptions.style.display = 'none';
+        });
+
         configurePresetOptionEvents(optionButton, patchTypeButton, presetOptions, letter, number, index);
         presetOptions.appendChild(optionButton);
     });
 
     patchTypeButton.addEventListener('click', (e) => {
         e.stopPropagation();
-    
-        if (currentOpenPresetOptions && currentOpenPresetOptions !== presetOptions) {
-            currentOpenPresetOptions.style.display = 'none';
-        }
-    
-        if (presetOptions.style.display === 'block') {
-            presetOptions.style.display = 'none';
-            currentOpenPresetOptions = null;
-        } else {
-            presetOptions.style.display = 'block';
-            
-            // Obtém o botão e o sidebar
-            const rect = patchTypeButton.getBoundingClientRect();
-            const sidebar = document.querySelector('.sidebar');
-    
-            // Ajusta a posição do popup considerando o scroll do sidebar
-            const sidebarRect = sidebar.getBoundingClientRect();
-            presetOptions.style.left = `${rect.left}px`;
-            presetOptions.style.top = `${rect.bottom + sidebar.scrollTo}px`;
-    
-            // Garante que o popup fique dentro do sidebar
-            const popupWidth = presetOptions.offsetWidth;
-            const popupHeight = presetOptions.offsetHeight;
-    
-            // Se ultrapassar a largura do sidebar, ajusta para a esquerda
-            if (rect.left + popupWidth > sidebarRect.right) {
-                presetOptions.style.left = `${sidebarRect.right - popupWidth - 10}px`;
-            }
-    
-            // Se ultrapassar a altura do sidebar, ajusta para cima
-            if (rect.bottom + popupHeight > sidebarRect.bottom) {
-                presetOptions.style.top = `${rect.top - popupHeight + sidebar.scrollTo}px`;
-            }
-    
-            currentOpenPresetOptions = presetOptions;
-        }
-    });    
+        presetOptions.style.display = presetOptions.style.display === 'block' ? 'none' : 'block';
+        currentOpenPresetOptions = presetOptions.style.display === 'block' ? presetOptions : null;
+    });
 
     document.addEventListener('click', (e) => {
         if (!patchTypeButton.contains(e.target) && !presetOptions.contains(e.target)) {
@@ -856,8 +1028,14 @@ function createPresetOptions(patchTypeButton, letter, number, index) {
         }
     });
 
+    const savedType = localStorage.getItem(`${letter}${number}_type`);
+    if (savedType) {
+        patchTypeButton.textContent = savedType;
+    }
+
     return presetOptions;
 }
+
 
 // Gerencia a tabela de tipos de patch
 function configurePresetOptionEvents(optionButton, patchTypeButton, presetOptions, letter, number, index) {
@@ -1159,7 +1337,8 @@ function createMidiTable(patchId, index, tableId) {
     midiTableFull.style.marginTop = '5vh';
     midiTableFull.style.borderRadius = '10px';
     midiTableFull.style.width = '230px';
-    midiTableFull.style.height = '160px';
+    midiTableFull.style.height = '165px';
+    midiTableFull.style.minHeight = '165px';
     midiTableFull.style.position = 'relative'; // Para que os botões fiquem posicionados corretamente dentro dela
     
     midiTable.innerHTML = ''; // Limpa a tabela MIDI
@@ -1197,8 +1376,8 @@ function createMidiTable(patchId, index, tableId) {
             detailButton.textContent = value.toString();
             detailButton.className = 'midi-detail';
             detailButton.style.cursor = 'pointer';
-            detailButton.style.minWidth = '25px';
-            detailButton.style.maxWidth = '25px';
+            detailButton.style.minWidth = '15px';
+            detailButton.style.maxWidth = '15px';
             detailButton.style.opacity = '0';
     
             detailButton.addEventListener('click', (e) => {
@@ -1393,7 +1572,7 @@ function createDetailButton(initialValue, index, patchId, midiIndex) {
 
             const states = loadMidiStates(patchId);
             states[midiIndex].values[index] = selectedValue; // Atualiza no front
-            localStorage.setItem(`${patchId}_${tableId}`, JSON.stringify(states)); // Salva no banco
+            //localStorage.setItem(`${patchId}_${tableId}`, JSON.stringify(states)); // Salva no banco
         });
     });
 
@@ -1420,12 +1599,31 @@ function handleMidiSelection(type, midiButton, patchId, index) {
     }
 
     // Cria botões secundarios
-    for (let i = 0; i < 2; i++) {
-        const detailButton = createDetailButton(0, i, patchId, index);
+    for (let j = 0; j < 2; j++) {
+        const detailButton = document.createElement('span');
+        detailButton.textContent = '0';
+        detailButton.className = 'midi-detail';
+        detailButton.style.height = '15px';
+        detailButton.style.cursor = 'pointer';
+        detailButton.style.minWidth = '15px';
+        detailButton.style.maxWidth = '15px';
+
+        // Evento de clique para abrir popup de seleção
+        detailButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const rangeStart = j === 0 ? 0 : 1;
+            const rangeEnd = j === 0 ? 127 : 16;
+
+            createValuePopup(detailButton, rangeStart, rangeEnd, (selectedValue) => {
+                detailButton.textContent = selectedValue;
+                updateMidiState(patchId, index, j, selectedValue);
+            });
+        });
+
         parentRow.appendChild(detailButton);
     }
 
-    // Salva
+    // Salva o estado inicial
     const midiData = { type: type, values: [0, 1] };
     const states = loadMidiStates(patchId);
     states[index] = midiData;
