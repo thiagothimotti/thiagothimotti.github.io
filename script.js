@@ -14,6 +14,12 @@ let currentBankLetter = null;
 
 let activePatch = null;
 
+const selectedButtonIndices = {
+    'midi-table': 0,
+    'midi-table-2': 0,
+    'midi-table-3': 0
+};
+
 // Função base da inicialização do site
 async function initializeSite() {
 
@@ -76,7 +82,6 @@ function setBankColor(bank, ball, arrow, index) {
 function bankSelect(bank, bankDetails, index) {
     bank.addEventListener('click', () => {
         const isActive = bank.classList.contains('active');
-        const connectButton = document.getElementById('connectButton');
 
         document.querySelectorAll('.table-section').forEach(table => {
             table.style.display = 'none';
@@ -84,18 +89,18 @@ function bankSelect(bank, bankDetails, index) {
         document.getElementById('patchTitle').style.display = 'none';
         document.getElementById('saveButton').style.display = 'none';
         document.getElementById('cancelButton').style.display = 'none';
-
-        if (!isActive) {
-            const bankColor = '#9f18fd';
-            connectButton.style.backgroundColor = bankColor;
-            document.getElementById('saveButton').style.backgroundColor = bankColor;
-            document.getElementById('cancelButton').style.backgroundColor = bankColor;
-        }
         
         // Atualiza a variável global com a letra do banco atual
         if (!isActive) {
             currentBankLetter = bank.dataset.letter; // Atribui a letra do banco atual
             console.log(`Banco selecionado: ${currentBankLetter}`);
+
+            // Remove a configuração antiga se existir
+            const existingConfig = document.getElementById('bnkCfg');
+            if (existingConfig) existingConfig.remove();
+
+            // Chama createBnkCfg passando a letra do banco
+            createBnkCfg(currentBankLetter);
         } else {
             currentBankLetter = null; // Nenhum banco ativo
         }
@@ -348,9 +353,9 @@ function createBankPatches(letter, index) {
             await delay(200);
             sendMessage([0xF0,0x0B,letter.charCodeAt(0)-65,0xF7]); // Deletar em breve
 
-            sendMessage([0xF0,0x0D,0x00,0x01,0xF7]) /* arrumar depois, tabela 0 não responde */
-            sendMessage([0xF0,0x0D,0x01,0x01,0xF7])
-            sendMessage([0xF0,0x0D,0x02,0x01,0xF7])
+            sendMessage([0xF0,0x0D,0x00,0x00,0xF7]) /* arrumar depois, tabela 0 não responde */
+            sendMessage([0xF0,0x0D,0x01,0x00,0xF7])
+            sendMessage([0xF0,0x0D,0x02,0x00,0xF7])
 
             createLoopTable(patchId, index);
             createTableRemoteSwitch(patchId, index)
@@ -613,15 +618,13 @@ function fillMidiTable(values, tableId) {
 
     midiTable.innerHTML = ''; // Limpa a tabela antes de preencher
 
-    for (let i = 0; i < 30; i=i+3) {
+    for (let i = 0; i < 30; i += 3) {
         const midiRow = document.createElement('div');
         midiRow.className = 'midi-row';
         midiRow.style.display = 'flex';
-        //midiRow.style.alignItems = 'center';
         midiRow.style.maxHeight = '17px';
         midiRow.style.maxWidth = '120px';
-        
-        // Criar botão principal
+
         const midiButton = document.createElement('span');
         midiButton.textContent = values[i] === 0 ? 'OFF' : values[i] === 1 ? 'PC' : `CC${values[i] - 2}`;
         midiButton.className = 'toggle';
@@ -633,13 +636,12 @@ function fillMidiTable(values, tableId) {
         midiButton.addEventListener('click', () => {
             createMidiPopup(midiButton, values, i, tableId);
         });
-        
+
         midiRow.appendChild(midiButton);
-        
-        // Criar botões secundários
+
         for (let j = 0; j < 2; j++) {
             const detailButton = document.createElement('span');
-            detailButton.textContent = values[i+j+1];
+            detailButton.textContent = j === 0 ? values[i + j + 1] : values[i + j + 1] + 1;
             detailButton.className = 'midi-detail';
             detailButton.style.cursor = 'pointer';
             detailButton.style.minWidth = '15px';
@@ -655,26 +657,31 @@ function fillMidiTable(values, tableId) {
         
                 createValuePopup(detailButton, rangeStart, rangeEnd, (selectedValue) => {
                     detailButton.textContent = selectedValue;
-                    values[10 + i * 2 + j] = selectedValue; // Atualiza no array
+                    values[10 + i * 2 + j] = selectedValue;
                 });
             });
         
             midiRow.appendChild(detailButton);
         }
-        
+
         midiTable.appendChild(midiRow);
     }
 
     const buttonContainer = document.createElement('div');
     buttonContainer.style.position = 'absolute';
     buttonContainer.style.left = '10px';
-    buttonContainer.style.bottom = '10px';
+    buttonContainer.style.bottom = '3px';
     buttonContainer.style.display = 'flex';
     buttonContainer.style.gap = '10px';
 
-    const buttonCount = tableId === 'midi-table-3' ? 2 : 3;
-    
+    const buttonCount = tableId === 'midi-table-2' ? 2 : 3;
+
     for (let i = 1; i <= buttonCount; i++) {
+        const buttonWrapper = document.createElement('div');
+        buttonWrapper.style.display = 'flex';
+        buttonWrapper.style.flexDirection = 'column';
+        buttonWrapper.style.alignItems = 'center';
+
         const button = document.createElement('button');
         button.textContent = i;
         button.style.minWidth = '10px';
@@ -684,19 +691,34 @@ function fillMidiTable(values, tableId) {
         button.style.border = 'none';
         button.style.backgroundColor = 'transparent';
         button.style.color = 'white';
-        
+
+        const arrow = document.createElement('div');
+        arrow.textContent = '\u276E';
+        arrow.style.color = '#53bfeb';
+        arrow.style.marginTop = '-10px';
+        arrow.style.transform = "rotate(90deg)";
+        arrow.style.fontSize = '10px';
+        arrow.style.visibility = i - 1 === selectedButtonIndices[tableId] ? 'visible' : 'hidden';
+
         button.addEventListener('click', () => {
             alert(`Botão ${i} pressionado na tabela ${tableId}`);
-            switch(tableId) {
+            selectedButtonIndices[tableId] = i - 1;
+
+            midiTable.querySelectorAll('.arrow-indicator').forEach(arrow => {
+                arrow.style.visibility = 'hidden';
+            });
+            arrow.style.visibility = 'visible';
+
+            switch (tableId) {
                 case 'midi-table':
-                    sendMessage([0xF0,0x0D,0x00,i,0xF7])
-                    break
+                    sendMessage([0xF0, 0x0D, 0x00, i - 1, 0xF7]);
+                    break;
                 case 'midi-table-2':
-                    sendMessage([0xF0,0x0D,0x01,i,0xF7])
-                    break
+                    sendMessage([0xF0, 0x0D, 0x01, i - 1, 0xF7]);
+                    break;
                 case 'midi-table-3':
-                    sendMessage([0xF0,0x0D,0x02,i,0xF7])
-                    break
+                    sendMessage([0xF0, 0x0D, 0x02, i - 1, 0xF7]);
+                    break;
             }
         });
 
@@ -709,11 +731,13 @@ function fillMidiTable(values, tableId) {
             button.style.transform = 'scale(1)';
             button.style.color = 'white';
         });
-        
-        buttonContainer.appendChild(button);
+
+        arrow.className = 'arrow-indicator';
+        buttonWrapper.appendChild(button);
+        buttonWrapper.appendChild(arrow);
+        buttonContainer.appendChild(buttonWrapper);
     }
     midiTable.appendChild(buttonContainer);
-
 }
 
 function updatePatchTypes(bankLetter, patchTypesArray) {
@@ -790,7 +814,7 @@ function createNameInput(letter, number) {
     patchName.maxLength = 6;
 
     // Define a cor com base na letra do banco
-    const color = /*(letter.charCodeAt(0) - 65) % 2 === 0 ? '#9f18fd' : '#53bfeb';*/ '#9f18fd'; // Azul ou roxo
+    const color = /*(letter.charCodeAt(0) - 65) % 2 === 0 ? '#9f18fd' :*/ '#53bfeb'; //'#9f18fd'; // Azul ou roxo
     patchName.style.border = `1px solid ${color}`;
 
     patchName.addEventListener('input', () => {
