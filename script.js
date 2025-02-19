@@ -60,6 +60,35 @@ function createBank(letter, index) {
     const bankText = document.createTextNode(`Bank ${letter}`);
     bank.appendChild(bankText);
 
+    // Ícone de cópia (aparece apenas quando o banco é selecionado)
+    const copyIcon = document.createElement('span');
+    copyIcon.textContent = '📋';
+    copyIcon.className = 'copy-icon';
+    copyIcon.title = 'Copiar Bank';
+    copyIcon.style.display = 'none';
+
+    // Botão de colar (aparece quando um banco é copiado)
+    const pasteIcon = document.createElement('button');
+    pasteIcon.textContent = 'Colar';
+    pasteIcon.className = 'paste-button';
+    pasteIcon.style.display = 'none';
+
+    pasteIcon.onclick = () => {
+        alert(`Bank ${letter} atualizado com o conteúdo de ${copiedBank}`);
+        document.querySelectorAll('.paste-button').forEach(button => button.style.display = 'none');
+    };
+
+    copyIcon.onclick = () => {
+        copiedBank = `Bank ${letter}`;
+        alert('Bank copiado!');
+        document.querySelectorAll('.paste-button').forEach(button => {
+            button.style.display = 'inline-block';
+        });
+    };
+
+    bank.appendChild(copyIcon);
+    bank.appendChild(pasteIcon);
+
     const arrow = document.createElement('span');
     arrow.textContent = '\u276E';
     arrow.style.transform = 'rotate(-90deg) scale(1.8)';
@@ -79,6 +108,7 @@ function setBankColor(bank, ball, arrow, index) {
 }
 
 // Lida com a seleção de um banco
+let copiedBank = null; // Variável global para armazenar o banco copiado
 function bankSelect(bank, bankDetails, index) {
     bank.addEventListener('click', () => {
         const isActive = bank.classList.contains('active');
@@ -110,18 +140,16 @@ function bankSelect(bank, bankDetails, index) {
         sendMessage([0xF0, 0x0A, index - 65, 0xF7]);
         sendMessage([0xF0, 0x10, currentBankLetter.charCodeAt(0)-65, 0xF7]);
 
-        // Remove a classe 'active' de todos os bancos
         document.querySelectorAll('.bank').forEach(b => {
             b.classList.remove('active');
             b.style.backgroundColor = '';
-            const arrow = b.querySelector('span:last-child'); // Seleciona a arrow
+            b.querySelector('.copy-icon').style.display = 'none'; // Esconde o ícone de cópia
+            const arrow = b.querySelector('span:last-child');
             arrow.style.transform = 'rotate(-90deg) scale(1.8)';
         });
 
-        // Esconde os detalhes de todos os bancos
         document.querySelectorAll('.bank-details').forEach(details => details.style.display = 'none');
 
-        // Ativa ou desativa o banco clicado
         if (!isActive) {
             bank.style.backgroundColor = index % 2 === 0
                 ? 'rgba(83, 191, 235, 0.5)'
@@ -130,6 +158,7 @@ function bankSelect(bank, bankDetails, index) {
             const arrow = bank.querySelector('span:last-child');
             arrow.style.transform = 'rotate(90deg) scale(1.8)';
             bankDetails.style.display = 'block';
+            bank.querySelector('.copy-icon').style.display = 'inline-block'; // Exibe o ícone de cópia
         }
     });
 }
@@ -644,10 +673,11 @@ function fillMidiTable(values, tableId) {
             detailButton.textContent = j === 0 ? values[i + j + 1] : values[i + j + 1] + 1;
             detailButton.className = 'midi-detail';
             detailButton.style.cursor = 'pointer';
+            detailButton.style.marginTop = '-5px';
             detailButton.style.minWidth = '15px';
             detailButton.style.maxWidth = '15px';
             detailButton.style.visibility = values[i] === 0 ? 'hidden' : 'visible';
-            detailButton.style.textOverflow = 'ellipsis';
+            //detailButton.style.textOverflow = 'ellipsis';
         
             // Evento de clique para abrir popup e atualizar valor
             detailButton.addEventListener('click', (e) => {
@@ -701,7 +731,7 @@ function fillMidiTable(values, tableId) {
         arrow.style.visibility = i - 1 === selectedButtonIndices[tableId] ? 'visible' : 'hidden';
 
         button.addEventListener('click', () => {
-            alert(`Botão ${i} pressionado na tabela ${tableId}`);
+            //alert(`Botão ${i} pressionado na tabela ${tableId}`);
             selectedButtonIndices[tableId] = i - 1;
 
             midiTable.querySelectorAll('.arrow-indicator').forEach(arrow => {
@@ -902,7 +932,7 @@ async function createLoopTable(patchId, index) {
             case 1: states[i - 1] = 'ON'; break;
             case 2: states[i - 1] = 'NUL'; break;
             case 3: states[i - 1] = 'TGL'; break;
-            default: states[i - 1] = 'erro'; break;
+            default: states[i - 1] = 'Error'; break;
         }
 
         const loopContainer = document.createElement('div');
@@ -1012,22 +1042,22 @@ function createPresetOptions(patchTypeButton, letter, number, index) {
             console.log(`Valor selecionado: ${preset}`);
             switch (preset) {
                 case 'Preset':
-                    sendMessage([0xF0, 0x10, 0, 0xF7]);
+                    sendMessage([0xF0, 0x11, 0, 0xF7]);
                     break;
                 case 'Action':
-                    sendMessage([0xF0, 0x10, 1, 0xF7]);
+                    sendMessage([0xF0, 0x11, 1, 0xF7]);
                     break;
                 case 'Toggle Action':
-                    sendMessage([0xF0, 0x10, 2, 0xF7]);
+                    sendMessage([0xF0, 0x11, 2, 0xF7]);
                     break;
                 case 'Momentary':
-                    sendMessage([0xF0, 0x10, 3, 0xF7]);
+                    sendMessage([0xF0, 0x11, 3, 0xF7]);
                     break;
                 case 'Tap':
-                    sendMessage([0xF0, 0x10, 4, 0xF7]);
+                    sendMessage([0xF0, 0x11, 4, 0xF7]);
                     break;
                 case 'Tuner':
-                    sendMessage([0xF0, 0x10, 5, 0xF7]);
+                    sendMessage([0xF0, 0x11, 5, 0xF7]);
                     break;
             }
 
@@ -1114,6 +1144,9 @@ async function createTableRemoteSwitch(patchId, index) {
 
     const remoteTable = document.getElementById('remote-table');
     const remoteTableFull = document.getElementById('table-3');
+
+    const tableAux = document.getElementById('table-6');
+    tableAux.style.display = 'flex';
 
     await delay(200);
 
@@ -1368,7 +1401,7 @@ function createMidiTable(patchId, index, tableId) {
     midiTable.innerHTML = ''; // Limpa a tabela MIDI
     midiTable.style.display = 'grid';
     midiTable.style.gridTemplateColumns = '1fr 1fr'; // Divide em duas colunas
-    midiTable.style.columnGap = '10px';
+    midiTable.style.columnGap = '0px';
     midiTable.style.rowGap = '5px';
 
     // Agora os estados são carregados separadamente para cada tabela
@@ -1466,7 +1499,7 @@ function createMidiTable(patchId, index, tableId) {
         button.style.color = 'white';
         
         button.addEventListener('click', () => {
-            alert(`Botão ${i} pressionado na tabela ${tableId}`);
+            //alert(`Botão ${i} pressionado na tabela ${tableId}`);
             switch(tableId) {
                 case 'midi-table':
                     sendMessage([0xF0,0x0D,0x00,i,0xF7])
@@ -1631,6 +1664,7 @@ function handleMidiSelection(type, midiButton, patchId, index) {
         detailButton.style.cursor = 'pointer';
         detailButton.style.minWidth = '15px';
         detailButton.style.maxWidth = '15px';
+        detailButton.style.marginTop = '-5px';
 
         // Evento de clique para abrir popup de seleção
         detailButton.addEventListener('click', (e) => {

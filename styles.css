@@ -197,6 +197,35 @@ header p {
     transform: scale(1.1);
 }
 
+.copy-icon {
+    margin-left: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.copy-icon:hover {
+    transform: scale(1.2);
+    color: #53bfeb;
+}
+
+.paste-button {
+    margin-left: 10px;
+    padding: 5px 10px;
+    font-size: 14px;
+    background-color: #53bfeb;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.paste-button:hover {
+    background-color: #429fd8;
+    transform: scale(1.1);
+}
+
 .popup-options {
     display: none;
     position: absolute;
@@ -274,7 +303,6 @@ header p {
     background-color: #2a2a40;
     border-radius: 10px;
     padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     text-align: center;
 }
 
@@ -285,6 +313,14 @@ header p {
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     padding: 20px;
+}
+
+#table-6 {
+    display: none;
+    margin: auto;
+    width: 230px;
+    padding: 10px;
+    background-color: transparent;
 }
 
 #table-1 p, #table-2 p, #table-3 p, #table-4 p, #table-5 p {
@@ -339,10 +375,11 @@ header p {
 .buttons-container {
     width: 100%;
     display: flex;
-    justify-content: flex-end;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;    
     gap: 20px;
     margin-top: 20px;
-    margin-right: 11vw;
 }
 
 .system-button {
