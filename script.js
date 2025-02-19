@@ -618,7 +618,16 @@ async function setupMidiListener() {
                         console.log(sysexData.slice(1));
                         updatePatchTypes(currentBankLetter, sysexData.slice(1));
                         break;
-                        
+
+                    case 0x12:
+                        alert("salvo")
+                        break;
+
+                    case 0x13:
+                        alert("cancelado")
+                        //voltar
+                        break;
+
                     default:
                         break;
                 }
@@ -927,12 +936,29 @@ async function createLoopTable(patchId, index) {
     }
 
     loopNumbers.forEach((i) => {
-        switch (states[i - 1]) {
-            case 0: states[i - 1] = 'OFF'; break;
-            case 1: states[i - 1] = 'ON'; break;
-            case 2: states[i - 1] = 'NUL'; break;
-            case 3: states[i - 1] = 'TGL'; break;
-            default: states[i - 1] = 'Error'; break;
+        let size = '0px';
+        let varAuxType = document.getElementById("patchType").textContent;
+        if (varAuxType == "(Preset)" || varAuxType == "(Tuner)") {
+            switch (states[i - 1]) {
+                case 0: states[i - 1] = 'OFF'; break;
+                case 1: states[i - 1] = 'ON'; break;
+                case 2: states[i - 1] = 'NUL'; break;
+                default: states[i - 1] = 'Error'; break;
+            }
+            size = '16px';
+        } else if (varAuxType === "(Tap)") {
+            states[i - 1] = 'Inactive';
+            size = '14px';
+            loopTable.style.columnGap = '5px';
+        } else {
+            switch (states[i - 1]) {
+                case 0: states[i - 1] = 'NUL'; break;
+                case 1: states[i - 1] = 'TGL'; break;
+                case 2: states[i - 1] = 'ON'; break;
+                case 3: states[i - 1] = 'OFF'; break;
+                default: states[i - 1] = 'Error'; break;
+            }
+            size = '16px';
         }
 
         const loopContainer = document.createElement('div');
@@ -953,7 +979,9 @@ async function createLoopTable(patchId, index) {
             states[i - 1] === 'ON' ? 'lime' :
             states[i - 1] === 'NUL' ? 'yellow' :
             states[i - 1] === 'TGL' ? 'white' :
+            states[i - 1] === 'Inactive' ? 'gray' :
             'red';
+        loopButton.style.fontSize = size;
         loopButton.style.cursor = 'pointer';
         loopButton.style.fontWeight = '600';
         loopButton.style.textAlign = 'center';
@@ -1172,11 +1200,24 @@ async function createTableRemoteSwitch(patchId, index) {
     const loopNumbers = ['1', '2', '3', '4']; // Ajuste para 4 loops
 
     loopNumbers.forEach((i) => {
-        switch (states[i - 1]) {
-            case 0: states[i - 1] = 'OFF'; break;
-            case 1: states[i - 1] = 'ON'; break;
-            case 2: states[i - 1] = 'NUL'; break;
-            case 3: states[i - 1] = 'TGL'; break;
+        let varAuxType = document.getElementById("patchType").textContent;
+        if (varAuxType == "(Preset)") {
+            switch (states[i - 1]) {
+                case 0: states[i - 1] = 'OFF'; break;
+                case 1: states[i - 1] = 'ON'; break;
+                case 2: states[i - 1] = 'NUL'; break;
+                default: states[i - 1] = 'Error'; break;
+            }
+        } else if (varAuxType === "(Tuner)") {
+            states[i - 1] = 'Inactive';
+        } else {
+            switch (states[i - 1]) {
+                case 0: states[i - 1] = 'NUL'; break;
+                case 1: states[i - 1] = 'TGL'; break;
+                case 2: states[i - 1] = 'ON'; break;
+                case 3: states[i - 1] = 'OFF'; break;
+                default: states[i - 1] = 'Error'; break;
+            }
         }
 
         const loopContainer = document.createElement('div');
@@ -1203,6 +1244,7 @@ async function createTableRemoteSwitch(patchId, index) {
             states[i - 1] === 'ON' ? 'lime' :
             states[i - 1] === 'NUL' ? 'yellow' :
             states[i - 1] === 'TGL' ? 'white' :
+            states[i - 1] === 'Inactive' ? 'gray' :
             'red';
         loopButton.style.cursor = 'pointer';
         loopButton.style.fontWeight = 'bold';
@@ -1338,10 +1380,12 @@ async function heartBeat() {
 
 function saveChanges(button) {
     alert("Changes saved!");
+    sendMessage([0xF0,0x12,0x00,0xF7])
 }
 
 function cancelChanges(button) {
     alert("Changes canceled!");
+    sendMessage([0xF0,0x13,0x00,0xF7])
 }
 
 
