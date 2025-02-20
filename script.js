@@ -60,29 +60,36 @@ function createBank(letter, index) {
     const bankText = document.createTextNode(`Bank ${letter}`);
     bank.appendChild(bankText);
 
-    // Ícone de cópia (aparece apenas quando o banco é selecionado)
-    const copyIcon = document.createElement('span');
-    copyIcon.textContent = '📋';
-    copyIcon.className = 'copy-icon';
+    // Ícone de copiar usando o mesmo ícone do createPatch,
+    // porém com classe exclusiva para os banks: "bank-copy-icon"
+    const copyIcon = document.createElement('i');
+    copyIcon.className = 'fa-regular fa-copy bank-copy-icon';
     copyIcon.title = 'Copiar Bank';
     copyIcon.style.display = 'none';
+    copyIcon.style.cursor = 'pointer';
 
-    // Botão de colar (aparece quando um banco é copiado)
-    const pasteIcon = document.createElement('button');
-    pasteIcon.textContent = 'Colar';
-    pasteIcon.className = 'paste-button';
+    // Botão de colar usando o ícone do Font Awesome com classe "bank-paste-icon"
+    const pasteIcon = document.createElement('i');
+    pasteIcon.className = 'fa-regular fa-paste bank-paste-icon';
+    pasteIcon.title = 'Colar Bank';
     pasteIcon.style.display = 'none';
+    pasteIcon.style.cursor = 'pointer';
 
-    pasteIcon.onclick = () => {
-        alert(`Bank ${letter} atualizado com o conteúdo de ${copiedBank}`);
-        document.querySelectorAll('.paste-button').forEach(button => button.style.display = 'none');
-    };
-
+    // Ao clicar no copyIcon, salva o bank copiado e exibe todos os botões de paste
     copyIcon.onclick = () => {
         copiedBank = `Bank ${letter}`;
         alert('Bank copiado!');
-        document.querySelectorAll('.paste-button').forEach(button => {
-            button.style.display = 'inline-block';
+        document.querySelectorAll('.bank-paste-icon').forEach(icon => {
+            icon.style.display = 'inline-block';
+        });
+    };
+
+    // Ao clicar no pasteIcon, envia mensagem, exibe alerta e oculta todos os botões de paste
+    pasteIcon.onclick = () => {
+        sendMessage([0xF0, 0x17, letter.charCodeAt(0) - 65, 0xF7]);
+        alert(`Bank ${letter} atualizado com o conteúdo de ${copiedBank}`);
+        document.querySelectorAll('.bank-paste-icon').forEach(icon => {
+            icon.style.display = 'none';
         });
     };
 
@@ -107,10 +114,15 @@ function setBankColor(bank, ball, arrow, index) {
     bank.dataset.color = color;
 }
 
-// Lida com a seleção de um banco
 let copiedBank = null; // Variável global para armazenar o banco copiado
+// Lida com a seleção de um banco
 function bankSelect(bank, bankDetails, index) {
     bank.addEventListener('click', () => {
+        const patchCopyIcon = document.getElementById('patch-copy-icon');
+        if (patchCopyIcon) {
+            patchCopyIcon.remove();
+        }
+
         const isActive = bank.classList.contains('active');
 
         document.querySelectorAll('.table-section').forEach(table => {
@@ -138,12 +150,16 @@ function bankSelect(bank, bankDetails, index) {
         // Envia mensagens MIDI relacionadas ao banco
         sendMessage([0xF0, 0x09, index - 65, 0, 0xF7]);
         sendMessage([0xF0, 0x0A, index - 65, 0xF7]);
-        sendMessage([0xF0, 0x10, currentBankLetter.charCodeAt(0)-65, 0xF7]);
+        sendMessage([0xF0, 0x10, currentBankLetter.charCodeAt(0) - 65, 0xF7]);
 
+        // Remove o estado ativo e oculta o ícone de copiar de todos os bancos
         document.querySelectorAll('.bank').forEach(b => {
             b.classList.remove('active');
             b.style.backgroundColor = '';
-            b.querySelector('.copy-icon').style.display = 'none'; // Esconde o ícone de cópia
+            const copyIcon = b.querySelector('.bank-copy-icon');
+            if (copyIcon) {
+                copyIcon.style.display = 'none';
+            }
             const arrow = b.querySelector('span:last-child');
             arrow.style.transform = 'rotate(-90deg) scale(1.8)';
         });
@@ -158,7 +174,11 @@ function bankSelect(bank, bankDetails, index) {
             const arrow = bank.querySelector('span:last-child');
             arrow.style.transform = 'rotate(90deg) scale(1.8)';
             bankDetails.style.display = 'block';
-            bank.querySelector('.copy-icon').style.display = 'inline-block'; // Exibe o ícone de cópia
+            // Exibe o ícone de copiar para o banco selecionado
+            const copyIcon = bank.querySelector('.bank-copy-icon');
+            if (copyIcon) {
+                copyIcon.style.display = 'inline-block';
+            }
         }
     });
 }
@@ -341,6 +361,7 @@ function createConfigPopup(detailButton, rangeStart, rangeEnd, onSelectCallback,
 
 
 // Base para a criação dos patches
+let copiedPatchId = null; // Armazena o ID do patch copiado
 function createBankPatches(letter, index) {
     const bankDetails = document.createElement('div');
     bankDetails.className = 'bank-details';
@@ -348,46 +369,112 @@ function createBankPatches(letter, index) {
     const patchList = document.createElement('ul');
 
     let size = 8;
-    if (nomeControladora === 'supernova'){
+    if (nomeControladora === 'supernova') {
         size = 5;
     }
+
     for (let j = 1; j <= size; j++) {
         const patchId = `${letter}${j}`; // Identificador do patch
         const patchItem = createPatch(letter, j, index);
         const inputElement = patchItem.querySelector('input');
         patchItem.dataset.patchId = patchId;
 
+        // Botão de colar (inicialmente oculto)
+        const pasteButton = document.createElement('button');
+        pasteButton.className = 'paste-button';
+        pasteButton.style.display = 'none'; // Oculto por padrão
+
+        // Usando o ícone de paste da Font Awesome
+        const pasteIcon = document.createElement('i');
+        pasteIcon.className = 'fa-regular fa-paste'; // Ícone de colar
+        pasteIcon.style.fontSize = '20px'; // Tamanho do ícone
+
+        pasteButton.appendChild(pasteIcon);
+
+        pasteButton.onclick = () => {
+            if (copiedPatchId) {
+                alert(`Copiando de ${letter.charCodeAt(0)-65} ${j} para ${patchId}`);
+
+                sendMessage([0xF0, 0x15, letter.charCodeAt(0)-65, j, 0xF7])
+
+                // Esconde todos os botões "Paste" ao clicar em um
+                document.querySelectorAll('.paste-button').forEach(button => {
+                    button.style.display = 'none';
+                });
+            }
+        };
+
+        patchItem.appendChild(pasteButton);
+
         patchItem.addEventListener('click', async () => {
             activePatch = letter + j;
 
             document.getElementById('patchTitle').style.display = 'flex';
-            const patchNameValue = patchItem.querySelector('input').value || `Patch ${patchId}`;
+
+            const patchNameValue = inputElement.value || `Patch ${patchId}`;
             const selectedPatchText = document.getElementById('selectedPatch');
             const selectedPatchType = document.getElementById('patchType');
-            if (patchItem.querySelector('input').value)
-                selectedPatchText.textContent = `${patchId} - ${patchNameValue}`;
-            else selectedPatchText.textContent = `Patch ${patchId}`;
+            selectedPatchText.textContent = inputElement.value 
+                ? `${patchId} - ${patchNameValue}` 
+                : `Patch ${patchId}`;
+
             const type = localStorage.getItem(`${letter}${j}_type`) || 'Preset';
             selectedPatchType.textContent = `(${type})`;
 
-            patchChange(letter, j)
+            // Remove ícone de cópia para ser recriado pertencendo a esse patch
+            const existingCopyIcon = document.getElementById('patch-copy-icon');
+            if (existingCopyIcon) {
+                existingCopyIcon.remove();
+            }
 
-            sendMessage([0xF0,0x06,0x00,0xF7]) // Nome do patch
+            // Cria um novo ícone de cópia
+            const patchCopyIcon = document.createElement('i');
+            patchCopyIcon.id = 'patch-copy-icon';
+            patchCopyIcon.className = 'fa-regular fa-copy';
+            patchCopyIcon.title = 'Copiar Patch';
+            patchCopyIcon.style.position = 'absolute';
+            patchCopyIcon.style.cursor = 'pointer';
+            patchCopyIcon.style.fontSize = '20px';
 
+            patchCopyIcon.onclick = () => {
+                copiedPatchId = patchId;
+                alert(`Patch ${patchId} copiado!`);
+
+                document.querySelectorAll('.paste-button').forEach(button => {
+                    if (button.parentNode.dataset.patchId !== copiedPatchId) {
+                        button.style.display = 'inline-block';
+                    } else {
+                        button.style.display = 'none';
+                    }
+                });
+            };
+
+            const mainContent = document.getElementById('mainContent');
+            mainContent.appendChild(patchCopyIcon);
+
+            const mainRect = mainContent.getBoundingClientRect();
+            const rect = selectedPatchText.getBoundingClientRect();
+            patchCopyIcon.style.top = `${rect.top - mainRect.top}px`;
+            patchCopyIcon.style.left = `${rect.right - mainRect.left + 10}px`;
+
+            patchChange(letter, j);
+
+            sendMessage([0xF0, 0x06, 0x00, 0xF7]);
             const existingTable = document.getElementById('bnkCfg');
             if (existingTable) {
                 existingTable.remove();
             }
             createBnkCfg(letter);
-            await delay(200);
-            sendMessage([0xF0,0x0B,letter.charCodeAt(0)-65,0xF7]); // Deletar em breve
 
-            sendMessage([0xF0,0x0D,0x00,0x00,0xF7])
-            sendMessage([0xF0,0x0D,0x01,0x00,0xF7])
-            sendMessage([0xF0,0x0D,0x02,0x00,0xF7])
+            await delay(200);
+            sendMessage([0xF0, 0x0B, letter.charCodeAt(0) - 65, 0xF7]);
+
+            sendMessage([0xF0, 0x0D, 0x00, 0x00, 0xF7]); 
+            sendMessage([0xF0, 0x0D, 0x01, 0x00, 0xF7]);
+            sendMessage([0xF0, 0x0D, 0x02, 0x00, 0xF7]);
 
             createLoopTable(patchId, index);
-            createTableRemoteSwitch(patchId, index)
+            createTableRemoteSwitch(patchId, index);
             createMidiTable(patchId, index, "midi-table");
             createMidiTable(patchId, index, "midi-table-2");
             createMidiTable(patchId, index, "midi-table-3");
@@ -620,11 +707,11 @@ async function setupMidiListener() {
                         break;
 
                     case 0x12:
-                        alert("Saved")
+                        //alert("Saved")
                         break;
 
                     case 0x13:
-                        alert("Canceled")
+                        //alert("Canceled")
                         const selectedPatch = document.querySelector(`.bank-details li[data-patch-id="${activePatch}"]`);
                         if (selectedPatch) {
                             selectedPatch.click();
@@ -890,6 +977,8 @@ function createNameInput(letter, number) {
 function createPatchTypeButton(letter, number) {
     const patchTypeButton = document.createElement('button');
     patchTypeButton.textContent = localStorage.getItem(`${letter}${number}_type`) || 'Preset';
+    patchTypeButton.style.minWidth = '65px';
+    patchTypeButton.style.maxWidth = '65px';
     return patchTypeButton;
 }
 
@@ -1365,6 +1454,10 @@ async function toggleConnection(button) {
         document.getElementById('saveButton').style.display = 'none';
         document.getElementById('cancelButton').style.display = 'none';
         lastMessage = []
+        const patchCopyIcon = document.getElementById('patch-copy-icon');
+        if (patchCopyIcon) {
+            patchCopyIcon.remove();
+        }
         
         // Alterar o texto do botão
         button.textContent = "Connect";
@@ -1393,12 +1486,12 @@ async function heartBeat() {
 }
 
 function saveChanges(button) {
-    alert("Changes saved!");
+    //alert("Changes saved!");
     sendMessage([0xF0,0x12,0x00,0xF7])
 }
 
 function cancelChanges(button) {
-    alert("Changes canceled!");
+    //alert("Changes canceled!");
     sendMessage([0xF0,0x13,0x00,0xF7])
 }
 
@@ -1560,13 +1653,13 @@ function createMidiTable(patchId, index, tableId) {
             //alert(`Botão ${i} pressionado na tabela ${tableId}`);
             switch(tableId) {
                 case 'midi-table':
-                    sendMessage([0xF0,0x0D,0x00,i,0xF7])
+                    sendMessage([0xF0,0x0D,0x00,i-1,0xF7])
                     break
                 case 'midi-table-2':
-                    sendMessage([0xF0,0x0D,0x01,i,0xF7])
+                    sendMessage([0xF0,0x0D,0x01,i-1,0xF7])
                     break
                 case 'midi-table-3':
-                    sendMessage([0xF0,0x0D,0x02,i,0xF7])
+                    sendMessage([0xF0,0x0D,0x02,i-1,0xF7])
                     break
             }
         });
