@@ -835,26 +835,6 @@ function createPatch(letter, number, index) {
     patchLabel.style.cursor = 'pointer';
     patchItem.appendChild(patchLabel);
 
-    // Adiciona o ícone de cópia ao lado do título do patch
-    const copyIcon = document.createElement('span');
-    copyIcon.textContent = '📋';
-    copyIcon.className = 'copy-icon';
-    copyIcon.title = 'Copiar Patch';
-    copyIcon.style.marginLeft = '10px';
-    copyIcon.style.cursor = 'pointer';
-    
-    // Ação de copiar
-    copyIcon.onclick = () => {
-        const patchName = patchLabel.textContent;
-        navigator.clipboard.writeText(patchName).then(() => {
-            alert(`Patch ${patchName} copiado!`);
-        }).catch(err => {
-            console.error('Erro ao copiar', err);
-        });
-    };
-
-    patchLabel.appendChild(copyIcon);  // Adiciona o ícone ao lado do nome do patch
-
     const patchName = createNameInput(letter, number);
     patchItem.appendChild(patchName);
 
@@ -868,7 +848,6 @@ function createPatch(letter, number, index) {
 
     return patchItem;
 }
-
 
 // Cria o input de nome
 function createNameInput(letter, number) {
