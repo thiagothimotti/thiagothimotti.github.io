@@ -436,7 +436,6 @@ function createBankPatches(letter, index) {
 
             patchCopyIcon.onclick = () => {
                 copiedPatchId = patchId;
-                alert(`Patch ${patchId} copiado!`);
 
                 document.querySelectorAll('.paste-button').forEach(button => {
                     if (button.parentNode.dataset.patchId !== copiedPatchId) {
