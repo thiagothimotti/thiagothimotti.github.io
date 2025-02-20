@@ -382,7 +382,7 @@ function createBankPatches(letter, index) {
             await delay(200);
             sendMessage([0xF0,0x0B,letter.charCodeAt(0)-65,0xF7]); // Deletar em breve
 
-            sendMessage([0xF0,0x0D,0x00,0x00,0xF7]) /* arrumar depois, tabela 0 não responde */
+            sendMessage([0xF0,0x0D,0x00,0x00,0xF7])
             sendMessage([0xF0,0x0D,0x01,0x00,0xF7])
             sendMessage([0xF0,0x0D,0x02,0x00,0xF7])
 
@@ -620,12 +620,17 @@ async function setupMidiListener() {
                         break;
 
                     case 0x12:
-                        alert("salvo")
+                        alert("Saved")
                         break;
 
                     case 0x13:
-                        alert("cancelado")
-                        //voltar
+                        alert("Canceled")
+                        const selectedPatch = document.querySelector(`.bank-details li[data-patch-id="${activePatch}"]`);
+                        if (selectedPatch) {
+                            selectedPatch.click();
+                        } else {
+                            console.warn("Nenhum patch selecionado para simular o clique.");
+                        }
                         break;
 
                     default:
@@ -830,6 +835,26 @@ function createPatch(letter, number, index) {
     patchLabel.style.cursor = 'pointer';
     patchItem.appendChild(patchLabel);
 
+    // Adiciona o ícone de cópia ao lado do título do patch
+    const copyIcon = document.createElement('span');
+    copyIcon.textContent = '📋';
+    copyIcon.className = 'copy-icon';
+    copyIcon.title = 'Copiar Patch';
+    copyIcon.style.marginLeft = '10px';
+    copyIcon.style.cursor = 'pointer';
+    
+    // Ação de copiar
+    copyIcon.onclick = () => {
+        const patchName = patchLabel.textContent;
+        navigator.clipboard.writeText(patchName).then(() => {
+            alert(`Patch ${patchName} copiado!`);
+        }).catch(err => {
+            console.error('Erro ao copiar', err);
+        });
+    };
+
+    patchLabel.appendChild(copyIcon);  // Adiciona o ícone ao lado do nome do patch
+
     const patchName = createNameInput(letter, number);
     patchItem.appendChild(patchName);
 
@@ -843,6 +868,7 @@ function createPatch(letter, number, index) {
 
     return patchItem;
 }
+
 
 // Cria o input de nome
 function createNameInput(letter, number) {
@@ -977,7 +1003,7 @@ async function createLoopTable(patchId, index) {
         loopButton.textContent = states[i - 1];
         loopButton.style.color =
             states[i - 1] === 'ON' ? 'lime' :
-            states[i - 1] === 'NUL' ? 'yellow' :
+            //states[i - 1] === 'NUL' ? 'yellow' :
             states[i - 1] === 'TGL' ? 'white' :
             states[i - 1] === 'Inactive' ? 'gray' :
             'red';
@@ -1092,6 +1118,10 @@ function createPresetOptions(patchTypeButton, letter, number, index) {
             patchTypeButton.textContent = preset;
             localStorage.setItem(`${letter}${number}_type`, preset);
             presetOptions.style.display = 'none';
+
+            sendMessage([0xF0,0x0D,0x00,0x00,0xF7])
+            sendMessage([0xF0,0x0D,0x01,0x00,0xF7])
+            sendMessage([0xF0,0x0D,0x02,0x00,0xF7])
         });
 
         configurePresetOptionEvents(optionButton, patchTypeButton, presetOptions, letter, number, index);
@@ -1200,6 +1230,7 @@ async function createTableRemoteSwitch(patchId, index) {
     const loopNumbers = ['1', '2', '3', '4']; // Ajuste para 4 loops
 
     loopNumbers.forEach((i) => {
+        let size = '0';
         let varAuxType = document.getElementById("patchType").textContent;
         if (varAuxType == "(Preset)") {
             switch (states[i - 1]) {
@@ -1208,8 +1239,10 @@ async function createTableRemoteSwitch(patchId, index) {
                 case 2: states[i - 1] = 'NUL'; break;
                 default: states[i - 1] = 'Error'; break;
             }
+            size = '16px';
         } else if (varAuxType === "(Tuner)") {
             states[i - 1] = 'Inactive';
+            size = '14px';
         } else {
             switch (states[i - 1]) {
                 case 0: states[i - 1] = 'NUL'; break;
@@ -1218,6 +1251,7 @@ async function createTableRemoteSwitch(patchId, index) {
                 case 3: states[i - 1] = 'OFF'; break;
                 default: states[i - 1] = 'Error'; break;
             }
+            size = '16px';
         }
 
         const loopContainer = document.createElement('div');
@@ -1242,10 +1276,11 @@ async function createTableRemoteSwitch(patchId, index) {
         loopButton.textContent = states[i - 1];
         loopButton.style.color =
             states[i - 1] === 'ON' ? 'lime' :
-            states[i - 1] === 'NUL' ? 'yellow' :
+            //states[i - 1] === 'NUL' ? 'yellow' :
             states[i - 1] === 'TGL' ? 'white' :
             states[i - 1] === 'Inactive' ? 'gray' :
             'red';
+        loopButton.style.fontSize = size;
         loopButton.style.cursor = 'pointer';
         loopButton.style.fontWeight = 'bold';
         loopButton.style.minWidth = '50px'; // Define tamanho fixo do botão
@@ -1449,7 +1484,7 @@ function createMidiTable(patchId, index, tableId) {
     midiTable.style.rowGap = '5px';
 
     // Agora os estados são carregados separadamente para cada tabela
-    const states = loadMidiStates(patchId, tableId);
+    const states = [] //loadMidiStates(patchId, tableId);
 
     // Cria as linhas da tabela MIDI
     for (let i = 0; i < 10; i++) {
@@ -1471,7 +1506,7 @@ function createMidiTable(patchId, index, tableId) {
         // Lista para armazenar os botões secundários
         const detailButtons = [];
 
-        const values = states[i]?.values || [0, 1];
+        const values =  [0, 1];
         values.forEach((value, idx) => {
             const detailButton = createDetailButton(value, idx, patchId, i);
             detailButton.textContent = value.toString();
@@ -1702,7 +1737,10 @@ function handleMidiSelection(type, midiButton, patchId, index) {
     // Cria botões secundarios
     for (let j = 0; j < 2; j++) {
         const detailButton = document.createElement('span');
-        detailButton.textContent = '0';
+        if (j === 0){
+            detailButton.textContent = '0';
+        } else detailButton.textContent = '1';
+        
         detailButton.className = 'midi-detail';
         detailButton.style.height = '15px';
         detailButton.style.cursor = 'pointer';
