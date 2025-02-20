@@ -393,8 +393,6 @@ function createBankPatches(letter, index) {
 
         pasteButton.onclick = () => {
             if (copiedPatchId) {
-                alert(`Copiando de ${letter.charCodeAt(0)-65} ${j} para ${patchId}`);
-
                 sendMessage([0xF0, 0x15, letter.charCodeAt(0)-65, j, 0xF7])
 
                 // Esconde todos os botões "Paste" ao clicar em um
