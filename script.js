@@ -122,6 +122,10 @@ function bankSelect(bank, bankDetails, index) {
         if (patchCopyIcon) {
             patchCopyIcon.remove();
         }
+        const patchSwapIcon = document.getElementById('patch-swap-icon');
+        if (patchSwapIcon) {
+            patchSwapIcon.remove();
+        }
 
         const isActive = bank.classList.contains('active');
 
@@ -144,7 +148,7 @@ function bankSelect(bank, bankDetails, index) {
             // Chama createBnkCfg passando a letra do banco
             createBnkCfg(currentBankLetter);
         } else {
-            //currentBankLetter = null; // Nenhum banco ativo
+            currentBankLetter = null; // Nenhum banco ativo
         }
         //alert([0xF0, 0x0B, currentBankLetter.charCodeAt(0) - 65, 0xF7])
 
@@ -368,6 +372,7 @@ function createConfigPopup(detailButton, rangeStart, rangeEnd, onSelectCallback,
 
 // Base para a criação dos patches
 let copiedPatchId = null; // Armazena o ID do patch copiado
+let swapPatchId = null; // Armazena o ID do patch para troca (swap)
 function createBankPatches(letter, index) {
     const bankDetails = document.createElement('div');
     bankDetails.className = 'bank-details';
@@ -392,9 +397,8 @@ function createBankPatches(letter, index) {
 
         // Usando o ícone de paste da Font Awesome
         const pasteIcon = document.createElement('i');
-        pasteIcon.className = 'fa-regular fa-paste'; // Ícone de colar
-        pasteIcon.style.fontSize = '20px'; // Tamanho do ícone
-
+        pasteIcon.className = 'fa-regular fa-paste';
+        pasteIcon.style.fontSize = '20px';
         pasteButton.appendChild(pasteIcon);
 
         pasteButton.onclick = () => {
@@ -409,6 +413,28 @@ function createBankPatches(letter, index) {
         };
 
         patchItem.appendChild(pasteButton);
+
+        const swapButton = document.createElement('button');
+        swapButton.className = 'swap-button';
+        swapButton.style.display = 'none';
+
+        const swapIcon = document.createElement('i');
+        swapIcon.className = 'fa-solid fa-rotate';
+        swapIcon.style.fontSize = '20px';
+        swapButton.appendChild(swapIcon);
+
+        swapButton.onclick = () => {
+            if (swapPatchId) {
+                alert(`Trocando ${swapPatchId.charCodeAt(0)-65} ${swapPatchId.slice(1)} com ${patchId}`);
+                document.querySelectorAll('.swap-button').forEach(button => {
+                    button.style.display = 'none';
+                });
+                //sendMessage([0xF0,0x16,swapPatchId.charCodeAt(0)-65,swapPatchId.slice(1),0xF7])
+                sendMessage([0xF0,0x16,patchId.charCodeAt(0)-65,patchId.slice(1),0xF7])
+            }
+        };
+
+        patchItem.appendChild(swapButton);
 
         patchItem.addEventListener('click', async () => {
             activePatch = letter + j;
@@ -427,9 +453,9 @@ function createBankPatches(letter, index) {
 
             // Remove ícone de cópia para ser recriado pertencendo a esse patch
             const existingCopyIcon = document.getElementById('patch-copy-icon');
-            if (existingCopyIcon) {
-                existingCopyIcon.remove();
-            }
+            const existingSwapIcon = document.getElementById('patch-swap-icon');
+            if (existingCopyIcon) existingCopyIcon.remove();
+            if (existingSwapIcon) existingSwapIcon.remove();
 
             // Cria um novo ícone de cópia
             const patchCopyIcon = document.createElement('i');
@@ -442,6 +468,11 @@ function createBankPatches(letter, index) {
 
             patchCopyIcon.onclick = () => {
                 copiedPatchId = patchId;
+                //alert(`Patch ${patchId} copiado!`);
+
+                document.querySelectorAll('.swap-button').forEach(button => {
+                    button.style.display = 'none';
+                });
 
                 document.querySelectorAll('.paste-button').forEach(button => {
                     if (button.parentNode.dataset.patchId !== copiedPatchId) {
@@ -452,13 +483,46 @@ function createBankPatches(letter, index) {
                 });
             };
 
+            // Cria um novo ícone de swap
+            const patchSwapIcon = document.createElement('i');
+            patchSwapIcon.id = 'patch-swap-icon';
+            patchSwapIcon.className = 'fa-solid fa-rotate';
+            patchSwapIcon.title = 'Trocar Patch';
+            patchSwapIcon.style.position = 'absolute';
+            patchSwapIcon.style.cursor = 'pointer';
+            patchSwapIcon.style.fontSize = '20px';
+            patchSwapIcon.style.marginLeft = '30px';
+
+            patchSwapIcon.onclick = () => {
+                swapPatchId = patchId;
+                //alert(`Selecionado para troca: ${patchId}`);
+
+                document.querySelectorAll('.paste-button').forEach(button => {
+                    button.style.display = 'none';
+                });
+
+                document.querySelectorAll('.swap-button').forEach(button => {
+                    if (button.parentNode.dataset.patchId !== swapPatchId) {
+                        button.style.display = 'inline-block';
+                    } else {
+                        button.style.display = 'none';
+                    }
+                });
+            };
+
             const mainContent = document.getElementById('mainContent');
             mainContent.appendChild(patchCopyIcon);
+            mainContent.appendChild(patchSwapIcon);
 
-            const mainRect = mainContent.getBoundingClientRect();
             const rect = selectedPatchText.getBoundingClientRect();
-            patchCopyIcon.style.top = `${rect.top - mainRect.top}px`;
-            patchCopyIcon.style.left = `${rect.right - mainRect.left + 10}px`;
+            const mainRect = mainContent.getBoundingClientRect();
+            const scrollY = mainContent.scrollTop;
+            const scrollX = mainContent.scrollLeft;
+
+            patchCopyIcon.style.top = `${rect.top - mainRect.top + scrollY}px`;
+            patchCopyIcon.style.left = `${rect.right - mainRect.left + scrollX + 10}px`;
+            patchSwapIcon.style.top = patchCopyIcon.style.top;
+            patchSwapIcon.style.left = `${parseInt(patchCopyIcon.style.left) + 20}px`;
 
             patchChange(letter, j);
 
@@ -1455,6 +1519,10 @@ async function toggleConnection(button) {
         const patchCopyIcon = document.getElementById('patch-copy-icon');
         if (patchCopyIcon) {
             patchCopyIcon.remove();
+        }
+        const patchSwapIcon = document.getElementById('patch-swap-icon');
+        if (patchSwapIcon) {
+            patchSwapIcon.remove();
         }
         
         // Alterar o texto do botão

@@ -197,26 +197,26 @@ header p {
     transform: scale(1.1);
 }
 
-.copy-icon, .fa-regular, .bank-copy-icon {
+.copy-icon, .fa-regular, .bank-copy-icon, .fa-solid {
     margin-left: 10px;
     cursor: pointer;
     font-size: 16px;
     transition: transform 0.2s ease, color 0.2s ease;
 }
 
-.copy-icon:hover, .fa-regular:hover, .bank-copy-icon:hover  {
+.copy-icon:hover, .fa-regular:hover, .bank-copy-icon:hover, .fa-solid:hover {
     transform: scale(1.2);
     color: #53bfeb;
 }
 
-.paste-button, .bank-paste-icon {
+.paste-button, .bank-paste-icon, .swap-button {
     margin-left: 0px;
     cursor: pointer;
     font-size: 16px;
     transition: transform 0.2s ease, color 0.2s ease;
 }
 
-.paste-button:hover, .bank-paste-icon:hover  {
+.paste-button:hover, .bank-paste-icon:hover, .swap-button:hover  {
     transform: scale(1.2);
     color: #53bfeb;
 }
@@ -416,4 +416,9 @@ header p {
     top: 150px;
     right: 170px;
     display: none;
+}
+
+#extraScroll {
+    display: flex;
+    height: 10vh;
 }
