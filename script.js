@@ -14,7 +14,7 @@ let currentBankLetter = null;
 
 let activePatch = null;
 
-const selectedButtonIndices = {
+let selectedButtonIndices = {
     'midi-table': 0,
     'midi-table-2': 0,
     'midi-table-3': 0
@@ -144,13 +144,15 @@ function bankSelect(bank, bankDetails, index) {
             // Chama createBnkCfg passando a letra do banco
             createBnkCfg(currentBankLetter);
         } else {
-            currentBankLetter = null; // Nenhum banco ativo
+            //currentBankLetter = null; // Nenhum banco ativo
         }
+        alert([0xF0, 0x0B, currentBankLetter.charCodeAt(0) - 65, 0xF7])
 
         // Envia mensagens MIDI relacionadas ao banco
         sendMessage([0xF0, 0x09, index - 65, 0, 0xF7]);
         sendMessage([0xF0, 0x0A, index - 65, 0xF7]);
         sendMessage([0xF0, 0x10, currentBankLetter.charCodeAt(0) - 65, 0xF7]);
+        sendMessage([0xF0, 0x0B, currentBankLetter.charCodeAt(0) - 65, 0xF7]);
 
         // Remove o estado ativo e oculta o ícone de copiar de todos os bancos
         document.querySelectorAll('.bank').forEach(b => {
@@ -244,14 +246,18 @@ function createBnkCfg(letter) {
 
             options.push('OFF');
             if (i <= 1) {
-                for (let letter = 66; letter <= 90; letter++) {
-                    options.push(`Load from ${String.fromCharCode(letter)}`);
+                for (let letterAux = 65; letterAux <= 90; letterAux++) {
+                    if (String.fromCharCode(letterAux) != letter){
+                        options.push(`Load from ${String.fromCharCode(letterAux)}`);
+                    }
                 }
             } else {
-                for (let letter = 66; letter <= 90; letter++) {
-                    options.push(`Load from ${String.fromCharCode(letter)}`);
-                    for (let num = 1; num <= 8; num++) {
-                        options.push(`Load from ${String.fromCharCode(letter)}${num}`);
+                for (let letterAux = 65; letterAux <= 90; letterAux++) {
+                    if (String.fromCharCode(letterAux) != letter){
+                    options.push(`Load from ${String.fromCharCode(letterAux)}`);
+                        for (let num = 1; num <= 8; num++) {
+                            options.push(`Load from ${String.fromCharCode(letterAux)}${num}`);
+                        }
                     }
                 }
             }
@@ -653,34 +659,29 @@ async function setupMidiListener() {
                                     buttons[i].textContent = `Load from ${String.fromCharCode(sysexData[i]+64)}`;
                                     buttons[i].style.color = 'lime';
                                 } else {
-                                    buttons[i].textContent = `Load from ${String.fromCharCode(sysexData[i]+65)}`;
+                                    buttons[i].textContent = `Load from ${String.fromCharCode(sysexData[i]+64)}`;
                                     buttons[i].style.color = 'lime';
                                 }
                             }
                         }
                         for (let i=2; i<4; i++){
-                            if (sysexData[i] === 0){
-                                buttons[i].textContent = 'OFF';
-                                buttons[i].style.color = 'red';
-                            } else {
-                                switch (sysexData[i]) {
-                                    case 0:
-                                        buttons[i].textContent = 'OFF';
-                                        buttons[i].style.color = 'red';
-                                        break;
-                                    case 1:
-                                        buttons[i].textContent = 'Locked';
-                                        buttons[i].style.color = 'lime';
-                                        break;
-                                    default:
-                                        sysexData[i] = sysexData[i] - 2;
-                                        let bankToGo = String.fromCharCode(Math.floor(sysexData[i] / 9) + 65);
-                                        let patchToGo = sysexData[i] % 9;
-                                        buttons[i].textContent = `Load from ${bankToGo}${patchToGo}`;
-                                        buttons[i].style.color = 'lime';
-                                        break;
-                                }
+                            switch (sysexData[i]) {
+                                case 0:
+                                    buttons[i].textContent = 'OFF';
+                                    buttons[i].style.color = 'red';
+                                    break;
+                                case 1:
+                                    buttons[i].textContent = 'Locked';
+                                    buttons[i].style.color = 'lime';
+                                    break;
+                                default:
+                                    sysexData[i] = sysexData[i] - 2;
+                                    let bankToGo = String.fromCharCode(Math.floor(sysexData[i] / 9) + 65);
+                                    let patchToGo = sysexData[i] % 9;
+                                    buttons[i].textContent = `Load from ${bankToGo}${patchToGo}`;                                        buttons[i].style.color = 'lime';
+                                    break;
                             }
+                            
                         }
                         break;
                     case 0x0D:
@@ -1825,7 +1826,7 @@ function handleMidiSelection(type, midiButton, patchId, index) {
 
             createValuePopup(detailButton, rangeStart, rangeEnd, (selectedValue) => {
                 detailButton.textContent = selectedValue;
-                updateMidiState(patchId, index, j, selectedValue);
+                //updateMidiState(patchId, index, j, selectedValue);
             });
         });
 
@@ -1836,7 +1837,7 @@ function handleMidiSelection(type, midiButton, patchId, index) {
     const midiData = { type: type, values: [0, 1] };
     const states = loadMidiStates(patchId);
     states[index] = midiData;
-    localStorage.setItem(`${patchId}_${tableId}`, JSON.stringify(states));
+    //localStorage.setItem(`${patchId}_${tableId}`, JSON.stringify(states));
 }
 
 // Cria popup pro valor e canal
@@ -1876,7 +1877,49 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
         valueButton.addEventListener('click', (e) => {
             e.stopPropagation();
             onSelectCallback(127);
-            closePopup();
+            // Identifica qual tabela MIDI originou esse popup
+            const midiTable = detailButton.closest('.table'); 
+            if (!midiTable) {
+                console.error("Não foi possível identificar a tabela MIDI.");
+                return;
+            }
+
+            // Captura todos os valores dos botões dentro dessa tabela específica
+            let midiValues = Array.from(midiTable.querySelectorAll('span'))
+                .map(btn => {
+                    let text = btn.textContent.trim();
+                    
+                    if (text === "OFF") return 0;
+                    if (text === "PC") return 1;
+                    if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
+                    return parseInt(text) || 0;
+                });
+
+            midiValues.forEach((value, index) => {
+                if ((index - 2) % 3 === 0) { // Identifica as posições 2, 5, 8, 11...
+                    midiValues[index] = value - 1; // Diminui 1 do valor
+                }
+            });
+
+            alert(`Valores da ${midiTable.id} na pagina ${selectedButtonIndices[midiTable.id]}: ${midiValues}`);
+            
+            let tableAux = '';
+            switch (midiTable.id) {
+                case 'midi-table':
+                    tableAux = 0;
+                    break;
+                case 'midi-table-2':
+                    tableAux = 1;
+                    break;
+                case 'midi-table-3':
+                    tableAux = 2;
+                    break;
+            }
+
+            // Envia os valores da tabela específica
+            sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...midiValues, 0xF7]);
+
+            valuePopup.remove();
         });
 
         valuePopup.appendChild(valueButton);
@@ -1895,7 +1938,49 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
         valueButton.addEventListener('click', (e) => {
             e.stopPropagation();
             onSelectCallback(i);
-            closePopup();
+            // Identifica qual tabela MIDI originou esse popup
+            const midiTable = detailButton.closest('.table'); 
+            if (!midiTable) {
+                console.error("Não foi possível identificar a tabela MIDI.");
+                return;
+            }
+
+            // Captura todos os valores dos botões dentro dessa tabela específica
+            let midiValues = Array.from(midiTable.querySelectorAll('span'))
+                .map(btn => {
+                    let text = btn.textContent.trim();
+                    
+                    if (text === "OFF") return 0;
+                    if (text === "PC") return 1;
+                    if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
+                    return parseInt(text) || 0;
+                });
+
+            midiValues.forEach((value, index) => {
+                if ((index - 2) % 3 === 0) { // Identifica as posições 2, 5, 8, 11...
+                    midiValues[index] = value - 1; // Diminui 1 do valor
+                }
+            });
+
+            alert(`Valores da ${midiTable.id} na pagina ${selectedButtonIndices[midiTable.id]}: ${midiValues}`);
+            
+            let tableAux = '';
+            switch (midiTable.id) {
+                case 'midi-table':
+                    tableAux = 0;
+                    break;
+                case 'midi-table-2':
+                    tableAux = 1;
+                    break;
+                case 'midi-table-3':
+                    tableAux = 2;
+                    break;
+            }
+
+            // Envia os valores da tabela específica
+            sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...midiValues, 0xF7]);
+
+            valuePopup.remove();
         });
 
         valuePopup.appendChild(valueButton);
