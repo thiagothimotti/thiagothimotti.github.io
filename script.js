@@ -146,7 +146,7 @@ function bankSelect(bank, bankDetails, index) {
         } else {
             //currentBankLetter = null; // Nenhum banco ativo
         }
-        alert([0xF0, 0x0B, currentBankLetter.charCodeAt(0) - 65, 0xF7])
+        //alert([0xF0, 0x0B, currentBankLetter.charCodeAt(0) - 65, 0xF7])
 
         // Envia mensagens MIDI relacionadas ao banco
         sendMessage([0xF0, 0x09, index - 65, 0, 0xF7]);
