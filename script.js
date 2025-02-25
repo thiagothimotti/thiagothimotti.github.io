@@ -20,6 +20,15 @@ let selectedButtonIndices = {
     'midi-table-3': 0
 };
 
+let advanced1 = [];
+let advanced2 = [];
+let advanced3 = [];
+let usb1 = [];
+let usb2 = [];
+let air1 = [];
+let air2 = [];
+let air3 = [];
+
 // Função base da inicialização do site
 async function initializeSite() {
 
@@ -78,7 +87,7 @@ function createBank(letter, index) {
     // Ao clicar no copyIcon, salva o bank copiado e exibe todos os botões de paste
     copyIcon.onclick = () => {
         copiedBank = `Bank ${letter}`;
-        alert('Bank copiado!');
+        //alert('Bank copiado!');
         document.querySelectorAll('.bank-paste-icon').forEach(icon => {
             icon.style.display = 'inline-block';
         });
@@ -87,7 +96,7 @@ function createBank(letter, index) {
     // Ao clicar no pasteIcon, envia mensagem, exibe alerta e oculta todos os botões de paste
     pasteIcon.onclick = () => {
         sendMessage([0xF0, 0x17, letter.charCodeAt(0) - 65, 0xF7]);
-        alert(`Bank ${letter} atualizado com o conteúdo de ${copiedBank}`);
+        //alert(`Bank ${letter} atualizado com o conteúdo de ${copiedBank}`);
         document.querySelectorAll('.bank-paste-icon').forEach(icon => {
             icon.style.display = 'none';
         });
@@ -419,13 +428,14 @@ function createBankPatches(letter, index) {
         swapButton.style.display = 'none';
 
         const swapIcon = document.createElement('i');
-        swapIcon.className = 'fa-solid fa-rotate';
+        //swapIcon.className = 'fa-solid fa-rotate';
+        swapIcon.className = 'fa-solid fa-arrows-rotate';
         swapIcon.style.fontSize = '20px';
         swapButton.appendChild(swapIcon);
 
         swapButton.onclick = () => {
             if (swapPatchId) {
-                alert(`Trocando ${swapPatchId.charCodeAt(0)-65} ${swapPatchId.slice(1)} com ${patchId}`);
+                //alert(`Trocando ${swapPatchId.charCodeAt(0)-65} ${swapPatchId.slice(1)} com ${patchId}`);
                 document.querySelectorAll('.swap-button').forEach(button => {
                     button.style.display = 'none';
                 });
@@ -486,7 +496,8 @@ function createBankPatches(letter, index) {
             // Cria um novo ícone de swap
             const patchSwapIcon = document.createElement('i');
             patchSwapIcon.id = 'patch-swap-icon';
-            patchSwapIcon.className = 'fa-solid fa-rotate';
+            //patchSwapIcon.className = 'fa-solid fa-rotate';
+            patchSwapIcon.className = 'fa-solid fa-arrows-rotate';
             patchSwapIcon.title = 'Trocar Patch';
             patchSwapIcon.style.position = 'absolute';
             patchSwapIcon.style.cursor = 'pointer';
@@ -520,7 +531,7 @@ function createBankPatches(letter, index) {
             const scrollX = mainContent.scrollLeft;
 
             patchCopyIcon.style.top = `${rect.top - mainRect.top + scrollY}px`;
-            patchCopyIcon.style.left = `${rect.right - mainRect.left + scrollX + 10}px`;
+            patchCopyIcon.style.left = `${rect.right - mainRect.left + scrollX + 50}px`;
             patchSwapIcon.style.top = patchCopyIcon.style.top;
             patchSwapIcon.style.left = `${parseInt(patchCopyIcon.style.left) + 20}px`;
 
@@ -583,7 +594,6 @@ function writeAllNames(array, bankLetter) {
     });
 }
 
-
 async function sendMessage(message) {
 
     lastMessage.push(message[1]);
@@ -618,6 +628,15 @@ async function sendMessage(message) {
 }
 
 async function patchChange(letter, j) {
+
+    advanced1 = [];
+    advanced2 = [];
+    advanced3 = [];
+    usb1 = [];
+    usb2 = [];
+    air1 = [];
+    air2 = [];
+    air3 = [];
 
     const valorASCII = letter.charCodeAt(0);
     try {
@@ -693,14 +712,14 @@ async function setupMidiListener() {
                         console.log('remotes ', remotes)
                         break;
                     case 6:
-                        patchName = sysexData;
+                        /*patchName = sysexData;
                         console.log('patchname ', patchName )
                         const selectedPatchElement = document.getElementById('selectedPatch');
                         const textContent = Array.from(sysexData).map(num => String.fromCharCode(num)).join('').trim();
                         if (textContent)
                             selectedPatchElement.textContent = `${activePatch} - ${textContent.trim()}`;
-                        else selectedPatchElement.textContent = `Patch ${activePatch}`;
-                        
+                        else selectedPatchElement.textContent = `Patch ${activePatch}`;*/
+                        sendMessage([0xF0,0x0A,currentBankLetter.charCodeAt(0)-65,0xF7]);
                         break;
                     case 10:
                         console.log(Array.from(sysexData).map(num => String.fromCharCode(num)).join(''));
@@ -749,14 +768,47 @@ async function setupMidiListener() {
                         }
                         break;
                     case 0x0D:
-                        
+
                         const tableMapping = {
                             0: "midi-table",
                             1: "midi-table-2",
                             2: "midi-table-3"
                         };
-                        //alert(`${sysexData.slice(3)}`)
+                        
                         const tableId = tableMapping[sysexData[1]];
+
+                        if (sysexData[1] === 0) {
+                            if (sysexData[2] === 0 && advanced1.length !== 0){
+                                fillMidiTable(advanced1, tableId);
+                                break;
+                            }else if (sysexData[2] === 1 && advanced2.length !== 0){
+                                fillMidiTable(advanced2, tableId);
+                                break;
+                            }else if (sysexData[2] === 2 && advanced3.length !== 0){
+                                fillMidiTable(advanced3, tableId);
+                                break;
+                            }
+                        } else if (sysexData[1] === 1) {
+                            if (sysexData[2] === 0 && usb1.length !== 0){
+                                fillMidiTable(usb1, tableId);
+                                break;
+                            }else if (sysexData[2] === 1 && usb2.length !== 0){
+                                fillMidiTable(usb2, tableId);
+                                break;
+                            }
+                        } else if (sysexData[1] === 2) {
+                            if (sysexData[2] === 0 && air1.length !== 0){
+                                fillMidiTable(air1, tableId);
+                                break;
+                            }else if (sysexData[2] === 1 && air2.length !== 0){
+                                fillMidiTable(air2, tableId);
+                                break;
+                            }else if (sysexData[2] === 2 && air3.length !== 0){
+                                fillMidiTable(air3, tableId);
+                                break;
+                            }
+                        }
+                        
                         if (tableId) {
                             const values = sysexData.slice(3);
                             fillMidiTable(values /*[...Array(30).keys()]*/, tableId);
@@ -895,6 +947,7 @@ function fillMidiTable(values, tableId) {
 
         button.addEventListener('click', () => {
             //alert(`Botão ${i} pressionado na tabela ${tableId}`);
+            const aux = selectedButtonIndices[tableId];
             selectedButtonIndices[tableId] = i - 1;
 
             midiTable.querySelectorAll('.arrow-indicator').forEach(arrow => {
@@ -904,15 +957,102 @@ function fillMidiTable(values, tableId) {
 
             switch (tableId) {
                 case 'midi-table':
+                    switch (aux) {
+                        case 0: 
+                            advanced1 = Array.from(document.querySelectorAll("#midi-table .midi-row")).map(row => {
+                                let buttons = row.querySelectorAll("span");
+                                return buttons.length >= 3 ? [
+                                    buttons[0].textContent === "OFF" ? 0 : (buttons[0].textContent === "PC" ? 1 : parseInt(buttons[0].textContent.replace("CC", "")) + 2),
+                                    parseInt(buttons[1].textContent),
+                                    parseInt(buttons[2].textContent)-1
+                                ] : [0, 0, 0];
+                            }).flat();
+                            break;
+                        case 1: 
+                            advanced2 = Array.from(document.querySelectorAll("#midi-table .midi-row")).map(row => {
+                                let buttons = row.querySelectorAll("span");
+                                return buttons.length >= 3 ? [
+                                    buttons[0].textContent === "OFF" ? 0 : (buttons[0].textContent === "PC" ? 1 : parseInt(buttons[0].textContent.replace("CC", "")) + 2),
+                                    parseInt(buttons[1].textContent),
+                                    parseInt(buttons[2].textContent)-1
+                                ] : [0, 0, 0];
+                            }).flat();
+                            break;
+                        case 2: 
+                            advanced3 = Array.from(document.querySelectorAll("#midi-table .midi-row")).map(row => {
+                                let buttons = row.querySelectorAll("span");
+                                return buttons.length >= 3 ? [
+                                    buttons[0].textContent === "OFF" ? 0 : (buttons[0].textContent === "PC" ? 1 : parseInt(buttons[0].textContent.replace("CC", "")) + 2),
+                                    parseInt(buttons[1].textContent),
+                                    parseInt(buttons[2].textContent)-1
+                                ] : [0, 0, 0];
+                            }).flat();
+                        break;
+                    }
                     sendMessage([0xF0, 0x0D, 0x00, i - 1, 0xF7]);
                     break;
                 case 'midi-table-2':
+                    switch (aux) {
+                        case 0:
+                            usb1 = Array.from(document.querySelectorAll("#midi-table-2 .midi-row")).map(row => {
+                                let buttons = row.querySelectorAll("span");
+                                return buttons.length >= 3 ? [
+                                    buttons[0].textContent === "OFF" ? 0 : (buttons[0].textContent === "PC" ? 1 : parseInt(buttons[0].textContent.replace("CC", "")) + 2),
+                                    parseInt(buttons[1].textContent),
+                                    parseInt(buttons[2].textContent)-1
+                                ] : [0, 0, 0];
+                            }).flat();
+                            break;
+                        case 1:
+                            usb2 = Array.from(document.querySelectorAll("#midi-table-2 .midi-row")).map(row => {
+                                let buttons = row.querySelectorAll("span");
+                                return buttons.length >= 3 ? [
+                                    buttons[0].textContent === "OFF" ? 0 : (buttons[0].textContent === "PC" ? 1 : parseInt(buttons[0].textContent.replace("CC", "")) + 2),
+                                    parseInt(buttons[1].textContent),
+                                    parseInt(buttons[2].textContent)-1
+                                ] : [0, 0, 0];
+                            }).flat();
+                            break;
+                    }
                     sendMessage([0xF0, 0x0D, 0x01, i - 1, 0xF7]);
                     break;
                 case 'midi-table-3':
+                    switch (aux) {
+                        case 0: 
+                            air1 = Array.from(document.querySelectorAll("#midi-table-3 .midi-row")).map(row => {
+                                let buttons = row.querySelectorAll("span");
+                                return buttons.length >= 3 ? [
+                                    buttons[0].textContent === "OFF" ? 0 : (buttons[0].textContent === "PC" ? 1 : parseInt(buttons[0].textContent.replace("CC", "")) + 2),
+                                    parseInt(buttons[1].textContent),
+                                    parseInt(buttons[2].textContent)-1
+                                ] : [0, 0, 0];
+                            }).flat();
+                            break;
+                        case 1: 
+                            air2 = Array.from(document.querySelectorAll("#midi-table-3 .midi-row")).map(row => {
+                                let buttons = row.querySelectorAll("span");
+                                return buttons.length >= 3 ? [
+                                    buttons[0].textContent === "OFF" ? 0 : (buttons[0].textContent === "PC" ? 1 : parseInt(buttons[0].textContent.replace("CC", "")) + 2),
+                                    parseInt(buttons[1].textContent),
+                                    parseInt(buttons[2].textContent)-1
+                                ] : [0, 0, 0];
+                            }).flat();
+                            break;
+                        case 2: 
+                            air3 = Array.from(document.querySelectorAll("#midi-table-3 .midi-row")).map(row => {
+                                let buttons = row.querySelectorAll("span");
+                                return buttons.length >= 3 ? [
+                                    buttons[0].textContent === "OFF" ? 0 : (buttons[0].textContent === "PC" ? 1 : parseInt(buttons[0].textContent.replace("CC", "")) + 2),
+                                    parseInt(buttons[1].textContent),
+                                    parseInt(buttons[2].textContent)-1
+                                ] : [0, 0, 0];
+                            }).flat();
+                            break;
+                    }
                     sendMessage([0xF0, 0x0D, 0x02, i - 1, 0xF7]);
                     break;
             }
+            alert(advanced1 + advanced2 + advanced3)
         });
 
         button.addEventListener('mouseenter', () => {
@@ -1139,6 +1279,7 @@ async function createLoopTable(patchId, index) {
             'red';
         loopButton.style.fontSize = size;
         loopButton.style.cursor = 'pointer';
+        if (loopButton.textContent === 'Inactive') loopButton.style.cursor = 'not-allowed';
         loopButton.style.fontWeight = '600';
         loopButton.style.textAlign = 'center';
         loopButton.style.minWidth = '35px';  // Define um tamanho mínimo para o botão
@@ -1147,9 +1288,27 @@ async function createLoopTable(patchId, index) {
 
 
         loopButton.addEventListener('click', () => {
-            toggleState(loopButton, patchId, i);
-            states = updateStates();
-            sendMessage(states);
+            if (loopButton.textContent === 'Inactive') return; // Impede clique se for Inactive
+            
+            if (event.ctrlKey) {
+                event.stopPropagation(); // Evita o fechamento do popup ao clicar no botão
+            
+                // Criar popup com opções
+                let options = ["OFF", "ON", "NUL", "TGL"];
+                if (document.getElementById("patchType").textContent == "(Preset)" || document.getElementById("patchType").textContent == "(Tuner)") options = ["OFF", "ON", "NUL"];
+                remotePopup(loopButton, options, (selectedValue) => {
+                    loopButton.textContent = selectedValue;
+                    loopButton.style.color = selectedValue === "ON" ? "lime" : 
+                                            selectedValue === "NUL" ? "yellow" :
+                                            selectedValue === "TGL" ? "white" : "red";
+                    states = updateStatesRemote();
+                    sendMessage(states);
+                });
+            } else {
+                toggleState(loopButton, patchId, i);
+                states = updateStates();
+                sendMessage(states);
+            }
         });
 
         loopContainer.appendChild(loopLabel);
@@ -1412,21 +1571,94 @@ async function createTableRemoteSwitch(patchId, index) {
             'red';
         loopButton.style.fontSize = size;
         loopButton.style.cursor = 'pointer';
+        if (loopButton.textContent === 'Inactive') loopButton.style.cursor = 'not-allowed';
         loopButton.style.fontWeight = 'bold';
         loopButton.style.minWidth = '50px'; // Define tamanho fixo do botão
         loopButton.style.textAlign = 'left';
 
-        loopButton.addEventListener('click', () => {
-            toggleState(loopButton, patchId, i);
-            states = updateStatesRemote();
-            sendMessage(states);
+        loopButton.addEventListener('click', (event) => {
+            if (loopButton.textContent === 'Inactive') return; // Impede clique se for Inactive
+            
+            if (event.ctrlKey) {
+                event.stopPropagation(); // Evita o fechamento do popup ao clicar no botão
+            
+                // Criar popup com opções
+                let options = ["OFF", "ON", "NUL", "TGL"];
+                if (document.getElementById("patchType").textContent == "(Preset)") options = ["OFF", "ON", "NUL"];
+                remotePopup(loopButton, options, (selectedValue) => {
+                    loopButton.textContent = selectedValue;
+                    loopButton.style.color = selectedValue === "ON" ? "lime" : 
+                                            selectedValue === "NUL" ? "yellow" :
+                                            selectedValue === "TGL" ? "white" : "red";
+                    states = updateStatesRemote();
+                    sendMessage(states);
+                });
+            } else {
+                toggleState(loopButton, patchId, i);
+                states = updateStates();
+                sendMessage(states);
+            }
         });
-
+        
         loopContainer.appendChild(loopLabel);
         loopContainer.appendChild(loopButton);
         remoteTable.appendChild(loopContainer);
     });
 }
+
+function remotePopup(targetButton, options, onSelectCallback) {
+    // Remove popups anteriores
+    const existingPopup = document.querySelector('.value-popup');
+    if (existingPopup) existingPopup.remove();
+
+    // Criar o popup
+    const popup = document.createElement('div');
+    popup.className = 'value-popup';
+    popup.style.position = 'absolute';
+    popup.style.backgroundColor = '#242424';
+    popup.style.border = '1px solid #000';
+    popup.style.borderRadius = '5px';
+    popup.style.padding = '5px';
+    popup.style.zIndex = '1000';
+    popup.style.textAlign = 'center';
+    
+    // Posicionar perto do botão clicado
+    const rect = targetButton.getBoundingClientRect();
+    popup.style.top = `${rect.bottom + window.scrollY}px`;
+    popup.style.left = `${rect.left + window.scrollX}px`;
+
+    // Criar opções dentro do popup
+    options.forEach(option => {
+        const optionButton = document.createElement('button');
+        optionButton.textContent = option;
+        optionButton.style.display = 'block';
+        optionButton.style.width = '100%';
+        optionButton.style.padding = '5px';
+        optionButton.style.cursor = 'pointer';
+        optionButton.style.backgroundColor = '#242424';
+        optionButton.style.color = '#fff';
+        optionButton.style.border = 'none';
+        optionButton.style.marginBottom = '5px';
+
+        optionButton.addEventListener('click', () => {
+            onSelectCallback(option);
+            popup.remove();
+        });
+
+        popup.appendChild(optionButton);
+    });
+
+    // Adiciona o popup à página
+    document.body.appendChild(popup);
+
+    // Fechar popup ao clicar fora
+    document.addEventListener('click', (e) => {
+        if (!popup.contains(e.target) && e.target !== targetButton) {
+            popup.remove();
+        }
+    }, { once: true });
+}
+
 
 function updateStatesRemote() {
     let updatedStates = [0xF0, 0x05];
@@ -1536,7 +1768,10 @@ async function heartBeat() {
 
         const outputs = Array.from(midiAccess.outputs.values());
         if (outputs.length === 0) {
-            alert("Nenhum dispositivo MIDI encontrado.");
+            //alert("Nenhum dispositivo MIDI encontrado. Abortando conexão.");
+            toggleConnection(document.getElementById('connectButton'));
+            //await(10000)
+            //window.location.reload();
             return;
         }
 
@@ -1764,6 +1999,9 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
 
         let top = rect.bottom -'7vh';
         let left = rect.left -390
+        if (tableId === 'midi-table-2') {
+            left -= 310
+        } else left -= 40
 
         const popupHeight = 200;
 
@@ -1774,7 +2012,7 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
 
         midiPopup.style.top = `${top}px`;
         midiPopup.style.left = `${left}px`;
-        midiPopup.style.maxWidth = '100px';
+        midiPopup.style.maxWidth = '80px';
         midiPopup.style.maxHeight = '200px';
         midiPopup.style.overflowY = 'auto';
         midiPopup.style.overflowX = 'hidden';
@@ -1929,8 +2167,24 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
 
     // Obter posição correta do popup
     const rect = detailButton.getBoundingClientRect();
-    valuePopup.style.top = `${rect.bottom + window.scrollY}px`;
-    valuePopup.style.left = `${rect.left + window.scrollX}px`;
+    const popupHeight = 200;
+    const popupWidth = 100; // Largura do popup
+
+    let top = rect.bottom + window.scrollY;
+    let left = rect.left + window.scrollX;
+
+    // Ajusta caso o popup ultrapasse a parte inferior da tela
+    if (top + popupHeight > window.innerHeight + window.scrollY) {
+        top = rect.top + window.scrollY - popupHeight;
+    }
+
+    // Ajusta caso o popup ultrapasse a lateral direita
+    if (left + popupWidth > window.innerWidth + window.scrollX) {
+        left = window.innerWidth + window.scrollX - popupWidth - 10;
+    }
+
+    valuePopup.style.top = `${top}px`;
+    valuePopup.style.left = `${left}px`;
 
     if (rangeStart === 0) {
         const valueButton = document.createElement('button');
@@ -1969,7 +2223,7 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                 }
             });
 
-            alert(`Valores da ${midiTable.id} na pagina ${selectedButtonIndices[midiTable.id]}: ${midiValues}`);
+            //alert(`Valores da ${midiTable.id} na pagina ${selectedButtonIndices[midiTable.id]}: ${midiValues}`);
             
             let tableAux = '';
             switch (midiTable.id) {
@@ -2030,7 +2284,7 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                 }
             });
 
-            alert(`Valores da ${midiTable.id} na pagina ${selectedButtonIndices[midiTable.id]}: ${midiValues}`);
+            //alert(`Valores da ${midiTable.id} na pagina ${selectedButtonIndices[midiTable.id]}: ${midiValues}`);
             
             let tableAux = '';
             switch (midiTable.id) {
