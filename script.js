@@ -56,6 +56,7 @@ async function initializeSite() {
 }
 
 // Cria um banco
+let swapping = false;
 function createBank(letter, index) {
     const bank = document.createElement('div');
     bank.className = 'bank';
@@ -69,7 +70,6 @@ function createBank(letter, index) {
     const bankText = document.createTextNode(`Bank ${letter}`);
     bank.appendChild(bankText);
 
-    // Ícone de copiar usando o mesmo ícone do createPatch,
     // porém com classe exclusiva para os banks: "bank-copy-icon"
     const copyIcon = document.createElement('i');
     copyIcon.className = 'fa-regular fa-copy bank-copy-icon';
@@ -87,9 +87,20 @@ function createBank(letter, index) {
     // Ao clicar no copyIcon, salva o bank copiado e exibe todos os botões de paste
     copyIcon.onclick = () => {
         copiedBank = `Bank ${letter}`;
-        //alert('Bank copiado!');
+        alert(`Bank ${letter} copiado!`);
+
+        // Esconder todos os botões Swap ao copiar
+        document.querySelectorAll('.bank-swap-icon').forEach(icon => {
+            icon.style.display = 'none';
+        });
+
+        // Exibir botões Paste em todos os outros Banks
         document.querySelectorAll('.bank-paste-icon').forEach(icon => {
-            icon.style.display = 'inline-block';
+            if (icon.parentNode.dataset.letter !== letter) {
+                icon.style.display = 'inline-block';
+            } else {
+                icon.style.display = 'none';
+            }
         });
     };
 
@@ -102,8 +113,49 @@ function createBank(letter, index) {
         });
     };
 
+    // Criar ícone de Swap para os Banks
+    const swapIcon = document.createElement('i');
+    swapIcon.className = 'fa-solid fa-rotate bank-swap-icon';
+    swapIcon.title = 'Trocar Bank';
+    swapIcon.style.display = 'none';
+    swapIcon.style.cursor = 'pointer';
+
+    // Evento de clique no Swap (seleciona um banco para troca)
+    swapIcon.onclick = () => {
+        if (swapping) {
+            swapping = false;
+            alert(`Trocando ${swapBank} com Bank ${letter}`);
+
+            sendMessage([0xF0,0x18,letter-65,0xF7])
+
+            // Esconder todos os botões Swap após a troca
+            document.querySelectorAll('.bank-swap-icon').forEach(icon => {
+                icon.style.display = 'none';
+            });
+        } else {
+            swapping = true;
+            swapBank = letter; // Armazena apenas a letra para facilitar a lógica
+            alert(`Selecionado para troca: Bank ${swapBank}`);
+        
+            // Esconder todos os botões Paste ao selecionar Swap
+            document.querySelectorAll('.bank-paste-icon').forEach(icon => {
+                icon.style.display = 'none';
+            });
+        
+            // Exibir botões Swap em todos os outros Banks
+            document.querySelectorAll('.bank-swap-icon').forEach(icon => {
+                if (icon.parentNode.dataset.letter !== swapBank) {
+                    icon.style.display = 'inline-block';
+                } else {
+                    icon.style.display = 'none';
+                }
+            });
+        }
+    };
+
     bank.appendChild(copyIcon);
     bank.appendChild(pasteIcon);
+    bank.appendChild(swapIcon);
 
     const arrow = document.createElement('span');
     arrow.textContent = '\u276E';
@@ -124,6 +176,7 @@ function setBankColor(bank, ball, arrow, index) {
 }
 
 let copiedBank = null; // Variável global para armazenar o banco copiado
+let swapBank = null;
 // Lida com a seleção de um banco
 function bankSelect(bank, bankDetails, index) {
     bank.addEventListener('click', () => {
@@ -134,6 +187,10 @@ function bankSelect(bank, bankDetails, index) {
         const patchSwapIcon = document.getElementById('patch-swap-icon');
         if (patchSwapIcon) {
             patchSwapIcon.remove();
+        }
+        const patchClearIcon = document.getElementById('patch-clear-icon');
+        if (patchClearIcon) {
+            patchClearIcon.remove();
         }
 
         const isActive = bank.classList.contains('active');
@@ -175,6 +232,10 @@ function bankSelect(bank, bankDetails, index) {
             if (copyIcon) {
                 copyIcon.style.display = 'none';
             }
+            const swapIcon = b.querySelector('.bank-swap-icon');
+            if (swapIcon) {
+                swapIcon.style.display = 'none';
+            }
             const arrow = b.querySelector('span:last-child');
             arrow.style.transform = 'rotate(-90deg) scale(1.8)';
         });
@@ -194,7 +255,12 @@ function bankSelect(bank, bankDetails, index) {
             if (copyIcon) {
                 copyIcon.style.display = 'inline-block';
             }
+            const swapIcon = bank.querySelector('.bank-swap-icon');
+            if (swapIcon) {
+                swapIcon.style.display = 'inline-block';
+            }
         }
+        swapping = false;
     });
 }
 
@@ -464,14 +530,16 @@ function createBankPatches(letter, index) {
             // Remove ícone de cópia para ser recriado pertencendo a esse patch
             const existingCopyIcon = document.getElementById('patch-copy-icon');
             const existingSwapIcon = document.getElementById('patch-swap-icon');
+            const existingClearIcon = document.getElementById('patch-clear-icon');
             if (existingCopyIcon) existingCopyIcon.remove();
             if (existingSwapIcon) existingSwapIcon.remove();
+            if (existingClearIcon) existingClearIcon.remove();
 
             // Cria um novo ícone de cópia
             const patchCopyIcon = document.createElement('i');
             patchCopyIcon.id = 'patch-copy-icon';
             patchCopyIcon.className = 'fa-regular fa-copy';
-            patchCopyIcon.title = 'Copiar Patch';
+            patchCopyIcon.title = 'Copy Patch';
             patchCopyIcon.style.position = 'absolute';
             patchCopyIcon.style.cursor = 'pointer';
             patchCopyIcon.style.fontSize = '20px';
@@ -498,7 +566,7 @@ function createBankPatches(letter, index) {
             patchSwapIcon.id = 'patch-swap-icon';
             //patchSwapIcon.className = 'fa-solid fa-rotate';
             patchSwapIcon.className = 'fa-solid fa-arrows-rotate';
-            patchSwapIcon.title = 'Trocar Patch';
+            patchSwapIcon.title = 'Swap Patch';
             patchSwapIcon.style.position = 'absolute';
             patchSwapIcon.style.cursor = 'pointer';
             patchSwapIcon.style.fontSize = '20px';
@@ -521,9 +589,25 @@ function createBankPatches(letter, index) {
                 });
             };
 
+            // Cria um novo ícone de clear
+            const patchClearIcon = document.createElement('i');
+            patchClearIcon.id = 'patch-clear-icon';
+            patchClearIcon.className = 'fa-solid fa-xmark';
+            patchClearIcon.title = 'Clear Patch';
+            patchClearIcon.style.position = 'absolute';
+            patchClearIcon.style.cursor = 'pointer';
+            patchClearIcon.style.fontSize = '25px';
+            patchClearIcon.style.marginLeft = '50px';
+
+            patchClearIcon.onclick = () => {
+                //alert(`Patch ${patchId} resetado!`);
+                sendMessage([0xF0, 0x14, letter.charCodeAt(0) - 65, j, 0xF7]);
+            };
+
             const mainContent = document.getElementById('mainContent');
             mainContent.appendChild(patchCopyIcon);
             mainContent.appendChild(patchSwapIcon);
+            mainContent.appendChild(patchClearIcon);
 
             const rect = selectedPatchText.getBoundingClientRect();
             const mainRect = mainContent.getBoundingClientRect();
@@ -534,6 +618,9 @@ function createBankPatches(letter, index) {
             patchCopyIcon.style.left = `${rect.right - mainRect.left + scrollX + 50}px`;
             patchSwapIcon.style.top = patchCopyIcon.style.top;
             patchSwapIcon.style.left = `${parseInt(patchCopyIcon.style.left) + 20}px`;
+            patchClearIcon.style.top = patchCopyIcon.style.top;
+            patchClearIcon.style.left = `${parseInt(patchSwapIcon.style.left) + 20}px`;
+
 
             patchChange(letter, j);
 
@@ -835,6 +922,16 @@ async function setupMidiListener() {
                         const selectedPatch = document.querySelector(`.bank-details li[data-patch-id="${activePatch}"]`);
                         if (selectedPatch) {
                             selectedPatch.click();
+                        } else {
+                            console.warn("Nenhum patch selecionado para simular o clique.");
+                        }
+                        break;
+                    
+                    case 0x14:
+                        alert("Canceled")
+                        const actualPatch = document.querySelector(`.bank-details li[data-patch-id="${activePatch}"]`);
+                        if (actualPatch) {
+                            actualPatch.click();
                         } else {
                             console.warn("Nenhum patch selecionado para simular o clique.");
                         }
@@ -1761,6 +1858,10 @@ async function toggleConnection(button) {
         const patchSwapIcon = document.getElementById('patch-swap-icon');
         if (patchSwapIcon) {
             patchSwapIcon.remove();
+        }
+        const patchClearIcon = document.getElementById('patch-clear-icon');
+        if (patchClearIcon) {
+            patchClearIcon.remove();
         }
         
         // Alterar o texto do botão

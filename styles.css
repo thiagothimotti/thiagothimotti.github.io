@@ -221,6 +221,18 @@ header p {
     color: #53bfeb;
 }
 
+.fa-xmark {
+    margin-left: 0px;
+    cursor: pointer;
+    font-size: 55px;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.fa-xmark:hover {
+    transform: scale(1.2);
+    color: red;
+}
+
 .popup-options {
     display: none;
     position: absolute;
