@@ -777,6 +777,12 @@ async function setupMidiListener() {
                         
                         const tableId = tableMapping[sysexData[1]];
 
+                        const novaOrdem = [
+                            0,1,2, 15,16,17, 3,4,5, 18,19,20, 6,7,8, 21,22,23, 9,10,11, 27,28,29, 12,13,14,24,25,26, 
+                        ];
+                        
+                        const results = novaOrdem.map(index => sysexData.slice(3)[index]);
+
                         if (sysexData[1] === 0) {
                             if (sysexData[2] === 0 && advanced1.length !== 0){
                                 fillMidiTable(advanced1, tableId);
@@ -811,7 +817,7 @@ async function setupMidiListener() {
                         
                         if (tableId) {
                             const values = sysexData.slice(3);
-                            fillMidiTable(values /*[...Array(30).keys()]*/, tableId);
+                            fillMidiTable(results /*[...Array(30).keys()]*/, tableId);
                         }
                         break;
                     
@@ -1052,7 +1058,7 @@ function fillMidiTable(values, tableId) {
                     sendMessage([0xF0, 0x0D, 0x02, i - 1, 0xF7]);
                     break;
             }
-            alert(advanced1 + advanced2 + advanced3)
+            //alert(advanced1 + advanced2 + advanced3)
         });
 
         button.addEventListener('mouseenter', () => {
@@ -1279,7 +1285,7 @@ async function createLoopTable(patchId, index) {
             'red';
         loopButton.style.fontSize = size;
         loopButton.style.cursor = 'pointer';
-        if (loopButton.textContent === 'Inactive') loopButton.style.cursor = 'not-allowed';
+        if (loopButton.textContent === 'Inactive') loopButton.style.cursor = 'cursor';
         loopButton.style.fontWeight = '600';
         loopButton.style.textAlign = 'center';
         loopButton.style.minWidth = '35px';  // Define um tamanho mínimo para o botão
@@ -1571,7 +1577,7 @@ async function createTableRemoteSwitch(patchId, index) {
             'red';
         loopButton.style.fontSize = size;
         loopButton.style.cursor = 'pointer';
-        if (loopButton.textContent === 'Inactive') loopButton.style.cursor = 'not-allowed';
+        if (loopButton.textContent === 'Inactive') loopButton.style.cursor = 'cursor';
         loopButton.style.fontWeight = 'bold';
         loopButton.style.minWidth = '50px'; // Define tamanho fixo do botão
         loopButton.style.textAlign = 'left';
@@ -2238,8 +2244,16 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                     break;
             }
 
+            const novaOrdem = [
+                0,1,2, 6,7,8, 12,13,14, 18,19,20, 24,25,26, 
+                3,4,5, 9,10,11, 15,16,17, 21,22,23, 27,28,29
+            ];
+            
+            const results = novaOrdem.map(index => midiValues[index]);
+            alert (results)
+
             // Envia os valores da tabela específica
-            sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...midiValues, 0xF7]);
+            sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
 
             valuePopup.remove();
         });
