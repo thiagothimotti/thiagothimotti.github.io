@@ -94,17 +94,24 @@ function createBank(letter, index) {
 
     // Ao clicar no copyIcon, salva o bank copiado e exibe todos os botões de paste
     copyIcon.onclick = () => {
+        event.stopPropagation();
         copiedBank = `Bank ${letter}`;
         alert(`Bank ${letter} copiado!`);
 
         // Esconder todos os botões Swap ao copiar
         document.querySelectorAll('.bank-swap-icon').forEach(icon => {
-            icon.style.display = 'none';
+            const bankElement = icon.closest('.bank'); // Encontra o bank mais próximo
+            if (bankElement && bankElement.dataset.letter == currentBankLetter) {
+                icon.style.display = 'inline-block';
+            } else {
+                icon.style.display = 'none';
+            }
         });
 
         // Exibir botões Paste em todos os outros Banks
         document.querySelectorAll('.bank-paste-icon').forEach(icon => {
-            if (icon.parentNode.dataset.letter !== letter) {
+            const bankElement = icon.closest('.bank'); // Encontra o bank mais próximo
+            if (bankElement && bankElement.dataset.letter !== currentBankLetter) {
                 icon.style.display = 'inline-block';
             } else {
                 icon.style.display = 'none';
@@ -139,9 +146,15 @@ function createBank(letter, index) {
 
             // Esconder todos os botões Swap após a troca
             document.querySelectorAll('.bank-swap-icon').forEach(icon => {
-                icon.style.display = 'none';
+                const bankElement = icon.closest('.bank'); // Encontra o bank mais próximo
+                if (bankElement && bankElement.dataset.letter !== currentBankLetter) {
+                    icon.style.display = 'inline-block';
+                } else {
+                    icon.style.display = 'none';
+                }
             });
         } else {
+            event.stopPropagation();
             swapping = true;
             swapBank = letter; // Armazena apenas a letra para facilitar a lógica
             alert(`Selecionado para troca: Bank ${swapBank}`);
@@ -153,10 +166,11 @@ function createBank(letter, index) {
         
             // Exibir botões Swap em todos os outros Banks
             document.querySelectorAll('.bank-swap-icon').forEach(icon => {
-                if (icon.parentNode.dataset.letter !== swapBank) {
+                const bankElement = icon.closest('.bank'); // Encontra o bank mais próximo
+                if (bankElement && bankElement.dataset.letter !== currentBankLetter) {
                     icon.style.display = 'inline-block';
                 } else {
-                    icon.style.display = 'none';
+                    //icon.style.display = 'none';
                 }
             });
         }
@@ -259,6 +273,10 @@ function bankSelect(bank, bankDetails, index) {
             const copyIcon = b.querySelector('.bank-copy-icon');
             if (copyIcon) {
                 copyIcon.style.display = 'none';
+            }
+            const pasteIcon = b.querySelector('.bank-paste-icon');
+            if (pasteIcon) {
+                pasteIcon.style.display = 'none';
             }
             const swapIcon = b.querySelector('.bank-swap-icon');
             if (swapIcon) {
