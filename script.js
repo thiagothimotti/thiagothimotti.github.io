@@ -70,17 +70,25 @@ function createBank(letter, index) {
     const bankText = document.createTextNode(`Bank ${letter}`);
     bank.appendChild(bankText);
 
-    // porém com classe exclusiva para os banks: "bank-copy-icon"
+    // Criar um contêiner para os botões do Bank
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'bank-button-container';
+    buttonContainer.style.display = 'inline-flex';
+    buttonContainer.style.gap = '8px';
+    buttonContainer.style.marginLeft = '10px';
+
+    // Botão copy
     const copyIcon = document.createElement('i');
     copyIcon.className = 'fa-regular fa-copy bank-copy-icon';
-    copyIcon.title = 'Copiar Bank';
+    copyIcon.title = 'Copy Bank';
     copyIcon.style.display = 'none';
     copyIcon.style.cursor = 'pointer';
+    copyIcon.style.marginTop = '4px';
 
-    // Botão de colar usando o ícone do Font Awesome com classe "bank-paste-icon"
+    // Botão de colar
     const pasteIcon = document.createElement('i');
     pasteIcon.className = 'fa-regular fa-paste bank-paste-icon';
-    pasteIcon.title = 'Colar Bank';
+    pasteIcon.title = 'Paste Bank';
     pasteIcon.style.display = 'none';
     pasteIcon.style.cursor = 'pointer';
 
@@ -116,9 +124,10 @@ function createBank(letter, index) {
     // Criar ícone de Swap para os Banks
     const swapIcon = document.createElement('i');
     swapIcon.className = 'fa-solid fa-rotate bank-swap-icon';
-    swapIcon.title = 'Trocar Bank';
+    swapIcon.title = 'Swap Bank';
     swapIcon.style.display = 'none';
     swapIcon.style.cursor = 'pointer';
+    swapIcon.style.marginTop = '4px';
 
     // Evento de clique no Swap (seleciona um banco para troca)
     swapIcon.onclick = () => {
@@ -153,9 +162,28 @@ function createBank(letter, index) {
         }
     };
 
-    bank.appendChild(copyIcon);
-    bank.appendChild(pasteIcon);
-    bank.appendChild(swapIcon);
+    // Criar ícone de Clear (Resetar Bank)
+    const clearIcon = document.createElement('i');
+    clearIcon.className = 'fa-solid fa-xmark bank-clear-icon';
+    clearIcon.title = 'Clear Bank';
+    clearIcon.style.display = 'none';
+    clearIcon.style.cursor = 'pointer';
+    clearIcon.style.fontSize = '23px';
+    clearIcon.style.marginLeft = '8px';
+
+    // Evento de clique no Clear (resetar o Bank)
+    clearIcon.onclick = () => {
+        alert(`Bank ${letter} foi resetado!`);
+        sendMessage([0xF0, 0x19, 0x00, 0xF7]); // Enviar comando de reset
+    };
+
+    buttonContainer.appendChild(copyIcon);
+    buttonContainer.appendChild(pasteIcon);
+    buttonContainer.appendChild(swapIcon);
+    buttonContainer.appendChild(clearIcon);
+
+    // Agora, adicionamos o container ao Bank
+    bank.appendChild(buttonContainer);
 
     const arrow = document.createElement('span');
     arrow.textContent = '\u276E';
@@ -214,7 +242,7 @@ function bankSelect(bank, bankDetails, index) {
             // Chama createBnkCfg passando a letra do banco
             createBnkCfg(currentBankLetter);
         } else {
-            currentBankLetter = null; // Nenhum banco ativo
+            //currentBankLetter = null; // Nenhum banco ativo
         }
         //alert([0xF0, 0x0B, currentBankLetter.charCodeAt(0) - 65, 0xF7])
 
@@ -235,6 +263,10 @@ function bankSelect(bank, bankDetails, index) {
             const swapIcon = b.querySelector('.bank-swap-icon');
             if (swapIcon) {
                 swapIcon.style.display = 'none';
+            }
+            const clearIcon = b.querySelector('.bank-clear-icon');
+            if (clearIcon) {
+                clearIcon.style.display = 'none';
             }
             const arrow = b.querySelector('span:last-child');
             arrow.style.transform = 'rotate(-90deg) scale(1.8)';
@@ -258,6 +290,10 @@ function bankSelect(bank, bankDetails, index) {
             const swapIcon = bank.querySelector('.bank-swap-icon');
             if (swapIcon) {
                 swapIcon.style.display = 'inline-block';
+            }
+            const clearIcon = bank.querySelector('.bank-clear-icon');
+            if (clearIcon) {
+                clearIcon.style.display = 'inline-block';
             }
         }
         swapping = false;
@@ -618,7 +654,7 @@ function createBankPatches(letter, index) {
             patchCopyIcon.style.left = `${rect.right - mainRect.left + scrollX + 50}px`;
             patchSwapIcon.style.top = patchCopyIcon.style.top;
             patchSwapIcon.style.left = `${parseInt(patchCopyIcon.style.left) + 20}px`;
-            patchClearIcon.style.top = patchCopyIcon.style.top;
+            patchClearIcon.style.top = `${parseInt(patchCopyIcon.style.top) - 2}px`;
             patchClearIcon.style.left = `${parseInt(patchSwapIcon.style.left) + 20}px`;
 
 
