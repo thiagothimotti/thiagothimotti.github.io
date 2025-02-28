@@ -462,19 +462,23 @@ function createConfigPopup(detailButton, rangeStart, rangeEnd, onSelectCallback,
                     } else if (value == 'Locked'){
                         data.push(1)
                     } else if (index < 2){
-                        const aux = value.slice(-1).charCodeAt(0);
+                        let aux = value.slice(-1).charCodeAt(0);
                         /*if (aux < currentBankLetter.charCodeAt(0)) {
                             data.push(aux - 64)
                         } else {
                             data.push(aux - 65)
                         }*/data.push(aux - 64)
                     } else {
-                        aux = value.slice(-2);
-                        aux = (aux.charCodeAt(0)-65)*9 + parseInt(aux[1])+2;
+                        let aux = value.replace("Load from ", "");
+                        if (aux.length === 1) {
+                            aux = (aux.charCodeAt(0) - 65) * 9 + 2;
+                        } else {
+                            aux = (aux.charCodeAt(0) - 65) * 9 + parseInt(aux[1]) + 2;
+                        }
                         data.push(aux)
                     }
                 });
-                //alert(data)
+                alert(data)
                 sendMessage([0xF0,0x0C,/*currentBankLetter.charCodeAt(0)-65,*/ ...data ,0xF7])
                 valuePopup.remove();
             });
@@ -566,7 +570,12 @@ function createBankPatches(letter, index) {
 
         patchItem.appendChild(swapButton);
 
+        let isProcessingPatch = false; // Flag para impedir cliques multiplos
         patchItem.addEventListener('click', async () => {
+            if (isProcessingPatch) return;
+
+            isProcessingPatch = true;
+
             activePatch = letter + j;
 
             document.getElementById('patchTitle').style.display = 'flex';
@@ -699,6 +708,10 @@ function createBankPatches(letter, index) {
             createMidiTable(patchId, index, "midi-table-3");
             document.getElementById('saveButton').style.display = 'inline-block';
             document.getElementById('cancelButton').style.display = 'inline-block';
+
+            setTimeout(() => {
+                isProcessingPatch = false; // Libera para novos cliques
+            }, 300);
         });
 
         inputElement.addEventListener('input', () => {
@@ -1436,7 +1449,7 @@ async function createLoopTable(patchId, index) {
             'red';
         loopButton.style.fontSize = size;
         loopButton.style.cursor = 'pointer';
-        if (loopButton.textContent === 'Inactive') loopButton.style.cursor = 'cursor';
+        if (loopButton.textContent == 'Inactive') loopButton.style.cursor = 'default';
         loopButton.style.fontWeight = '600';
         loopButton.style.textAlign = 'center';
         loopButton.style.minWidth = '35px';  // Define um tamanho mínimo para o botão
@@ -1728,7 +1741,7 @@ async function createTableRemoteSwitch(patchId, index) {
             'red';
         loopButton.style.fontSize = size;
         loopButton.style.cursor = 'pointer';
-        if (loopButton.textContent === 'Inactive') loopButton.style.cursor = 'cursor';
+        if (loopButton.textContent === 'Inactive') loopButton.style.cursor = 'default';
         loopButton.style.fontWeight = 'bold';
         loopButton.style.minWidth = '50px'; // Define tamanho fixo do botão
         loopButton.style.textAlign = 'left';
@@ -2327,22 +2340,12 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
     valuePopup.style.zIndex = '1000';
 
     // Obter posição correta do popup
+    const mainContent = document.getElementById('mainContent');
     const rect = detailButton.getBoundingClientRect();
-    const popupHeight = 200;
-    const popupWidth = 100; // Largura do popup
+    const mainRect = mainContent.getBoundingClientRect();
 
-    let top = rect.bottom + window.scrollY;
-    let left = rect.left + window.scrollX;
-
-    // Ajusta caso o popup ultrapasse a parte inferior da tela
-    if (top + popupHeight > window.innerHeight + window.scrollY) {
-        top = rect.top + window.scrollY - popupHeight;
-    }
-
-    // Ajusta caso o popup ultrapasse a lateral direita
-    if (left + popupWidth > window.innerWidth + window.scrollX) {
-        left = window.innerWidth + window.scrollX - popupWidth - 10;
-    }
+    const top = rect.bottom - mainRect.top + mainContent.scrollTop;
+    const left = rect.left - mainRect.left + mainContent.scrollLeft;
 
     valuePopup.style.top = `${top}px`;
     valuePopup.style.left = `${left}px`;
@@ -2500,7 +2503,7 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
     }
 
     // Adicionar popup à página
-    document.body.appendChild(valuePopup);
+    document.getElementById('mainContent').appendChild(valuePopup);
 
     // Função para fechar o popup ao clicar fora
     function closePopup() {
