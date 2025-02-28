@@ -96,7 +96,7 @@ function createBank(letter, index) {
     copyIcon.onclick = () => {
         event.stopPropagation();
         copiedBank = `Bank ${letter}`;
-        alert(`Bank ${letter} copiado!`);
+        notify(`Bank ${letter} copied!`);
 
         // Esconder todos os botões Swap ao copiar
         document.querySelectorAll('.bank-swap-icon').forEach(icon => {
@@ -122,7 +122,7 @@ function createBank(letter, index) {
     // Ao clicar no pasteIcon, envia mensagem, exibe alerta e oculta todos os botões de paste
     pasteIcon.onclick = () => {
         sendMessage([0xF0, 0x17, letter.charCodeAt(0) - 65, 0xF7]);
-        //alert(`Bank ${letter} atualizado com o conteúdo de ${copiedBank}`);
+        notify(`Bank ${letter} updated with the content from ${copiedBank}`);
         document.querySelectorAll('.bank-paste-icon').forEach(icon => {
             icon.style.display = 'none';
         });
@@ -140,7 +140,7 @@ function createBank(letter, index) {
     swapIcon.onclick = () => {
         if (swapping) {
             swapping = false;
-            alert(`Trocando ${swapBank} com Bank ${letter}`);
+            notify(`Switching Bank ${swapBank} with Bank ${letter}`);
 
             sendMessage([0xF0,0x18,letter-65,0xF7])
 
@@ -157,7 +157,7 @@ function createBank(letter, index) {
             event.stopPropagation();
             swapping = true;
             swapBank = letter; // Armazena apenas a letra para facilitar a lógica
-            alert(`Selecionado para troca: Bank ${swapBank}`);
+            notify(`Bank ${swapBank} selected for a swap`);
         
             // Esconder todos os botões Paste ao selecionar Swap
             document.querySelectorAll('.bank-paste-icon').forEach(icon => {
@@ -187,7 +187,7 @@ function createBank(letter, index) {
 
     // Evento de clique no Clear (resetar o Bank)
     clearIcon.onclick = () => {
-        alert(`Bank ${letter} was reseted!`);
+        notify(`Bank ${letter} was reseted!`);
         sendMessage([0xF0, 0x19, 0x00, 0xF7]); // Enviar comando de reset
     };
 
@@ -478,7 +478,7 @@ function createConfigPopup(detailButton, rangeStart, rangeEnd, onSelectCallback,
                         data.push(aux)
                     }
                 });
-                alert(data)
+                //alert(data)
                 sendMessage([0xF0,0x0C,/*currentBankLetter.charCodeAt(0)-65,*/ ...data ,0xF7])
                 valuePopup.remove();
             });
@@ -559,7 +559,7 @@ function createBankPatches(letter, index) {
 
         swapButton.onclick = () => {
             if (swapPatchId) {
-                //alert(`Trocando ${swapPatchId.charCodeAt(0)-65} ${swapPatchId.slice(1)} com ${patchId}`);
+                notify(`Switching ${swapPatchId.charCodeAt(0)-65} ${swapPatchId.slice(1)} with ${patchId}`);
                 document.querySelectorAll('.swap-button').forEach(button => {
                     button.style.display = 'none';
                 });
@@ -609,7 +609,7 @@ function createBankPatches(letter, index) {
 
             patchCopyIcon.onclick = () => {
                 copiedPatchId = patchId;
-                //alert(`Patch ${patchId} copiado!`);
+                notify(`Patch ${patchId} Copied!`);
 
                 document.querySelectorAll('.swap-button').forEach(button => {
                     button.style.display = 'none';
@@ -637,7 +637,7 @@ function createBankPatches(letter, index) {
 
             patchSwapIcon.onclick = () => {
                 swapPatchId = patchId;
-                //alert(`Selecionado para troca: ${patchId}`);
+                notify(`${patchId} selected for a swap`);
 
                 document.querySelectorAll('.paste-button').forEach(button => {
                     button.style.display = 'none';
@@ -663,7 +663,7 @@ function createBankPatches(letter, index) {
             patchClearIcon.style.marginLeft = '50px';
 
             patchClearIcon.onclick = () => {
-                //alert(`Patch ${patchId} resetado!`);
+                notify(`Patch ${patchId} reseted!`);
                 sendMessage([0xF0, 0x14, letter.charCodeAt(0) - 65, j, 0xF7]);
             };
 
@@ -981,11 +981,11 @@ async function setupMidiListener() {
                         break;
 
                     case 0x12:
-                        //alert("Saved")
+                        notify("Changes saved", 'success')
                         break;
 
                     case 0x13:
-                        //alert("Canceled")
+                        notify("Changes canceled")
                         const selectedPatch = document.querySelector(`.bank-details li[data-patch-id="${activePatch}"]`);
                         if (selectedPatch) {
                             selectedPatch.click();
@@ -995,7 +995,7 @@ async function setupMidiListener() {
                         break;
                     
                     case 0x14:
-                        //alert("Clear")
+                        notify("Clear")
                         const actualPatch = document.querySelector(`.bank-details li[data-patch-id="${activePatch}"]`);
                         if (actualPatch) {
                             actualPatch.click();
@@ -1970,6 +1970,20 @@ function cancelChanges(button) {
     sendMessage([0xF0,0x13,0x00,0xF7])
 }
 
+function notify(mensagem, icon) {
+    Swal.fire({
+      toast: true,
+      background: "#2a2a40",
+      color: "rgb(83, 191, 235)",
+      position: "bottom-end",
+      icon: icon,
+      title: mensagem,
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    });
+  }
+
 
 
 
@@ -2202,6 +2216,56 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
                 handleMidiSelection(option, midiButton, patchId, index, tableId);
                 midiPopup.style.display = 'none';
                 currentOpenMidiPopup = null;
+
+                // Identifica qual tabela MIDI originou esse popup
+                const midiTable = midiButton.closest('.table'); 
+                if (!midiTable) {
+                    console.error("Não foi possível identificar a tabela MIDI.");
+                    return;
+                }
+
+                // Captura todos os valores dos botões dentro dessa tabela específica
+                let midiValues = Array.from(midiTable.querySelectorAll('span'))
+                    .map(btn => {
+                        let text = btn.textContent.trim();
+                        
+                        if (text === "OFF") return 0;
+                        if (text === "PC") return 1;
+                        if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
+                        return parseInt(text) || 0;
+                    });
+
+                midiValues.forEach((value, index) => {
+                    if ((index - 2) % 3 === 0) { // Identifica as posições 2, 5, 8, 11...
+                        midiValues[index] = value - 1; // Diminui 1 do valor
+                    }
+                });
+
+                //alert(`Valores da ${midiTable.id} na pagina ${selectedButtonIndices[midiTable.id]}: ${midiValues}`);
+                
+                let tableAux = '';
+                switch (midiTable.id) {
+                    case 'midi-table':
+                        tableAux = 0;
+                        break;
+                    case 'midi-table-2':
+                        tableAux = 1;
+                        break;
+                    case 'midi-table-3':
+                        tableAux = 2;
+                        break;
+                }
+
+                const novaOrdem = [
+                    0,1,2, 6,7,8, 12,13,14, 18,19,20, 24,25,26, 
+                    3,4,5, 9,10,11, 15,16,17, 21,22,23, 27,28,29
+                ];
+                
+                const results = novaOrdem.map(index => midiValues[index]);
+                alert (results)
+
+                // Envia os valores da tabela específica
+                sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
             });
             midiPopup.appendChild(optionButton);
         });
@@ -2216,6 +2280,56 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
                 handleMidiSelection(`CC${i}`, midiButton, patchId, index, tableId);
                 midiPopup.style.display = 'none';
                 currentOpenMidiPopup = null;
+                
+                // Identifica qual tabela MIDI originou esse popup
+                const midiTable = midiButton.closest('.table'); 
+                if (!midiTable) {
+                    console.error("Não foi possível identificar a tabela MIDI.");
+                    return;
+                }
+
+                // Captura todos os valores dos botões dentro dessa tabela específica
+                let midiValues = Array.from(midiTable.querySelectorAll('span'))
+                    .map(btn => {
+                        let text = btn.textContent.trim();
+                        
+                        if (text === "OFF") return 0;
+                        if (text === "PC") return 1;
+                        if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
+                        return parseInt(text) || 0;
+                    });
+
+                midiValues.forEach((value, index) => {
+                    if ((index - 2) % 3 === 0) { // Identifica as posições 2, 5, 8, 11...
+                        midiValues[index] = value - 1; // Diminui 1 do valor
+                    }
+                });
+
+                //alert(`Valores da ${midiTable.id} na pagina ${selectedButtonIndices[midiTable.id]}: ${midiValues}`);
+                
+                let tableAux = '';
+                switch (midiTable.id) {
+                    case 'midi-table':
+                        tableAux = 0;
+                        break;
+                    case 'midi-table-2':
+                        tableAux = 1;
+                        break;
+                    case 'midi-table-3':
+                        tableAux = 2;
+                        break;
+                }
+
+                const novaOrdem = [
+                    0,1,2, 6,7,8, 12,13,14, 18,19,20, 24,25,26, 
+                    3,4,5, 9,10,11, 15,16,17, 21,22,23, 27,28,29
+                ];
+                
+                const results = novaOrdem.map(index => midiValues[index]);
+                //alert (results)
+
+                // Envia os valores da tabela específica
+                sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
             });
             midiPopup.appendChild(optionButton);
         }
