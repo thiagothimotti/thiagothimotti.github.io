@@ -187,7 +187,7 @@ function createBank(letter, index) {
 
     // Evento de clique no Clear (resetar o Bank)
     clearIcon.onclick = () => {
-        alert(`Bank ${letter} foi resetado!`);
+        alert(`Bank ${letter} was reseted!`);
         sendMessage([0xF0, 0x19, 0x00, 0xF7]); // Enviar comando de reset
     };
 
@@ -995,7 +995,7 @@ async function setupMidiListener() {
                         break;
                     
                     case 0x14:
-                        alert("Canceled")
+                        //alert("Clear")
                         const actualPatch = document.querySelector(`.bank-details li[data-patch-id="${activePatch}"]`);
                         if (actualPatch) {
                             actualPatch.click();
@@ -2287,9 +2287,7 @@ function handleMidiSelection(type, midiButton, patchId, index) {
     // Cria botões secundarios
     for (let j = 0; j < 2; j++) {
         const detailButton = document.createElement('span');
-        if (j === 0){
-            detailButton.textContent = '0';
-        } else detailButton.textContent = '1';
+        detailButton.textContent = j === 0 ? '0' : '1';
         
         detailButton.className = 'midi-detail';
         detailButton.style.height = '15px';
@@ -2306,7 +2304,6 @@ function handleMidiSelection(type, midiButton, patchId, index) {
 
             createValuePopup(detailButton, rangeStart, rangeEnd, (selectedValue) => {
                 detailButton.textContent = selectedValue;
-                //updateMidiState(patchId, index, j, selectedValue);
             });
         });
 
@@ -2317,7 +2314,6 @@ function handleMidiSelection(type, midiButton, patchId, index) {
     const midiData = { type: type, values: [0, 1] };
     const states = loadMidiStates(patchId);
     states[index] = midiData;
-    //localStorage.setItem(`${patchId}_${tableId}`, JSON.stringify(states));
 }
 
 // Cria popup pro valor e canal
@@ -2495,7 +2491,59 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
             valueButton.addEventListener('click', (e) => {
                 e.stopPropagation();
                 onSelectCallback(option);
-                closePopup();
+                // Identifica qual tabela MIDI originou esse popup
+                const midiTable = detailButton.closest('.table'); 
+                if (!midiTable) {
+                    console.error("Não foi possível identificar a tabela MIDI.");
+                    return;
+                }
+
+                // Captura todos os valores dos botões dentro dessa tabela específica
+                let midiValues = Array.from(midiTable.querySelectorAll('span'))
+                    .map(btn => {
+                        let text = btn.textContent.trim();
+                        
+                        if (text === "OFF") return 0;
+                        if (text === "PC") return 1;
+                        if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
+                        if (text === "EXP1") return 128;
+                        if (text === "EXP2") return 129;
+                        return parseInt(text) || 0;
+                    });
+
+                midiValues.forEach((value, index) => {
+                    if ((index - 2) % 3 === 0) { // Identifica as posições 2, 5, 8, 11...
+                        midiValues[index] = value - 1; // Diminui 1 do valor
+                    }
+                });
+
+                //alert(`Valores da ${midiTable.id} na pagina ${selectedButtonIndices[midiTable.id]}: ${midiValues}`);
+                
+                let tableAux = '';
+                switch (midiTable.id) {
+                    case 'midi-table':
+                        tableAux = 0;
+                        break;
+                    case 'midi-table-2':
+                        tableAux = 1;
+                        break;
+                    case 'midi-table-3':
+                        tableAux = 2;
+                        break;
+                }
+
+                const novaOrdem = [
+                    0,1,2, 6,7,8, 12,13,14, 18,19,20, 24,25,26, 
+                    3,4,5, 9,10,11, 15,16,17, 21,22,23, 27,28,29
+                ];
+                
+                const results = novaOrdem.map(index => midiValues[index]);
+                alert (results)
+
+                // Envia os valores da tabela específica
+                sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
+                
+                valuePopup.remove();
             });
 
             valuePopup.appendChild(valueButton);
