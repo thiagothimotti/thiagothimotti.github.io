@@ -319,16 +319,12 @@ function bankSelect(bank, bankDetails, index) {
 }
 
 function createBnkCfg(letter) {
-    /*sendMessage([0xF0,0x0B,bank.dataset.letter.charCodeAt(0)-65,0xF7]);*/
     const bnkCfg = document.createElement('div');
     bnkCfg.id = 'bnkCfg';
     bnkCfg.style.position = 'absolute';
     bnkCfg.style.right = '20px';
     bnkCfg.style.top = '50%';
     bnkCfg.style.transform = 'translateY(-50%)';
-    /*bnkCfg.style.backgroundColor = bank.dataset.letter.charCodeAt(0) % 2 === 0
-        ? 'rgba(83, 191, 235, 0.5)'
-        : 'rgba(159, 24, 253, 0.5)';*/
     bnkCfg.style.backgroundColor = 'rgba(159, 24, 253, 0.5)';
     bnkCfg.style.borderRadius = '8px';
     bnkCfg.style.padding = '20px';
@@ -341,9 +337,7 @@ function createBnkCfg(letter) {
     // Criar título
     const titleRow = document.createElement('div');
 
-    /*if (bank.dataset.letter.charCodeAt(0) % 2 === 0) {
-        titleRow.innerHTML = `<span style="color: #6c2ca7;">Bank ${bank.dataset.letter}</span> <span style="color: white;">Configuration</span>`;
-    } else*/ titleRow.innerHTML = `<span style="color: #53bfeb;">Bank ${letter}</span> <span style="color: white;">Configuration</span>`;
+    titleRow.innerHTML = `<span style="color: #53bfeb;">Bank ${letter}</span> <span style="color: white;">Configuration</span>`;
     
     titleRow.style.fontSize = '18px';
     titleRow.style.fontWeight = '600';
@@ -463,11 +457,7 @@ function createConfigPopup(detailButton, rangeStart, rangeEnd, onSelectCallback,
                         data.push(1)
                     } else if (index < 2){
                         let aux = value.slice(-1).charCodeAt(0);
-                        /*if (aux < currentBankLetter.charCodeAt(0)) {
-                            data.push(aux - 64)
-                        } else {
-                            data.push(aux - 65)
-                        }*/data.push(aux - 64)
+                        data.push(aux - 64)
                     } else {
                         let aux = value.replace("Load from ", "");
                         if (aux.length === 1) {
@@ -479,7 +469,7 @@ function createConfigPopup(detailButton, rangeStart, rangeEnd, onSelectCallback,
                     }
                 });
                 //alert(data)
-                sendMessage([0xF0,0x0C,/*currentBankLetter.charCodeAt(0)-65,*/ ...data ,0xF7])
+                sendMessage([0xF0,0x0C, ...data ,0xF7])
                 valuePopup.remove();
             });
 
@@ -866,13 +856,6 @@ async function setupMidiListener() {
                         console.log('remotes ', remotes)
                         break;
                     case 6:
-                        /*patchName = sysexData;
-                        console.log('patchname ', patchName )
-                        const selectedPatchElement = document.getElementById('selectedPatch');
-                        const textContent = Array.from(sysexData).map(num => String.fromCharCode(num)).join('').trim();
-                        if (textContent)
-                            selectedPatchElement.textContent = `${activePatch} - ${textContent.trim()}`;
-                        else selectedPatchElement.textContent = `Patch ${activePatch}`;*/
                         sendMessage([0xF0,0x0A,currentBankLetter.charCodeAt(0)-65,0xF7]);
                         break;
                     case 10:
@@ -971,7 +954,7 @@ async function setupMidiListener() {
                         
                         if (tableId) {
                             const values = sysexData.slice(3);
-                            fillMidiTable(results /*[...Array(30).keys()]*/, tableId);
+                            fillMidiTable(results, tableId);
                         }
                         break;
                     
@@ -1010,7 +993,7 @@ async function setupMidiListener() {
                 console.log('removendo ', lastMessage[0])
                 lastMessage.shift()
             } else {
-                /*console.log("Mensagem MIDI não SysEx recebida:", message.data);*/
+                console.log("Mensagem MIDI não SysEx recebida:", message.data);/**/
             }
         };
     } catch (error) {
@@ -1317,7 +1300,7 @@ function createNameInput(letter, number) {
     patchName.maxLength = 6;
 
     // Define a cor com base na letra do banco
-    const color = /*(letter.charCodeAt(0) - 65) % 2 === 0 ? '#9f18fd' :*/ '#53bfeb'; //'#9f18fd'; // Azul ou roxo
+    const color = '#53bfeb'; //'#9f18fd'; // Azul ou roxo
     patchName.style.border = `1px solid ${color}`;
 
     patchName.addEventListener('input', () => {
@@ -1356,7 +1339,7 @@ function createPatchTypeButton(letter, number) {
 
 // Calcula a cor do patch
 function setPatchColor(patchItem, patchTypeButton, index) {
-    const color = /*index % 2 === 0 ?*/ '#53bfeb' /*: '#9f18fd'*/;
+    const color = '#53bfeb';
     patchItem.style.color = color;
     patchTypeButton.style.color = color;
 }
@@ -1373,9 +1356,7 @@ async function createLoopTable(patchId, index) {
     let states = loops;
 
     loopTableFull.style.display = 'flex';
-    loopTableFull.style.backgroundColor = /*index % 2 === 0
-        ? 'rgba(83, 191, 235, 0.5)'
-        :*/ 'rgba(159, 24, 253, 0.5)';
+    loopTableFull.style.backgroundColor = 'rgba(159, 24, 253, 0.5)';
     loopTableFull.style.fontWeight = '500';
     loopTableFull.style.padding = '10px';
     loopTableFull.style.margin = 'auto';
@@ -1610,7 +1591,7 @@ function createPresetOptions(patchTypeButton, letter, number, index) {
 
 // Gerencia a tabela de tipos de patch
 function configurePresetOptionEvents(optionButton, patchTypeButton, presetOptions, letter, number, index) {
-    const color = /*index % 2 === 0 ? '#53bfeb' : '#9f18fd';*/ '#53bfeb'
+    const color = '#53bfeb';
 
     optionButton.addEventListener('mouseover', () => {
         optionButton.style.color = color;
@@ -1673,9 +1654,7 @@ async function createTableRemoteSwitch(patchId, index) {
     remoteTableFull.style.display = 'flex';
     remoteTableFull.style.flexDirection = 'column';
     remoteTableFull.style.alignItems = 'center';
-    remoteTableFull.style.backgroundColor = /*index % 2 === 0
-        ? 'rgba(83, 191, 235, 0.5)'
-        :*/ 'rgba(159, 24, 253, 0.5)';
+    remoteTableFull.style.backgroundColor = 'rgba(159, 24, 253, 0.5)';
     remoteTableFull.style.fontWeight = '500';
     remoteTableFull.style.padding = '10px';
     remoteTableFull.style.borderRadius = '10px';
@@ -1982,7 +1961,7 @@ function notify(mensagem, icon) {
       timer: 3000,
       timerProgressBar: true
     });
-  }
+}
 
 
 
