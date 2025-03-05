@@ -379,6 +379,7 @@ function createBnkCfg(letter) {
                     }
                 }
             } else {
+                options.push('Locked');
                 for (let letterAux = 65; letterAux <= 90; letterAux++) {
                     if (String.fromCharCode(letterAux) != letter){
                     options.push(`Load from ${String.fromCharCode(letterAux)}`);
@@ -468,8 +469,10 @@ function createConfigPopup(detailButton, rangeStart, rangeEnd, onSelectCallback,
                         data.push(aux)
                     }
                 });
-                //alert(data)
-                sendMessage([0xF0,0x0C, ...data ,0xF7])
+                //alert(data[2])
+                //alert([...data].map(num => Number(num).toString(2).padStart(8, '0')).join(' '))
+                sendMessage([0xF0,0x0C, currentBankLetter.charCodeAt(0)-65,data[0],data[1],
+                    data[2]&0b00001111,((data[2] & 0b11110000) >> 4),data[3]&0b00001111,((data[3]&0b11110000)>>4) ,0xF7])
                 valuePopup.remove();
             });
 
@@ -884,6 +887,10 @@ async function setupMidiListener() {
                                 }
                             }
                         }
+                        //alert([...sysexData].map(num => Number(num).toString(2).padStart(8, '0')).join(' '));
+                        sysexData[2] = sysexData[2]+(sysexData[3]<<4)
+                        sysexData[3] = sysexData[4]+(sysexData[5]<<4)
+                        //alert([...sysexData].map(num => Number(num).toString(2).padStart(8, '0')).join(' '));
                         for (let i=2; i<4; i++){
                             switch (sysexData[i]) {
                                 case 0:
@@ -921,6 +928,8 @@ async function setupMidiListener() {
                         const results = novaOrdem.map(index => sysexData.slice(3)[index]);
 
                         if (sysexData[1] === 0) {
+                            //alert([...sysexData].map(num => Number(num).toString(2).padStart(8, '0')).join(' '));
+
                             if (sysexData[2] === 0 && advanced1.length !== 0){
                                 fillMidiTable(advanced1, tableId);
                                 break;
@@ -1014,7 +1023,13 @@ function fillMidiTable(values, tableId) {
     }
 
     midiTable.innerHTML = ''; // Limpa a tabela antes de preencher
-
+    for (let i = 0; i < 10; i++) {
+        values[i*3+1]=(values[i*3+1]&0b01111111)+((values[i*3+2]&0b00100000)<<2)
+        values[i*3+0]=(values[i*3+0]&0b01111111)+((values[i*3+2]&0b00010000)<<3)
+        values[i*3+2]=values[i*3+2]&0b00001111
+    }
+    //alert([...values])
+    
     for (let i = 0; i < 30; i += 3) {
         const midiRow = document.createElement('div');
         midiRow.className = 'midi-row';
@@ -1909,6 +1924,8 @@ async function toggleConnection(button) {
         if (patchClearIcon) {
             patchClearIcon.remove();
         }
+
+        document.getElementById('editor-title').textContent = 'Saturno Web Editor';
         
         // Alterar o texto do botão
         button.textContent = "Connect";
@@ -1923,6 +1940,7 @@ async function heartBeat() {
         if (outputs.length === 0) {
             //alert("Nenhum dispositivo MIDI encontrado. Abortando conexão.");
             toggleConnection(document.getElementById('connectButton'));
+            //notify ("Nenhum dispositivo MIDI encontrado. Abortando conexão.", 'error');
             //await(10000)
             //window.location.reload();
             return;
@@ -2241,7 +2259,15 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
                 ];
                 
                 const results = novaOrdem.map(index => midiValues[index]);
-                alert (results)
+
+                for (let i = 0; i < 10; i++) {
+                    results[i*3+2]=results[i*3+2]+((results[i*3+0]&0b10000000)>>3)+((results[i*3+1]&0b10000000)>>2)
+                    results[i*3+0]=results[i*3+0]&0b01111111
+                    results[i*3+1]=results[i*3+1]&0b01111111
+                }
+                //alert([...results])
+
+                alert([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7])
 
                 // Envia os valores da tabela específica
                 sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
@@ -2305,8 +2331,12 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
                 ];
                 
                 const results = novaOrdem.map(index => midiValues[index]);
-                //alert (results)
-
+                for (let i = 0; i < 10; i++) {
+                    results[i*3+2]=results[i*3+2]+((results[i*3+0]&0b10000000)>>3)+((results[i*3+1]&0b10000000)>>2)
+                    results[i*3+0]=results[i*3+0]&0b01111111
+                    results[i*3+1]=results[i*3+1]&0b01111111
+                }
+                //alert([...results])
                 // Envia os valores da tabela específica
                 sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
             });
@@ -2373,7 +2403,7 @@ function handleMidiSelection(type, midiButton, patchId, index) {
 
     // Salva e sai se escolher OFF
     if (type === 'OFF') {
-        localStorage.setItem(`${patchId}_${tableId}`, JSON.stringify({ type: 'OFF', values: [] }));
+        //localStorage.setItem(`${patchId}_${tableId}`, JSON.stringify({ type: 'OFF', values: [] }));
         return;
     }
 
@@ -2497,8 +2527,12 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
             ];
             
             const results = novaOrdem.map(index => midiValues[index]);
-            alert (results)
-
+            for (let i = 0; i < 10; i++) {
+                results[i*3+2]=results[i*3+2]+((results[i*3+0]&0b10000000)>>3)+((results[i*3+1]&0b10000000)>>2)
+                results[i*3+0]=results[i*3+0]&0b01111111
+                results[i*3+1]=results[i*3+1]&0b01111111
+            }
+            //alert([...results])
             // Envia os valores da tabela específica
             sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
 
@@ -2560,8 +2594,20 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                     break;
             }
 
+            const novaOrdem = [
+                0,1,2, 6,7,8, 12,13,14, 18,19,20, 24,25,26, 
+                3,4,5, 9,10,11, 15,16,17, 21,22,23, 27,28,29
+            ];
+            
+            const results = novaOrdem.map(index => midiValues[index]);
+            for (let i = 0; i < 10; i++) {
+                results[i*3+2]=results[i*3+2]+((results[i*3+0]&0b10000000)>>3)+((results[i*3+1]&0b10000000)>>2)
+                results[i*3+0]=results[i*3+0]&0b01111111
+                results[i*3+1]=results[i*3+1]&0b01111111
+            }
+            //alert([...results])
             // Envia os valores da tabela específica
-            sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...midiValues, 0xF7]);
+            sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
 
             valuePopup.remove();
         });
@@ -2631,8 +2677,12 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                 ];
                 
                 const results = novaOrdem.map(index => midiValues[index]);
-                alert (results)
-
+                for (let i = 0; i < 10; i++) {
+                    results[i*3+2]=results[i*3+2]+((results[i*3+0]&0b10000000)>>3)+((results[i*3+1]&0b10000000)>>2)
+                    results[i*3+0]=results[i*3+0]&0b01111111
+                    results[i*3+1]=results[i*3+1]&0b01111111
+                }
+                //alert([...results])
                 // Envia os valores da tabela específica
                 sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
                 
