@@ -565,13 +565,19 @@ function createBankPatches(letter, index) {
 
         let isProcessingPatch = false; // Flag para impedir cliques multiplos
         patchItem.addEventListener('click', async () => {
-            if (isProcessingPatch) return;
+            if (isProcessingPatch || activePatch === patchId) return;
 
             isProcessingPatch = true;
 
             activePatch = letter + j;
 
             document.getElementById('patchTitle').style.display = 'flex';
+
+            selectedButtonIndices = {
+                'midi-table': 0,
+                'midi-table-2': 0,
+                'midi-table-3': 0
+            };
 
             const patchNameValue = inputElement.value || `Patch ${patchId}`;
             const selectedPatchText = document.getElementById('selectedPatch');
@@ -686,6 +692,8 @@ function createBankPatches(letter, index) {
                 existingTable.remove();
             }
             createBnkCfg(letter);
+
+            sendMessage([0xF0,0x10,currentBankLetter.charCodeAt(0)-65,0xF7])
 
             await delay(200);
             sendMessage([0xF0, 0x0B, letter.charCodeAt(0) - 65, 0xF7]);
@@ -1467,7 +1475,7 @@ async function createLoopTable(patchId, index) {
                     loopButton.style.color = selectedValue === "ON" ? "lime" : 
                                             selectedValue === "NUL" ? "yellow" :
                                             selectedValue === "TGL" ? "white" : "red";
-                    states = updateStatesRemote();
+                    states = updateStates();
                     sendMessage(states);
                 });
             } else {
@@ -1488,25 +1496,31 @@ function updateStates() {
 
     // Percorrer os botões de loop para obter os estados
     let loopButtons = document.querySelectorAll('#loop-table span-button');
-
+    let varAuxType = document.getElementById("patchType").textContent;
     loopButtons.forEach((loopButton, index) => {
         let state;
 
         // Verifica o texto do botão e atribui o valor correspondente
-        switch (loopButton.textContent) {
-            case 'ON':
-                state = 1;
-                break;
-            case 'NUL':
-                state = 2;
-                break;
-            case 'TGL':
-                state = 3;
-                break;
-            default: // Quando for 'OFF' ou qualquer outro valor
-                state = 0;
-                break;
+        if (varAuxType == "(Preset)") {
+            switch (loopButton.textContent) {
+                case 'OFF': state = 0; break;
+                case 'ON': state = 1; break;
+                case 'NUL': state = 2; break;
+            }
+            size = '16px';
+        } else if (varAuxType === "(Tuner)") {
+            state = 'Inactive';
+            size = '14px';
+        } else {
+            switch (loopButton.textContent) {
+                case 'NUL': state = 0; break;
+                case 'TLG': state = 1; break;
+                case 'ON': state = 2; break;
+                case 'OFF': state = 3; break;
+            }
+            size = '16px';
         }
+
         // Atualiza o array states com o valor numérico
         updatedStates[index+2] = state;
     });
@@ -1571,12 +1585,15 @@ function createPresetOptions(patchTypeButton, letter, number, index) {
             }
 
             patchTypeButton.textContent = preset;
+            document.getElementById("patchType").textContent = `(${preset})`
             localStorage.setItem(`${letter}${number}_type`, preset);
             presetOptions.style.display = 'none';
 
-            sendMessage([0xF0,0x0D,0x00,0x00,0xF7])
-            sendMessage([0xF0,0x0D,0x01,0x00,0xF7])
-            sendMessage([0xF0,0x0D,0x02,0x00,0xF7])
+            sendMessage([0xF0,0x0D,0x00,0x00,0xF7]);
+            sendMessage([0xF0,0x0D,0x01,0x00,0xF7]);
+            sendMessage([0xF0,0x0D,0x02,0x00,0xF7]);
+            createLoopTable(letter+number, index);
+            createTableRemoteSwitch(letter+number, index);
         });
 
         configurePresetOptionEvents(optionButton, patchTypeButton, presetOptions, letter, number, index);
@@ -1625,21 +1642,16 @@ function configurePresetOptionEvents(optionButton, patchTypeButton, presetOption
 
 // Alterna os valores da tabela loops
 function toggleState(button, index, loopIndex) {
-    const states = loadLoopStates(index);
 
-    states[loopIndex] = !states[loopIndex];
-
-    if (states[loopIndex]) {
+    if (button.textContent !== 'ON') {
         button.textContent = "ON";
         button.style.color = 'lime';
     } else {
         button.textContent = "OFF";
         button.style.color = 'red';
     }
-
-    saveLoopStates(index, states);
 }
-
+/*
 // Salva os estados dos loops
 function saveLoopStates(index, states) {
     localStorage.setItem(`${index}_loops`, JSON.stringify(states));
@@ -1649,7 +1661,7 @@ function saveLoopStates(index, states) {
 function loadLoopStates(index) {
     const savedStates = localStorage.getItem(`${index}_loops`);
     return savedStates ? JSON.parse(savedStates) : Array(8).fill(false);
-}
+}*/
 
 // Remote Switch
 async function createTableRemoteSwitch(patchId, index) {
@@ -1759,7 +1771,7 @@ async function createTableRemoteSwitch(patchId, index) {
                 });
             } else {
                 toggleState(loopButton, patchId, i);
-                states = updateStates();
+                states = updateStatesRemote();
                 sendMessage(states);
             }
         });
@@ -1881,7 +1893,7 @@ async function toggleConnection(button) {
                 if (!isExecuting) {
                     heartBeat();
                 }
-            }, 200);
+            }, 1000);
 
             // Alterar o texto do botão
             button.textContent = "Disconnect";
@@ -1893,6 +1905,11 @@ async function toggleConnection(button) {
         // Desconectar se já estiver conectado
         clearInterval(intervalId);
         intervalId = null;
+
+        const outputs = Array.from(midiAccess.outputs.values());
+        if (outputs.length !== 0) {
+            sendMessage([0xF0,0x1A,0x00,0xF7])
+        }
 
         // Fechar conexão MIDI explicitamente
         if (midiAccess) {
@@ -1940,7 +1957,7 @@ async function heartBeat() {
         if (outputs.length === 0) {
             //alert("Nenhum dispositivo MIDI encontrado. Abortando conexão.");
             toggleConnection(document.getElementById('connectButton'));
-            //notify ("Nenhum dispositivo MIDI encontrado. Abortando conexão.", 'error');
+            notify ("Nenhum dispositivo MIDI encontrado. Abortando conexão.", 'error');
             //await(10000)
             //window.location.reload();
             return;
@@ -2229,6 +2246,8 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
                         if (text === "OFF") return 0;
                         if (text === "PC") return 1;
                         if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
+                        if (text === "EXP1") return 128;
+                        if (text === "EXP2") return 129;
                         return parseInt(text) || 0;
                     });
 
@@ -2267,7 +2286,7 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
                 }
                 //alert([...results])
 
-                alert([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7])
+                //alert([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7])
 
                 // Envia os valores da tabela específica
                 sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
@@ -2301,6 +2320,8 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
                         if (text === "OFF") return 0;
                         if (text === "PC") return 1;
                         if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
+                        if (text === "EXP1") return 128;
+                        if (text === "EXP2") return 129;
                         return parseInt(text) || 0;
                     });
 
@@ -2497,6 +2518,8 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                     if (text === "OFF") return 0;
                     if (text === "PC") return 1;
                     if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
+                    if (text === "EXP1") return 128;
+                    if (text === "EXP2") return 129;
                     return parseInt(text) || 0;
                 });
 
@@ -2570,6 +2593,8 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                     if (text === "OFF") return 0;
                     if (text === "PC") return 1;
                     if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
+                    if (text === "EXP1") return 128;
+                    if (text === "EXP2") return 129;
                     return parseInt(text) || 0;
                 });
 
@@ -2600,12 +2625,13 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
             ];
             
             const results = novaOrdem.map(index => midiValues[index]);
+            alert([...results])
             for (let i = 0; i < 10; i++) {
                 results[i*3+2]=results[i*3+2]+((results[i*3+0]&0b10000000)>>3)+((results[i*3+1]&0b10000000)>>2)
                 results[i*3+0]=results[i*3+0]&0b01111111
                 results[i*3+1]=results[i*3+1]&0b01111111
             }
-            //alert([...results])
+            alert([...results])
             // Envia os valores da tabela específica
             sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
 
