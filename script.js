@@ -2625,7 +2625,7 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
     
     let tableElement = detailButton.closest('.table'); 
     let tableId = tableElement ? tableElement.id : 'desconhecido';
-    alert(tableId)
+    //alert(tableId)
     // Adiciona numeros ao popup
     for (let i = rangeStart; i <= rangeEnd; i++) {
         const valueButton = document.createElement('button');
