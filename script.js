@@ -1028,10 +1028,10 @@ async function setupMidiListener() {
                         remoteNamesChars = Array.from(remoteNames).map(num => String.fromCharCode(num));
                         break;
                     case 0x1D:
-                        alert(sysexData)
+                        //alert(sysexData)
                         midiChannelNames = sysexData.slice(1);
                         midiChannelNamesChars = Array.from(midiChannelNames).map(num => String.fromCharCode(num));
-                        alert(midiChannelNamesChars)
+                        //alert(midiChannelNamesChars)
                         break;
 
                     default:
@@ -1982,6 +1982,7 @@ async function toggleConnection(button) {
         // Alterar o texto do botão
         button.textContent = "Connect";
 
+        activePatch = null;
         isProcessingPatch = false; // Flag para impedir cliques multiplos
     }
 }
@@ -2641,7 +2642,7 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                 }
             });
 
-            //alert(Valores da ${midiTable.id} na pagina ${selectedButtonIndices[midiTable.id]}: ${midiValues});
+            //alert(`Valores da ${midiTable.id} na pagina ${selectedButtonIndices[midiTable.id]}: ${midiValues}`);
             
             let tableAux = '';
             switch (midiTable.id) {
@@ -2662,13 +2663,13 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
             ];
             
             const results = novaOrdem.map(index => midiValues[index]);
-            alert([...results])
+            //alert([...results])
             for (let i = 0; i < 10; i++) {
                 results[i*3+2]=results[i*3+2]+((results[i*3+0]&0b10000000)>>3)+((results[i*3+1]&0b10000000)>>2)
                 results[i*3+0]=results[i*3+0]&0b01111111
                 results[i*3+1]=results[i*3+1]&0b01111111
             }
-            alert([...results])
+            //alert([...results])
             // Envia os valores da tabela específica
             sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
 
