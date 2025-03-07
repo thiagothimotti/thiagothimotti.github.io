@@ -2363,6 +2363,23 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
                         if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
                         if (text === "EXP1") return 128;
                         if (text === "EXP2") return 129;
+                        switch (tableId) {
+                            case 'midi-table':
+                                if (midiChannelMap.hasOwnProperty(text)) {
+                                    return midiChannelMap[text];
+                                }
+                                break;
+                            case 'midi-table-2':
+                                if (midiChannelMap2.hasOwnProperty(text)) {
+                                    return midiChannelMap2[text];
+                                }
+                                break;
+                            case 'midi-table-3':
+                                if (midiChannelMap3.hasOwnProperty(text)) {
+                                    return midiChannelMap3[text];
+                                }
+                                break;
+                        }
                         return parseInt(text) || 0;
                     });
 
@@ -2400,9 +2417,9 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
                     results[i*3+1]=results[i*3+1]&0b01111111
                 }
 
-                //alert([...results])
+                alert([...results])
 
-                //alert([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7])
+                alert([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7])
 
                 // Envia os valores da tabela específica
                 sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
@@ -2438,6 +2455,23 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
                         if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
                         if (text === "EXP1") return 128;
                         if (text === "EXP2") return 129;
+                        switch (tableId) {
+                            case 'midi-table':
+                                if (midiChannelMap.hasOwnProperty(text)) {
+                                    return midiChannelMap[text];
+                                }
+                                break;
+                            case 'midi-table-2':
+                                if (midiChannelMap2.hasOwnProperty(text)) {
+                                    return midiChannelMap2[text];
+                                }
+                                break;
+                            case 'midi-table-3':
+                                if (midiChannelMap3.hasOwnProperty(text)) {
+                                    return midiChannelMap3[text];
+                                }
+                                break;
+                        }
                         return parseInt(text) || 0;
                     });
 
@@ -2473,7 +2507,7 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
                     results[i*3+0]=results[i*3+0]&0b01111111
                     results[i*3+1]=results[i*3+1]&0b01111111
                 }
-                //alert([...results])
+                alert([...results])
                 // Envia os valores da tabela específica
                 sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
             });
@@ -2637,6 +2671,23 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                     if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
                     if (text === "EXP1") return 128;
                     if (text === "EXP2") return 129;
+                    switch (tableId) {
+                        case 'midi-table':
+                            if (midiChannelMap.hasOwnProperty(text)) {
+                                return midiChannelMap[text];
+                            }
+                            break;
+                        case 'midi-table-2':
+                            if (midiChannelMap2.hasOwnProperty(text)) {
+                                return midiChannelMap2[text];
+                            }
+                            break;
+                        case 'midi-table-3':
+                            if (midiChannelMap3.hasOwnProperty(text)) {
+                                return midiChannelMap3[text];
+                            }
+                            break;
+                    }
                     return parseInt(text) || 0;
                 });
 
@@ -2672,7 +2723,7 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                 results[i*3+0]=results[i*3+0]&0b01111111
                 results[i*3+1]=results[i*3+1]&0b01111111
             }
-            //alert([...results])
+            alert([...results])
             // Envia os valores da tabela específica
             sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
 
@@ -2817,7 +2868,7 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                 results[i * 3 + 0] = results[i * 3 + 0] & 0b01111111;
                 results[i * 3 + 1] = results[i * 3 + 1] & 0b01111111;
             }
-            //alert([...results]);
+            alert([...results]);
             
             // Envia os valores da tabela específica
             sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
@@ -2860,6 +2911,23 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                         if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
                         if (text === "EXP1") return 128;
                         if (text === "EXP2") return 129;
+                        switch (tableId) {
+                            case 'midi-table':
+                                if (midiChannelMap.hasOwnProperty(text)) {
+                                    return midiChannelMap[text];
+                                }
+                                break;
+                            case 'midi-table-2':
+                                if (midiChannelMap2.hasOwnProperty(text)) {
+                                    return midiChannelMap2[text];
+                                }
+                                break;
+                            case 'midi-table-3':
+                                if (midiChannelMap3.hasOwnProperty(text)) {
+                                    return midiChannelMap3[text];
+                                }
+                                break;
+                        }
                         return parseInt(text) || 0;
                     });
 
@@ -2895,7 +2963,7 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                     results[i*3+0]=results[i*3+0]&0b01111111
                     results[i*3+1]=results[i*3+1]&0b01111111
                 }
-                //alert([...results])
+                alert([...results])
                 // Envia os valores da tabela específica
                 sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
                 
