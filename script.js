@@ -2417,9 +2417,9 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
                     results[i*3+1]=results[i*3+1]&0b01111111
                 }
 
-                alert([...results])
+                //alert([...results])
 
-                alert([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7])
+                //alert([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7])
 
                 // Envia os valores da tabela específica
                 sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
@@ -2507,7 +2507,7 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
                     results[i*3+0]=results[i*3+0]&0b01111111
                     results[i*3+1]=results[i*3+1]&0b01111111
                 }
-                alert([...results])
+                //alert([...results])
                 // Envia os valores da tabela específica
                 sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
             });
@@ -2723,7 +2723,7 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                 results[i*3+0]=results[i*3+0]&0b01111111
                 results[i*3+1]=results[i*3+1]&0b01111111
             }
-            alert([...results])
+            //alert([...results])
             // Envia os valores da tabela específica
             sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
 
@@ -2868,7 +2868,7 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                 results[i * 3 + 0] = results[i * 3 + 0] & 0b01111111;
                 results[i * 3 + 1] = results[i * 3 + 1] & 0b01111111;
             }
-            alert([...results]);
+            //alert([...results]);
             
             // Envia os valores da tabela específica
             sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
@@ -2963,7 +2963,7 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                     results[i*3+0]=results[i*3+0]&0b01111111
                     results[i*3+1]=results[i*3+1]&0b01111111
                 }
-                alert([...results])
+                //alert([...results])
                 // Envia os valores da tabela específica
                 sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
                 
