@@ -1041,14 +1041,47 @@ async function setupMidiListener() {
                     case 0x1D:
                         midiChannelNames = sysexData.slice(1);
                         midiChannelNamesChars = Array.from(midiChannelNames).map(num => String.fromCharCode(num));
+                        for (let i = 0; i < midiChannelNamesChars.length; i += 2) {
+                            let key = midiChannelNamesChars[i] + midiChannelNamesChars[i + 1];  // Concatenando os dois valores como chave
+                            if (key.trim() !== "") {
+                                midiChannelMap[key] = Math.floor(i / 2) + 1;  // Atribuindo um valor crescente de 1 a 16
+                            }
+                        }
+                        for (let key in midiChannelMap) {
+                            let value = midiChannelMap[key];
+                            midiChannelMap[value] = key;  // Adiciona o par inverso (valor-chave)
+                        }
+                        //alert(JSON.stringify(midiChannelMap, null, 2));
                         break;
                     case 0x1E:
                         midiChannelNames2 = sysexData.slice(1);
                         midiChannelNamesChars2 = Array.from(midiChannelNames2).map(num => String.fromCharCode(num));
+                        for (let i = 0; i < midiChannelNamesChars2.length; i += 2) {
+                            let key = midiChannelNamesChars2[i] + midiChannelNamesChars2[i + 1];  // Concatenando os dois valores como chave
+                            if (key.trim() !== "") {
+                                midiChannelMap2[key] = Math.floor(i / 2) + 1;  // Atribuindo um valor crescente de 1 a 16
+                            }
+                        }
+                        for (let key in midiChannelMap2) {
+                            let value = midiChannelMap2[key];
+                            midiChannelMap2[value] = key;  // Adiciona o par inverso (valor-chave)
+                        }
+                        //alert(JSON.stringify(midiChannelMap2, null, 2));
                         break;
                     case 0x1F:
                         midiChannelNames3 = sysexData.slice(1);
                         midiChannelNamesChars3 = Array.from(midiChannelNames3).map(num => String.fromCharCode(num));
+                        for (let i = 0; i < midiChannelNamesChars3.length; i += 2) {
+                            let key = midiChannelNamesChars3[i] + midiChannelNamesChars3[i + 1];  // Concatenando os dois valores como chave
+                            if (key.trim() !== "") {
+                                midiChannelMap3[key] = Math.floor(i / 2) + 1;  // Atribuindo um valor crescente de 1 a 16
+                            }
+                        }
+                        for (let key in midiChannelMap3) {
+                            let value = midiChannelMap3[key];
+                            midiChannelMap3[value] = key;  // Adiciona o par inverso (valor-chave)
+                        }
+                        //alert(JSON.stringify(midiChannelMap3, null, 2));
                         break;
 
                     default:
@@ -1105,10 +1138,36 @@ function fillMidiTable(values, tableId) {
         });
 
         midiRow.appendChild(midiButton);
+        //alert(values)
 
         for (let j = 0; j < 2; j++) {
             const detailButton = document.createElement('span');
-            detailButton.textContent = j === 0 ? values[i + j + 1] : values[i + j + 1] + 1;
+            if (j === 1){
+                let currentValue = values[i + j + 1]+1;
+                switch (tableId) {
+                    case 'midi-table':
+                        if (midiChannelMap.hasOwnProperty(currentValue)) {
+                            detailButton.textContent = midiChannelMap[currentValue];
+                        } else {
+                            detailButton.textContent = currentValue;
+                        }
+                        break;
+                    case 'midi-table-2':
+                        if (midiChannelMap2.hasOwnProperty(currentValue)) {
+                            detailButton.textContent = midiChannelMap2[currentValue];
+                        } else {
+                            detailButton.textContent = currentValue;
+                        }
+                        break;
+                    case 'midi-table-3':
+                        if (midiChannelMap3.hasOwnProperty(currentValue)) {
+                            detailButton.textContent = midiChannelMap3[currentValue];
+                        } else {
+                            detailButton.textContent = currentValue;
+                        }
+                        break;
+                }
+            } else detailButton.textContent = values[i + j + 1];  //voltar
             detailButton.className = 'midi-detail';
             detailButton.style.cursor = 'pointer';
             detailButton.style.marginTop = '-5px';
@@ -2660,7 +2719,7 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
             } else {
                 valueButton.textContent = i.toString(); // Caso os dois estejam vazios, usa o número
             }
-            switch (tableId) {
+            /*switch (tableId) {
                 case 'midi-table-2':
                     midiChannelMap2[valueButton.textContent] = i;
                     break;
@@ -2669,8 +2728,9 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                     break;
                 default:
                     midiChannelMap[valueButton.textContent] = i;
+                    midiChannelMap[i] = valueButton.textContent;
                     break;
-            }
+            }*/
             
         } else {
             valueButton.textContent = i.toString();
