@@ -1928,7 +1928,7 @@ async function toggleConnection(button) {
                 if (!isExecuting) {
                     heartBeat();
                 }
-            }, 1000);
+            }, 200);
 
             // Alterar o texto do botão
             button.textContent = "Disconnect";
