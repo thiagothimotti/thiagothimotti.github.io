@@ -24,6 +24,15 @@ let remoteNamesChars = [];
 
 let midiChannelNames = [];
 let midiChannelNamesChars = [];
+let midiChannelMap = {};
+
+let midiChannelNames2 = [];
+let midiChannelNamesChars2 = [];
+let midiChannelMap2 = {};
+
+let midiChannelNames3 = [];
+let midiChannelNamesChars3 = [];
+let midiChannelMap3 = {};
 
 let selectedButtonIndices = {
     'midi-table': 0,
@@ -56,6 +65,8 @@ async function initializeSite() {
     sendMessage([0xF0,0x1B,0x00,0xF7])
     sendMessage([0xF0,0x1C,0x00,0xF7])
     sendMessage([0xF0,0x1D,0x00,0xF7])
+    sendMessage([0xF0,0x1E,0x00,0xF7])
+    sendMessage([0xF0,0x1F,0x00,0xF7])
 
     const sidebar = document.getElementById('sidebar');
     for (let i = 65; i <= 90; i++) {
@@ -950,8 +961,6 @@ async function setupMidiListener() {
                         const results = novaOrdem.map(index => sysexData.slice(3)[index]);
 
                         if (sysexData[1] === 0) {
-                            //alert([...sysexData].map(num => Number(num).toString(2).padStart(8, '0')).join(' '));
-
                             if (sysexData[2] === 0 && advanced1.length !== 0){
                                 fillMidiTable(advanced1, tableId);
                                 break;
@@ -1028,11 +1037,18 @@ async function setupMidiListener() {
                         remoteNames = sysexData.slice(1);
                         remoteNamesChars = Array.from(remoteNames).map(num => String.fromCharCode(num));
                         break;
+
                     case 0x1D:
-                        //alert(sysexData)
                         midiChannelNames = sysexData.slice(1);
                         midiChannelNamesChars = Array.from(midiChannelNames).map(num => String.fromCharCode(num));
-                        //alert(midiChannelNamesChars)
+                        break;
+                    case 0x1E:
+                        midiChannelNames2 = sysexData.slice(1);
+                        midiChannelNamesChars2 = Array.from(midiChannelNames2).map(num => String.fromCharCode(num));
+                        break;
+                    case 0x1F:
+                        midiChannelNames3 = sysexData.slice(1);
+                        midiChannelNamesChars3 = Array.from(midiChannelNames3).map(num => String.fromCharCode(num));
                         break;
 
                     default:
@@ -1164,6 +1180,7 @@ function fillMidiTable(values, tableId) {
 
             switch (tableId) {
                 case 'midi-table':
+                    //voltar
                     switch (aux) {
                         case 0: 
                             advanced1 = Array.from(document.querySelectorAll("#midi-table .midi-row")).map(row => {
@@ -2605,16 +2622,32 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
 
         valuePopup.appendChild(valueButton);
     }
-
+    
+    let tableElement = detailButton.closest('.table'); 
+    let tableId = tableElement ? tableElement.id : 'desconhecido';
+    alert(tableId)
     // Adiciona numeros ao popup
     for (let i = rangeStart; i <= rangeEnd; i++) {
         const valueButton = document.createElement('button');
         
         // Verifica se o rangeEnd é 16 e substitui o número pelos valores de midiChannelNames se não estiverem vazios
         if (rangeEnd === 16) {
-            const channelName1 = midiChannelNamesChars[(i - 1) * 2];
-            const channelName2 = midiChannelNamesChars[(i - 1) * 2 + 1];
-
+            
+            let channelName1 = midiChannelNamesChars[(i - 1) * 2];
+            let channelName2 = midiChannelNamesChars[(i - 1) * 2 + 1];
+            switch (tableId) {
+                case 'midi-table-2':
+                    channelName1 = midiChannelNamesChars2[(i - 1) * 2];
+                    channelName2 = midiChannelNamesChars2[(i - 1) * 2 + 1];
+                    break;
+                case 'midi-table-3':
+                    channelName1 = midiChannelNamesChars3[(i - 1) * 2];
+                    channelName2 = midiChannelNamesChars3[(i - 1) * 2 + 1];
+                    break;
+                default:
+                    break;
+            }
+            
             const validChannelName1 = channelName1.trim();
             const validChannelName2 = channelName2.trim();
     
@@ -2627,6 +2660,18 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
             } else {
                 valueButton.textContent = i.toString(); // Caso os dois estejam vazios, usa o número
             }
+            switch (tableId) {
+                case 'midi-table-2':
+                    midiChannelMap2[valueButton.textContent] = i;
+                    break;
+                case 'midi-table-3':
+                    midiChannelMap3[valueButton.textContent] = i;
+                    break;
+                default:
+                    midiChannelMap[valueButton.textContent] = i;
+                    break;
+            }
+            
         } else {
             valueButton.textContent = i.toString();
         }
@@ -2658,6 +2703,24 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                     if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
                     if (text === "EXP1") return 128;
                     if (text === "EXP2") return 129;
+                    switch (tableId) {
+                        case 'midi-table':
+                            if (midiChannelMap.hasOwnProperty(text)) {
+                                return midiChannelMap[text];
+                            }
+                            break;
+                        case 'midi-table-2':
+                            if (midiChannelMap2.hasOwnProperty(text)) {
+                                return midiChannelMap2[text];
+                            }
+                            break;
+                        case 'midi-table-3':
+                            if (midiChannelMap3.hasOwnProperty(text)) {
+                                return midiChannelMap3[text];
+                            }
+                            break;
+                    }
+                    
                     return parseInt(text) || 0;
                 });
     
