@@ -1002,6 +1002,7 @@ async function setupMidiListener() {
                         notify("Changes canceled")
                         const selectedPatch = document.querySelector(`.bank-details li[data-patch-id="${activePatch}"]`);
                         if (selectedPatch) {
+                            activePatch = null;
                             selectedPatch.click();
                         } else {
                             console.warn("Nenhum patch selecionado para simular o clique.");
@@ -1012,6 +1013,7 @@ async function setupMidiListener() {
                         notify("Clear")
                         const actualPatch = document.querySelector(`.bank-details li[data-patch-id="${activePatch}"]`);
                         if (actualPatch) {
+                            activePatch = null;
                             actualPatch.click();
                         } else {
                             console.warn("Nenhum patch selecionado para simular o clique.");
@@ -1023,7 +1025,6 @@ async function setupMidiListener() {
                         loopsNamesChars = Array.from(loopsNames).map(num => String.fromCharCode(num));
                         break;
                     case 0x1C:
-                        
                         remoteNames = sysexData.slice(1);
                         remoteNamesChars = Array.from(remoteNames).map(num => String.fromCharCode(num));
                         break;
@@ -2315,13 +2316,14 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
                     3,4,5, 9,10,11, 15,16,17, 21,22,23, 27,28,29
                 ];
                 
-                const results = novaOrdem.map(index => midiValues[index]);
+                let results = novaOrdem.map(index => midiValues[index]);
 
                 for (let i = 0; i < 10; i++) {
                     results[i*3+2]=results[i*3+2]+((results[i*3+0]&0b10000000)>>3)+((results[i*3+1]&0b10000000)>>2)
                     results[i*3+0]=results[i*3+0]&0b01111111
                     results[i*3+1]=results[i*3+1]&0b01111111
                 }
+
                 //alert([...results])
 
                 //alert([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7])
@@ -2460,11 +2462,11 @@ function handleMidiSelection(type, midiButton, patchId, index) {
     const existingDetailButtons = parentRow.querySelectorAll('.midi-detail');
     existingDetailButtons.forEach((btn) => btn.remove());
 
-    // Salva e sai se escolher OFF
+    /*// Salva e sai se escolher OFF
     if (type === 'OFF') {
         //localStorage.setItem(`${patchId}_${tableId}`, JSON.stringify({ type: 'OFF', values: [] }));
         return;
-    }
+    }*/
 
     // Cria botões secundarios
     for (let j = 0; j < 2; j++) {
@@ -2477,6 +2479,7 @@ function handleMidiSelection(type, midiButton, patchId, index) {
         detailButton.style.minWidth = '15px';
         detailButton.style.maxWidth = '15px';
         detailButton.style.marginTop = '-5px';
+        if (type === 'OFF') detailButton.style.visibility = 'hidden';
 
         // Evento de clique para abrir popup de seleção
         detailButton.addEventListener('click', (e) => {
@@ -2606,28 +2609,50 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
     // Adiciona numeros ao popup
     for (let i = rangeStart; i <= rangeEnd; i++) {
         const valueButton = document.createElement('button');
-        valueButton.textContent = i.toString();
+        
+        // Verifica se o rangeEnd é 16 e substitui o número pelos valores de midiChannelNames se não estiverem vazios
+        if (rangeEnd === 16) {
+            const channelName1 = midiChannelNamesChars[(i - 1) * 2];
+            const channelName2 = midiChannelNamesChars[(i - 1) * 2 + 1];
+
+            const validChannelName1 = channelName1.trim();
+            const validChannelName2 = channelName2.trim();
+    
+            if (validChannelName1 && validChannelName2) {
+                valueButton.textContent = `${validChannelName1}${validChannelName2}`;
+            } else if (validChannelName1) {
+                valueButton.textContent = validChannelName1;
+            } else if (validChannelName2) {
+                valueButton.textContent = validChannelName2;
+            } else {
+                valueButton.textContent = i.toString(); // Caso os dois estejam vazios, usa o número
+            }
+        } else {
+            valueButton.textContent = i.toString();
+        }
+    
         valueButton.style.display = 'block';
         valueButton.style.width = '100%';
         valueButton.style.padding = '5px';
         valueButton.style.cursor = 'pointer';
-
+    
         // Salva e esconde o popup
         valueButton.addEventListener('click', (e) => {
             e.stopPropagation();
-            onSelectCallback(i);
+            onSelectCallback(valueButton.textContent);
+    
             // Identifica qual tabela MIDI originou esse popup
             const midiTable = detailButton.closest('.table'); 
             if (!midiTable) {
                 console.error("Não foi possível identificar a tabela MIDI.");
                 return;
             }
-
+    
             // Captura todos os valores dos botões dentro dessa tabela específica
             let midiValues = Array.from(midiTable.querySelectorAll('span'))
                 .map(btn => {
                     let text = btn.textContent.trim();
-                    
+    
                     if (text === "OFF") return 0;
                     if (text === "PC") return 1;
                     if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
@@ -2635,15 +2660,15 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                     if (text === "EXP2") return 129;
                     return parseInt(text) || 0;
                 });
-
+    
             midiValues.forEach((value, index) => {
                 if ((index - 2) % 3 === 0) { // Identifica as posições 2, 5, 8, 11...
                     midiValues[index] = value - 1; // Diminui 1 do valor
                 }
             });
-
+    
             //alert(`Valores da ${midiTable.id} na pagina ${selectedButtonIndices[midiTable.id]}: ${midiValues}`);
-            
+    
             let tableAux = '';
             switch (midiTable.id) {
                 case 'midi-table':
@@ -2656,26 +2681,27 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                     tableAux = 2;
                     break;
             }
-
+    
             const novaOrdem = [
                 0,1,2, 6,7,8, 12,13,14, 18,19,20, 24,25,26, 
                 3,4,5, 9,10,11, 15,16,17, 21,22,23, 27,28,29
             ];
-            
+    
             const results = novaOrdem.map(index => midiValues[index]);
             //alert([...results])
             for (let i = 0; i < 10; i++) {
-                results[i*3+2]=results[i*3+2]+((results[i*3+0]&0b10000000)>>3)+((results[i*3+1]&0b10000000)>>2)
-                results[i*3+0]=results[i*3+0]&0b01111111
-                results[i*3+1]=results[i*3+1]&0b01111111
+                results[i * 3 + 2] = results[i * 3 + 2] + ((results[i * 3 + 0] & 0b10000000) >> 3) + ((results[i * 3 + 1] & 0b10000000) >> 2);
+                results[i * 3 + 0] = results[i * 3 + 0] & 0b01111111;
+                results[i * 3 + 1] = results[i * 3 + 1] & 0b01111111;
             }
-            //alert([...results])
+            //alert([...results]);
+            
             // Envia os valores da tabela específica
             sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
-
+    
             valuePopup.remove();
         });
-
+    
         valuePopup.appendChild(valueButton);
     }
 
