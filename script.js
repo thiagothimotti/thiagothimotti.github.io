@@ -14,6 +14,17 @@ let currentBankLetter = null;
 
 let activePatch = null;
 
+let isProcessingPatch = false; // Flag para impedir cliques multiplos
+
+let loopsNames = [];
+let loopsNamesChars = [];
+
+let remoteNames = [];
+let remoteNamesChars = [];
+
+let midiChannelNames = [];
+let midiChannelNamesChars = [];
+
 let selectedButtonIndices = {
     'midi-table': 0,
     'midi-table-2': 0,
@@ -41,6 +52,10 @@ async function initializeSite() {
         // Aqui você pode aguardar algum tempo antes de verificar novamente
         await new Promise(resolve => setTimeout(resolve, 100)); // espera 1 segundo
     }
+
+    sendMessage([0xF0,0x1B,0x00,0xF7])
+    sendMessage([0xF0,0x1C,0x00,0xF7])
+    sendMessage([0xF0,0x1D,0x00,0xF7])
 
     const sidebar = document.getElementById('sidebar');
     for (let i = 65; i <= 90; i++) {
@@ -562,8 +577,7 @@ function createBankPatches(letter, index) {
         };
 
         patchItem.appendChild(swapButton);
-
-        let isProcessingPatch = false; // Flag para impedir cliques multiplos
+ 
         patchItem.addEventListener('click', async () => {
             if (isProcessingPatch || activePatch === patchId) return;
 
@@ -1004,6 +1018,22 @@ async function setupMidiListener() {
                         }
                         break;
 
+                    case 0x1B:
+                        loopsNames = sysexData.slice(1);
+                        loopsNamesChars = Array.from(loopsNames).map(num => String.fromCharCode(num));
+                        break;
+                    case 0x1C:
+                        
+                        remoteNames = sysexData.slice(1);
+                        remoteNamesChars = Array.from(remoteNames).map(num => String.fromCharCode(num));
+                        break;
+                    case 0x1D:
+                        alert(sysexData)
+                        midiChannelNames = sysexData.slice(1);
+                        midiChannelNamesChars = Array.from(midiChannelNames).map(num => String.fromCharCode(num));
+                        alert(midiChannelNamesChars)
+                        break;
+
                     default:
                         break;
                 }
@@ -1438,7 +1468,10 @@ async function createLoopTable(patchId, index) {
         loopContainer.style.width = '100%';
 
         const loopLabel = document.createElement('span');
-        loopLabel.textContent = `Loop ${i}`;
+        const startIdx = (i-1) * 3;
+        const hasOnlySpaces = loopsNamesChars.slice(startIdx, startIdx + 3).every(item => item.trim() === "");
+        if (hasOnlySpaces) loopLabel.textContent = `Loop ${i}`;
+        else loopLabel.textContent = `L${i} ${loopsNamesChars.slice(startIdx, startIdx + 3).join("")}`;
         loopLabel.style.color = '#fff';
         loopLabel.style.textAlign = 'center';
         loopLabel.style.marginRight = nomeControladora === "supernova" ? '20px' : '10px';
@@ -1447,7 +1480,7 @@ async function createLoopTable(patchId, index) {
         loopButton.textContent = states[i - 1];
         loopButton.style.color =
             states[i - 1] === 'ON' ? 'lime' :
-            //states[i - 1] === 'NUL' ? 'yellow' :
+            states[i - 1] === 'NUL' ? 'red' :
             states[i - 1] === 'TGL' ? 'white' :
             states[i - 1] === 'Inactive' ? 'gray' :
             'red';
@@ -1473,7 +1506,7 @@ async function createLoopTable(patchId, index) {
                 remotePopup(loopButton, options, (selectedValue) => {
                     loopButton.textContent = selectedValue;
                     loopButton.style.color = selectedValue === "ON" ? "lime" : 
-                                            selectedValue === "NUL" ? "yellow" :
+                                            selectedValue === "NUL" ? "red" :
                                             selectedValue === "TGL" ? "white" : "red";
                     states = updateStates();
                     sendMessage(states);
@@ -1651,17 +1684,6 @@ function toggleState(button, index, loopIndex) {
         button.style.color = 'red';
     }
 }
-/*
-// Salva os estados dos loops
-function saveLoopStates(index, states) {
-    localStorage.setItem(`${index}_loops`, JSON.stringify(states));
-}
-
-// Carrega os estados dos loops
-function loadLoopStates(index) {
-    const savedStates = localStorage.getItem(`${index}_loops`);
-    return savedStates ? JSON.parse(savedStates) : Array(8).fill(false);
-}*/
 
 // Remote Switch
 async function createTableRemoteSwitch(patchId, index) {
@@ -1726,12 +1748,25 @@ async function createTableRemoteSwitch(patchId, index) {
         loopContainer.style.width = '100%';
 
         const loopLabel = document.createElement('span');
-        loopLabel.textContent = [
-            'Rmt Switch 1 Tip:',
-            'Rmt Switch 1 Ring:',
-            'Rmt Switch 2 Tip:',
-            'Rmt Switch 2 Ring:'
-        ][i - 1]; 
+        const startIdx = (i - 1) * 3;
+        const hasOnlySpaces = remoteNamesChars.slice(startIdx, startIdx + 3).every(item => item.trim() === "");
+
+        const remoteName = remoteNamesChars.slice(startIdx, startIdx + 3).join("");
+        if (hasOnlySpaces) {
+            loopLabel.textContent = [
+                'Rmt Switch 1 Tip:',
+                'Rmt Switch 1 Ring:',
+                'Rmt Switch 2 Tip:',
+                'Rmt Switch 2 Ring:'
+            ][i - 1];
+        } else {
+            loopLabel.innerHTML = [
+                `RmtSw1 Tip: <span style="color: #53bfeb; font-weight: 600;">${remoteName}</span>`,
+                `RmtSw1 Ring: <span style="color: #53bfeb; font-weight: 600;">${remoteName}</span>`,
+                `RmtSw2 Tip: <span style="color: #53bfeb; font-weight: 600;">${remoteName}</span>`,
+                `RmtSw2 Ring: <span style="color: #53bfeb; font-weight: 600;">${remoteName}</span>`
+            ][i - 1];
+        }
         loopLabel.style.color = '#fff';
         loopLabel.style.minWidth = '150px'; // Define largura fixa para alinhamento
         loopLabel.style.textAlign = 'left';
@@ -1741,7 +1776,7 @@ async function createTableRemoteSwitch(patchId, index) {
         loopButton.textContent = states[i - 1];
         loopButton.style.color =
             states[i - 1] === 'ON' ? 'lime' :
-            //states[i - 1] === 'NUL' ? 'yellow' :
+            states[i - 1] === 'NUL' ? 'red' :
             states[i - 1] === 'TGL' ? 'white' :
             states[i - 1] === 'Inactive' ? 'gray' :
             'red';
@@ -1764,7 +1799,7 @@ async function createTableRemoteSwitch(patchId, index) {
                 remotePopup(loopButton, options, (selectedValue) => {
                     loopButton.textContent = selectedValue;
                     loopButton.style.color = selectedValue === "ON" ? "lime" : 
-                                            selectedValue === "NUL" ? "yellow" :
+                                            selectedValue === "NUL" ? "red" :
                                             selectedValue === "TGL" ? "white" : "red";
                     states = updateStatesRemote();
                     sendMessage(states);
@@ -1946,6 +1981,8 @@ async function toggleConnection(button) {
         
         // Alterar o texto do botão
         button.textContent = "Connect";
+
+        isProcessingPatch = false; // Flag para impedir cliques multiplos
     }
 }
 
@@ -2604,7 +2641,7 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                 }
             });
 
-            //alert(`Valores da ${midiTable.id} na pagina ${selectedButtonIndices[midiTable.id]}: ${midiValues}`);
+            //alert(Valores da ${midiTable.id} na pagina ${selectedButtonIndices[midiTable.id]}: ${midiValues});
             
             let tableAux = '';
             switch (midiTable.id) {
