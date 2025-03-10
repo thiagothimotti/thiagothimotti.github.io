@@ -2414,7 +2414,7 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
                     3,4,5, 9,10,11, 15,16,17, 21,22,23, 27,28,29
                 ];
                 
-                let results = novaOrdem.map(index => midiValues[index]);
+                let results = novaOrdem.map(index => midiValues2[index]);
 
                 for (let i = 0; i < 10; i++) {
                     results[i*3+2]=results[i*3+2]+((results[i*3+0]&0b10000000)>>3)+((results[i*3+1]&0b10000000)>>2)
@@ -2509,13 +2509,13 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
                     3,4,5, 9,10,11, 15,16,17, 21,22,23, 27,28,29
                 ];
                 
-                const results = novaOrdem.map(index => midiValues[index]);
+                const results = novaOrdem.map(index => midiValues2[index]);
                 for (let i = 0; i < 10; i++) {
                     results[i*3+2]=results[i*3+2]+((results[i*3+0]&0b10000000)>>3)+((results[i*3+1]&0b10000000)>>2)
                     results[i*3+0]=results[i*3+0]&0b01111111
                     results[i*3+1]=results[i*3+1]&0b01111111
                 }
-                //alert([...results])
+                alert([...results])
                 // Envia os valores da tabela específica
                 sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
             });
@@ -2751,7 +2751,7 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                 3,4,5, 9,10,11, 15,16,17, 21,22,23, 27,28,29
             ];
             
-            const results = novaOrdem.map(index => midiValues[index]);
+            const results = novaOrdem.map(index => midiValues2[index]);
             for (let i = 0; i < 10; i++) {
                 results[i*3+2]=results[i*3+2]+((results[i*3+0]&0b10000000)>>3)+((results[i*3+1]&0b10000000)>>2)
                 results[i*3+0]=results[i*3+0]&0b01111111
@@ -2995,7 +2995,7 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                     3,4,5, 9,10,11, 15,16,17, 21,22,23, 27,28,29
                 ];
                 
-                const results = novaOrdem.map(index => midiValues[index]);
+                const results = novaOrdem.map(index => midiValues2[index]);
                 for (let i = 0; i < 10; i++) {
                     results[i*3+2]=results[i*3+2]+((results[i*3+0]&0b10000000)>>3)+((results[i*3+1]&0b10000000)>>2)
                     results[i*3+0]=results[i*3+0]&0b01111111
