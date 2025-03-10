@@ -248,6 +248,9 @@ let swapBank = null;
 // Lida com a seleção de um banco
 function bankSelect(bank, bankDetails, index) {
     bank.addEventListener('click', () => {
+
+        activePatch = null;
+
         const patchCopyIcon = document.getElementById('patch-copy-icon');
         if (patchCopyIcon) {
             patchCopyIcon.remove();
@@ -948,7 +951,8 @@ async function setupMidiListener() {
                                     sysexData[i] = sysexData[i] - 2;
                                     let bankToGo = String.fromCharCode(Math.floor(sysexData[i] / 9) + 65);
                                     let patchToGo = sysexData[i] % 9;
-                                    buttons[i].textContent = `Load from ${bankToGo}${patchToGo}`;                                        buttons[i].style.color = 'lime';
+                                    if (patchToGo == 0) buttons[i].textContent = `Load from ${bankToGo}`; 
+                                    else buttons[i].textContent = `Load from ${bankToGo}${patchToGo}`;                                        buttons[i].style.color = 'lime';
                                     break;
                             }
                             
@@ -2353,39 +2357,42 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
 
                 // Captura todos os valores dos botões dentro dessa tabela específica
                 let midiValues = Array.from(midiTable.querySelectorAll('span'))
-                    .map(btn => {
-                        let text = btn.textContent.trim();
-                        
-                        if (text === "OFF") return 0;
-                        if (text === "PC") return 1;
-                        if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
-                        if (text === "EXP1") return 128;
-                        if (text === "EXP2") return 129;
+                .map(btn => {
+                    let text = btn.textContent.trim();
+    
+                    if (text === "OFF") return 0;
+                    if (text === "PC") return 1;
+                    if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
+                    if (text === "EXP1") return 128;
+                    if (text === "EXP2") return 129;
+                    
+                    return text// || 0;
+                });
+                //alert([...midiValues])
+                midiValues2 = Array.from(midiValues)
+                    .map((value, index) => {
+                    if ((index - 2) % 3 === 0) { // Identifica as posições 2, 5, 8, 11...
                         switch (tableId) {
                             case 'midi-table':
-                                if (midiChannelMap.hasOwnProperty(text)) {
-                                    return midiChannelMap[text];
+                                if (midiChannelMap.hasOwnProperty(value)) {
+                                    return midiChannelMap[value]-1;
                                 }
                                 break;
                             case 'midi-table-2':
-                                if (midiChannelMap2.hasOwnProperty(text)) {
-                                    return midiChannelMap2[text];
+                                if (midiChannelMap2.hasOwnProperty(value)) {
+                                    return midiChannelMap2[value]-1;
                                 }
                                 break;
                             case 'midi-table-3':
-                                if (midiChannelMap3.hasOwnProperty(text)) {
-                                    return midiChannelMap3[text];
+                                if (midiChannelMap3.hasOwnProperty(value)) {
+                                    return midiChannelMap3[value]-1;
                                 }
                                 break;
                         }
-                        return parseInt(text) || 0;
-                    });
-
-                midiValues.forEach((value, index) => {
-                    if ((index - 2) % 3 === 0) { // Identifica as posições 2, 5, 8, 11...
-                        midiValues[index] = value - 1; // Diminui 1 do valor
-                    }
+                        return value - 1; // Diminui 1 do valor
+                    } else return value;
                 });
+                //alert([...midiValues2])
 
                 //alert(`Valores da ${midiTable.id} na pagina ${selectedButtonIndices[midiTable.id]}: ${midiValues}`);
                 
@@ -2445,39 +2452,42 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
 
                 // Captura todos os valores dos botões dentro dessa tabela específica
                 let midiValues = Array.from(midiTable.querySelectorAll('span'))
-                    .map(btn => {
-                        let text = btn.textContent.trim();
-                        
-                        if (text === "OFF") return 0;
-                        if (text === "PC") return 1;
-                        if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
-                        if (text === "EXP1") return 128;
-                        if (text === "EXP2") return 129;
+                .map(btn => {
+                    let text = btn.textContent.trim();
+    
+                    if (text === "OFF") return 0;
+                    if (text === "PC") return 1;
+                    if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
+                    if (text === "EXP1") return 128;
+                    if (text === "EXP2") return 129;
+                    
+                    return text// || 0;
+                });
+                //alert([...midiValues])
+                midiValues2 = Array.from(midiValues)
+                    .map((value, index) => {
+                    if ((index - 2) % 3 === 0) { // Identifica as posições 2, 5, 8, 11...
                         switch (tableId) {
                             case 'midi-table':
-                                if (midiChannelMap.hasOwnProperty(text)) {
-                                    return midiChannelMap[text];
+                                if (midiChannelMap.hasOwnProperty(value)) {
+                                    return midiChannelMap[value]-1;
                                 }
                                 break;
                             case 'midi-table-2':
-                                if (midiChannelMap2.hasOwnProperty(text)) {
-                                    return midiChannelMap2[text];
+                                if (midiChannelMap2.hasOwnProperty(value)) {
+                                    return midiChannelMap2[value]-1;
                                 }
                                 break;
                             case 'midi-table-3':
-                                if (midiChannelMap3.hasOwnProperty(text)) {
-                                    return midiChannelMap3[text];
+                                if (midiChannelMap3.hasOwnProperty(value)) {
+                                    return midiChannelMap3[value]-1;
                                 }
                                 break;
                         }
-                        return parseInt(text) || 0;
-                    });
-
-                midiValues.forEach((value, index) => {
-                    if ((index - 2) % 3 === 0) { // Identifica as posições 2, 5, 8, 11...
-                        midiValues[index] = value - 1; // Diminui 1 do valor
-                    }
+                        return value - 1; // Diminui 1 do valor
+                    } else return value;
                 });
+                //alert([...midiValues2])
 
                 //alert(`Valores da ${midiTable.id} na pagina ${selectedButtonIndices[midiTable.id]}: ${midiValues}`);
                 
@@ -2686,37 +2696,40 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
             let midiValues = Array.from(midiTable.querySelectorAll('span'))
                 .map(btn => {
                     let text = btn.textContent.trim();
-                    
+    
                     if (text === "OFF") return 0;
                     if (text === "PC") return 1;
                     if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
                     if (text === "EXP1") return 128;
                     if (text === "EXP2") return 129;
+                    
+                    return text// || 0;
+                });
+            //alert([...midiValues])
+            midiValues2 = Array.from(midiValues)
+                .map((value, index) => {
+                if ((index - 2) % 3 === 0) { // Identifica as posições 2, 5, 8, 11...
                     switch (tableId) {
                         case 'midi-table':
-                            if (midiChannelMap.hasOwnProperty(text)) {
-                                return midiChannelMap[text];
+                            if (midiChannelMap.hasOwnProperty(value)) {
+                                return midiChannelMap[value]-1;
                             }
                             break;
                         case 'midi-table-2':
-                            if (midiChannelMap2.hasOwnProperty(text)) {
-                                return midiChannelMap2[text];
+                            if (midiChannelMap2.hasOwnProperty(value)) {
+                                return midiChannelMap2[value]-1;
                             }
                             break;
                         case 'midi-table-3':
-                            if (midiChannelMap3.hasOwnProperty(text)) {
-                                return midiChannelMap3[text];
+                            if (midiChannelMap3.hasOwnProperty(value)) {
+                                return midiChannelMap3[value]-1;
                             }
                             break;
                     }
-                    return parseInt(text) || 0;
-                });
-
-            midiValues.forEach((value, index) => {
-                if ((index - 2) % 3 === 0) { // Identifica as posições 2, 5, 8, 11...
-                    midiValues[index] = value - 1; // Diminui 1 do valor
-                }
+                    return value - 1; // Diminui 1 do valor
+                } else return value;
             });
+            //alert([...midiValues2])
 
             //alert(`Valores da ${midiTable.id} na pagina ${selectedButtonIndices[midiTable.id]}: ${midiValues}`);
             
@@ -2835,33 +2848,34 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                     if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
                     if (text === "EXP1") return 128;
                     if (text === "EXP2") return 129;
+                    
+                    return text// || 0;
+                });
+            //alert([...midiValues])
+            midiValues2 = Array.from(midiValues)
+                .map((value, index) => {
+                if ((index - 2) % 3 === 0) { // Identifica as posições 2, 5, 8, 11...
                     switch (tableId) {
                         case 'midi-table':
-                            if (midiChannelMap.hasOwnProperty(text)) {
-                                return midiChannelMap[text];
+                            if (midiChannelMap.hasOwnProperty(value)) {
+                                return midiChannelMap[value]-1;
                             }
                             break;
                         case 'midi-table-2':
-                            if (midiChannelMap2.hasOwnProperty(text)) {
-                                return midiChannelMap2[text];
+                            if (midiChannelMap2.hasOwnProperty(value)) {
+                                return midiChannelMap2[value]-1;
                             }
                             break;
                         case 'midi-table-3':
-                            if (midiChannelMap3.hasOwnProperty(text)) {
-                                return midiChannelMap3[text];
+                            if (midiChannelMap3.hasOwnProperty(value)) {
+                                return midiChannelMap3[value]-1;
                             }
                             break;
                     }
-                    
-                    return parseInt(text) || 0;
-                });
-    
-            midiValues.forEach((value, index) => {
-                if ((index - 2) % 3 === 0) { // Identifica as posições 2, 5, 8, 11...
-                    midiValues[index] = value - 1; // Diminui 1 do valor
-                }
+                    return value - 1; // Diminui 1 do valor
+                } else return value;
             });
-    
+            //alert([...midiValues2])
             //alert(`Valores da ${midiTable.id} na pagina ${selectedButtonIndices[midiTable.id]}: ${midiValues}`);
     
             let tableAux = '';
@@ -2882,7 +2896,7 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                 3,4,5, 9,10,11, 15,16,17, 21,22,23, 27,28,29
             ];
     
-            const results = novaOrdem.map(index => midiValues[index]);
+            const results = novaOrdem.map(index => midiValues2[index]);
             //alert([...results])
             for (let i = 0; i < 10; i++) {
                 results[i * 3 + 2] = results[i * 3 + 2] + ((results[i * 3 + 0] & 0b10000000) >> 3) + ((results[i * 3 + 1] & 0b10000000) >> 2);
@@ -2924,39 +2938,42 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
 
                 // Captura todos os valores dos botões dentro dessa tabela específica
                 let midiValues = Array.from(midiTable.querySelectorAll('span'))
-                    .map(btn => {
-                        let text = btn.textContent.trim();
-                        
-                        if (text === "OFF") return 0;
-                        if (text === "PC") return 1;
-                        if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
-                        if (text === "EXP1") return 128;
-                        if (text === "EXP2") return 129;
+                .map(btn => {
+                    let text = btn.textContent.trim();
+    
+                    if (text === "OFF") return 0;
+                    if (text === "PC") return 1;
+                    if (text.startsWith("CC")) return parseInt(text.slice(2)) + 2;
+                    if (text === "EXP1") return 128;
+                    if (text === "EXP2") return 129;
+                    
+                    return text// || 0;
+                });
+                //alert([...midiValues])
+                midiValues2 = Array.from(midiValues)
+                    .map((value, index) => {
+                    if ((index - 2) % 3 === 0) { // Identifica as posições 2, 5, 8, 11...
                         switch (tableId) {
                             case 'midi-table':
-                                if (midiChannelMap.hasOwnProperty(text)) {
-                                    return midiChannelMap[text];
+                                if (midiChannelMap.hasOwnProperty(value)) {
+                                    return midiChannelMap[value]-1;
                                 }
                                 break;
                             case 'midi-table-2':
-                                if (midiChannelMap2.hasOwnProperty(text)) {
-                                    return midiChannelMap2[text];
+                                if (midiChannelMap2.hasOwnProperty(value)) {
+                                    return midiChannelMap2[value]-1;
                                 }
                                 break;
                             case 'midi-table-3':
-                                if (midiChannelMap3.hasOwnProperty(text)) {
-                                    return midiChannelMap3[text];
+                                if (midiChannelMap3.hasOwnProperty(value)) {
+                                    return midiChannelMap3[value]-1;
                                 }
                                 break;
                         }
-                        return parseInt(text) || 0;
-                    });
-
-                midiValues.forEach((value, index) => {
-                    if ((index - 2) % 3 === 0) { // Identifica as posições 2, 5, 8, 11...
-                        midiValues[index] = value - 1; // Diminui 1 do valor
-                    }
+                        return value - 1; // Diminui 1 do valor
+                    } else return value;
                 });
+                //alert([...midiValues2])
 
                 //alert(`Valores da ${midiTable.id} na pagina ${selectedButtonIndices[midiTable.id]}: ${midiValues}`);
                 
