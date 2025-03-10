@@ -846,14 +846,24 @@ async function setupMidiListener() {
 
         // Obtém as entradas MIDI
         const inputs = Array.from(midiAccess.inputs.values());
+        // alert (inputs[0].name)
+        // alert (inputs[0].manufacturer)
 
         if (inputs.length === 0) {
             console.log("Nenhum dispositivo MIDI de entrada encontrado.");
             return;
         }
 
-        // Seleciona o primeiro dispositivo MIDI
-        const input = inputs[0];
+        // Detecta se é um dispositivo saturno
+        let aux = 0;
+        let input = null;
+        while(aux >= 0){
+            if (inputs[0].name === 'Saturno Pedais'){
+                input = inputs[0];
+                aux = -1;
+            } else aux++;
+        }
+
         console.log(`Conectado ao dispositivo MIDI: ${input.name}`);
 
         // Configura o evento para escutar as mensagens MIDI
@@ -1090,7 +1100,7 @@ async function setupMidiListener() {
                 console.log('removendo ', lastMessage[0])
                 lastMessage.shift()
             } else {
-                console.log("Mensagem MIDI não SysEx recebida:", message.data);/**/
+                console.log("Mensagem MIDI não SysEx recebida:", message.data);
             }
         };
     } catch (error) {
@@ -2113,34 +2123,6 @@ function notify(mensagem, icon) {
     });
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Cria a tabela MIDI
 let currentOpenMidiPopup = null;
 function createMidiTable(patchId, index, tableId) {
@@ -2198,8 +2180,24 @@ function createMidiTable(patchId, index, tableId) {
 
         const values =  [0, 1];
         values.forEach((value, idx) => {
-            const detailButton = createDetailButton(value, idx, patchId, i);
-            detailButton.textContent = value.toString();
+            const detailButton = createDetailButton(value, idx, patchId, i, tableId);
+            let mappedValue = value;
+            if (value === 1) {
+                switch (tableId) {
+                    case 'midi-table':
+                        mappedValue = midiChannelMap.hasOwnProperty(value) ? midiChannelMap[value] : value;
+                        break;
+                    case 'midi-table-2':
+                        mappedValue = midiChannelMap2.hasOwnProperty(value) ? midiChannelMap2[value] : value;
+                        break;
+                    case 'midi-table-3':
+                        mappedValue = midiChannelMap3.hasOwnProperty(value) ? midiChannelMap3[value] : value;
+                        break;
+                }
+            }
+            //alert (mappedValue)
+
+            detailButton.textContent = mappedValue.toString();
             detailButton.className = 'midi-detail';
             detailButton.style.cursor = 'pointer';
             detailButton.style.minWidth = '15px';
@@ -2533,9 +2531,25 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
 }
 
 // Cria botão secundario
-function createDetailButton(initialValue, index, patchId, midiIndex) {
+function createDetailButton(initialValue, index, patchId, midiIndex, tableId) {
     const detailButton = document.createElement('button');
-    detailButton.textContent = initialValue.toString();
+    
+    // Verifica se o valor inicial deve ser traduzido pelo midiChannelMap correspondente
+    let mappedValue = initialValue;
+    if (initialValue === 1) {
+        switch (tableId) {
+            case 'midi-table':
+                mappedValue = midiChannelMap.hasOwnProperty(initialValue) ? midiChannelMap[initialValue] : initialValue;
+                break;
+            case 'midi-table-2':
+                mappedValue = midiChannelMap2.hasOwnProperty(initialValue) ? midiChannelMap2[initialValue] : initialValue;
+                break;
+            case 'midi-table-3':
+                mappedValue = midiChannelMap3.hasOwnProperty(initialValue) ? midiChannelMap3[initialValue] : initialValue;
+                break;
+        }
+    }
+    detailButton.textContent = mappedValue.toString();
     detailButton.className = 'midi-detail';
     detailButton.style.marginLeft = '10px';
     detailButton.style.padding = '5px 10px';
@@ -2561,7 +2575,7 @@ function createDetailButton(initialValue, index, patchId, midiIndex) {
 
 
 // Lida com a seleção de comando
-function handleMidiSelection(type, midiButton, patchId, index) {
+function handleMidiSelection(type, midiButton, patchId, index, tableId) {
     const parentRow = midiButton.parentElement;
 
     // Atualiza o botão principal
@@ -2572,16 +2586,23 @@ function handleMidiSelection(type, midiButton, patchId, index) {
     const existingDetailButtons = parentRow.querySelectorAll('.midi-detail');
     existingDetailButtons.forEach((btn) => btn.remove());
 
-    /*// Salva e sai se escolher OFF
-    if (type === 'OFF') {
-        //localStorage.setItem(`${patchId}_${tableId}`, JSON.stringify({ type: 'OFF', values: [] }));
-        return;
-    }*/
-
-    // Cria botões secundarios
     for (let j = 0; j < 2; j++) {
         const detailButton = document.createElement('span');
-        detailButton.textContent = j === 0 ? '0' : '1';
+        let mappedValue = j;
+        if (j === 1) {
+            switch (tableId) {
+                case 'midi-table':
+                    mappedValue = midiChannelMap.hasOwnProperty(j) ? midiChannelMap[j] : j;
+                    break;
+                case 'midi-table-2':
+                    mappedValue = midiChannelMap2.hasOwnProperty(j) ? midiChannelMap2[j] : j;
+                    break;
+                case 'midi-table-3':
+                    mappedValue = midiChannelMap3.hasOwnProperty(j) ? midiChannelMap3[j] : j;
+                    break;
+            }
+        }
+        detailButton.textContent = mappedValue.toString();
         
         detailButton.className = 'midi-detail';
         detailButton.style.height = '15px';
