@@ -559,7 +559,6 @@ function createBankPatches(letter, index) {
         pasteButton.onclick = async () => {
             if (copiedPatchId) {
                 sendMessage([0xF0,0x09,copiedPatchId.charCodeAt(0)-65,copiedPatchId.slice(-1),0xF7])
-                await(2000)
                 //alert(copiedPatchId)
                 sendMessage([0xF0, 0x15, letter.charCodeAt(0)-65, j, 0xF7])
 
