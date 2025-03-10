@@ -556,8 +556,11 @@ function createBankPatches(letter, index) {
         pasteIcon.style.fontSize = '20px';
         pasteButton.appendChild(pasteIcon);
 
-        pasteButton.onclick = () => {
+        pasteButton.onclick = async () => {
             if (copiedPatchId) {
+                sendMessage([0xF0,0x09,copiedPatchId.charCodeAt(0)-65,copiedPatchId.slice(-1),0xF7])
+                await(2000)
+                //alert(copiedPatchId)
                 sendMessage([0xF0, 0x15, letter.charCodeAt(0)-65, j, 0xF7])
 
                 // Esconde todos os botões "Paste" ao clicar em um
@@ -581,7 +584,8 @@ function createBankPatches(letter, index) {
 
         swapButton.onclick = () => {
             if (swapPatchId) {
-                notify(`Switching ${swapPatchId.charCodeAt(0)-65} ${swapPatchId.slice(1)} with ${patchId}`);
+                sendMessage([0xF0,0x09,swapPatchId.charCodeAt(0)-65,swapPatchId.slice(-1),0xF7])
+                notify(`Switching ${swapPatchId} with ${patchId}`);
                 document.querySelectorAll('.swap-button').forEach(button => {
                     button.style.display = 'none';
                 });
