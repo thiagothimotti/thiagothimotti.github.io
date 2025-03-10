@@ -858,8 +858,8 @@ async function setupMidiListener() {
         let aux = 0;
         let input = null;
         while(aux >= 0){
-            if (inputs[0].name === 'Saturno Pedais'){
-                input = inputs[0];
+            if (inputs[aux].name === 'Saturno Pedais'){
+                input = inputs[aux];
                 aux = -1;
             } else aux++;
         }
