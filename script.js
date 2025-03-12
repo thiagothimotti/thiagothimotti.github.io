@@ -53,15 +53,15 @@ let air3 = [];
 async function initializeSite() {
 
     setupMidiListener();
-    sendMessage([0xF0,0x01,0x00,0xF7])
+    
 
     while (nomeControladora === null) {
         console.log('Aguardando nomeControladora...');
-        
+        sendMessage([0xF0,0x01,0x00,0xF7])
         // Aqui você pode aguardar algum tempo antes de verificar novamente
         await new Promise(resolve => setTimeout(resolve, 100)); // espera 1 segundo
     }
-
+    lastMessage = [];
     sendMessage([0xF0,0x1B,0x00,0xF7])
     sendMessage([0xF0,0x1C,0x00,0xF7])
     sendMessage([0xF0,0x1D,0x00,0xF7])
@@ -718,16 +718,16 @@ function createBankPatches(letter, index) {
             patchChange(letter, j);
 
             sendMessage([0xF0, 0x06, 0x00, 0xF7]);
-            const existingTable = document.getElementById('bnkCfg');
+            /*const existingTable = document.getElementById('bnkCfg');
             if (existingTable) {
                 existingTable.remove();
             }
-            createBnkCfg(letter);
+            createBnkCfg(letter);*/
 
             sendMessage([0xF0,0x10,currentBankLetter.charCodeAt(0)-65,0xF7])
 
             await delay(200);
-            sendMessage([0xF0, 0x0B, letter.charCodeAt(0) - 65, 0xF7]);
+            //sendMessage([0xF0, 0x0B, letter.charCodeAt(0) - 65, 0xF7]);
 
             sendMessage([0xF0, 0x0D, 0x00, 0x00, 0xF7]); 
             sendMessage([0xF0, 0x0D, 0x01, 0x00, 0xF7]);
@@ -805,7 +805,14 @@ async function sendMessage(message) {
             return;
         }
 
-        const output = outputs[0];
+        let aux = 0;
+        let output = null;
+        while(aux >= 0){
+            if (outputs[aux].name === 'Saturno Pedais'){
+                output = outputs[aux];
+                aux = -1;
+            } else aux++;
+        }
 
         output.send(message); 
     } catch (error) {
@@ -832,7 +839,14 @@ async function patchChange(letter, j) {
             return;
         }
 
-        const output = outputs[0];
+        /*let aux = 0;
+        let output = null;
+        while(aux >= 0){
+            if (outputs[aux].name === 'Saturno Pedais'){
+                output = outputs[aux];
+                aux = -1;
+            } else aux++;
+        }*/
 
         sendMessage([0xF0,0x09,valorASCII - 65,j,0xF7]); // Muda patch
         //alert([0xF0,0x09,valorASCII - 65,j,0xF7])
@@ -2095,7 +2109,14 @@ async function heartBeat() {
             return;
         }
 
-        const output = outputs[0];
+        let aux = 0;
+        let output = null;
+        while(aux >= 0){
+            if (outputs[aux].name === 'Saturno Pedais'){
+                output = outputs[aux];
+                aux = -1;
+            } else aux++;
+        }
         output.send([0xF0, 0x08, 0x00, 0xF7]); // Envia mensagem MIDI para o dispositivo
         console.log('heartbeat')
 
