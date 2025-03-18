@@ -1578,10 +1578,17 @@ async function createLoopTable(patchId, index) {
         const loopLabel = document.createElement('span');
         const startIdx = (i-1) * 3;
         const hasOnlySpaces = loopsNamesChars.slice(startIdx, startIdx + 3).every(item => item.trim() === "");
-        if (hasOnlySpaces) loopLabel.textContent = `Loop ${i}`;
-        else loopLabel.textContent = `L${i} ${loopsNamesChars.slice(startIdx, startIdx + 3).join("")}`;
+        if (hasOnlySpaces) {
+            loopLabel.textContent = `Loop ${i}`;
+        }
+        else {
+            //loopLabel.textContent = `L${i} ${loopsNamesChars.slice(startIdx, startIdx + 3).join("")}`;
+            const loopName = loopsNamesChars.slice(startIdx, startIdx + 3).join("").trim();
+            loopLabel.innerHTML = `L${i} <span style="color:#53bfeb; font-weight: 600;">${loopName}</span>`;
+        }
         loopLabel.style.color = '#fff';
-        loopLabel.style.textAlign = 'center';
+        loopLabel.style.textAlign = 'start';
+        loopLabel.style.minWidth = '60px'
         loopLabel.style.marginRight = nomeControladora === "supernova" ? '20px' : '10px';
 
         const loopButton = document.createElement('span-button');
@@ -1605,7 +1612,8 @@ async function createLoopTable(patchId, index) {
         loopButton.addEventListener('click', () => {
             if (loopButton.textContent === 'Inactive') return; // Impede clique se for Inactive
             
-            if (event.ctrlKey) {
+            const selectedPatchType = document.getElementById("patchType").textContent;
+            if (event.ctrlKey || selectedPatchType == '(Action)' || selectedPatchType == '(Toggle Action)' || selectedPatchType == '(Momentary)') {
                 event.stopPropagation(); // Evita o fechamento do popup ao clicar no botão
             
                 // Criar popup com opções
@@ -1898,7 +1906,7 @@ async function createTableRemoteSwitch(patchId, index) {
         loopButton.addEventListener('click', (event) => {
             if (loopButton.textContent === 'Inactive') return; // Impede clique se for Inactive
             
-            if (event.ctrlKey) {
+            if (event.ctrlKey || document.getElementById("patchType").textContent != '(Preset)') {
                 event.stopPropagation(); // Evita o fechamento do popup ao clicar no botão
             
                 // Criar popup com opções
