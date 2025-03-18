@@ -52,6 +52,8 @@ let air3 = [];
 // Função base da inicialização do site
 async function initializeSite() {
 
+    nomeControladora = null;
+
     setupMidiListener();
     
 
