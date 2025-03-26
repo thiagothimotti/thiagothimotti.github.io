@@ -61,9 +61,20 @@ async function initializeSite() {
         console.log('Aguardando nomeControladora...');
         sendMessage([0xF0,0x01,0x00,0xF7])
         // Aqui você pode aguardar algum tempo antes de verificar novamente
-        await new Promise(resolve => setTimeout(resolve, 100)); // espera 1 segundo
+        await new Promise(resolve => setTimeout(resolve, 300)); // espera 1 segundo
     }
     lastMessage = [];
+
+    if (nomeControladora !== 'titan' && nomeControladora !== 'supernova') {
+        console.log("Dispositivo não é uma Controladora, carregando o script dos pedais");
+        
+        let fallbackScript = document.createElement('script');
+        fallbackScript.src = 'pedalScript.js';
+        document.body.appendChild(fallbackScript);
+    
+        return;
+    }
+    
     sendMessage([0xF0,0x1B,0x00,0xF7])
     sendMessage([0xF0,0x1C,0x00,0xF7])
     sendMessage([0xF0,0x1D,0x00,0xF7])
@@ -908,10 +919,15 @@ async function setupMidiListener() {
                         if (sysexData["0"] === 2 || sysexData["0"] === 0){
                             nomeControladora = "supernova";
                             document.getElementById('editor-title').textContent = 'Web Editor - Supernova';
-
-                        } else {
+                        } else if (sysexData["0"] === 1 || sysexData["0"] === 3) {
                             nomeControladora = "titan";
                             document.getElementById('editor-title').textContent = 'Web Editor - Titan';
+                        } else if (sysexData["0"] === 4) {
+                            nomeControladora = "timespace";
+                            document.getElementById('editor-title').textContent = 'Web Editor - TimeSpace';
+                        } else if (sysexData["0"] === 5) {
+                            nomeControladora = "spacewalk";
+                            document.getElementById('editor-title').textContent = 'Web Editor - SpaceWalk';
                         }
                         console.log(nomeControladora)
                         break;
@@ -995,39 +1011,42 @@ async function setupMidiListener() {
 
                         if (sysexData[1] === 0) {
                             if (sysexData[2] === 0 && advanced1.length !== 0){
-                                fillMidiTable(advanced1, tableId);
+                                //alert(advanced1)
+                                fillMidiTable(advanced1, tableId, true);
                                 break;
                             }else if (sysexData[2] === 1 && advanced2.length !== 0){
-                                fillMidiTable(advanced2, tableId);
+                                //alert(advanced2)
+                                fillMidiTable(advanced2, tableId, true);
                                 break;
                             }else if (sysexData[2] === 2 && advanced3.length !== 0){
-                                fillMidiTable(advanced3, tableId);
+                                //alert(advanced3)
+                                fillMidiTable(advanced3, tableId, true);
                                 break;
                             }
                         } else if (sysexData[1] === 1) {
                             if (sysexData[2] === 0 && usb1.length !== 0){
-                                fillMidiTable(usb1, tableId);
+                                fillMidiTable(usb1, tableId, true);
                                 break;
                             }else if (sysexData[2] === 1 && usb2.length !== 0){
-                                fillMidiTable(usb2, tableId);
+                                fillMidiTable(usb2, tableId, true);
                                 break;
                             }
                         } else if (sysexData[1] === 2) {
                             if (sysexData[2] === 0 && air1.length !== 0){
-                                fillMidiTable(air1, tableId);
+                                fillMidiTable(air1, tableId, true);
                                 break;
                             }else if (sysexData[2] === 1 && air2.length !== 0){
-                                fillMidiTable(air2, tableId);
+                                fillMidiTable(air2, tableId), true;
                                 break;
                             }else if (sysexData[2] === 2 && air3.length !== 0){
-                                fillMidiTable(air3, tableId);
+                                fillMidiTable(air3, tableId, true);
                                 break;
                             }
                         }
                         
                         if (tableId) {
                             const values = sysexData.slice(3);
-                            fillMidiTable(results, tableId);
+                            fillMidiTable(results, tableId, false);
                         }
                         break;
                     
@@ -1117,6 +1136,23 @@ async function setupMidiListener() {
                         //alert(JSON.stringify(midiChannelMap3, null, 2));
                         break;
 
+                    // Mensagens exclusivas dos pedais
+                    case 0x30:
+                        
+                        break;
+                    case 0x31:
+                        //alert(sysexData.slice(-1))
+                        const topologyTypes = ["Single", "Dual", "Series", "Mixed", "Cascade"];
+
+                        const topologyDisplay = document.querySelector(".type-display");
+                        
+                        if (topologyDisplay) {
+                            topologyDisplay.textContent = topologyTypes[sysexData.slice(-1)];
+                        } else {
+                            console.warn("Elemento .type-display não encontrado.");
+                        }
+                        break;
+
                     default:
                         break;
                 }
@@ -1131,7 +1167,7 @@ async function setupMidiListener() {
     }
 }
 
-function fillMidiTable(values, tableId) {
+function fillMidiTable(values, tableId, saved) {
     if (values.length !== 30) {
         console.error("A função requer exatamente 30 valores.");
         return;
@@ -1144,10 +1180,12 @@ function fillMidiTable(values, tableId) {
     }
 
     midiTable.innerHTML = ''; // Limpa a tabela antes de preencher
-    for (let i = 0; i < 10; i++) {
-        values[i*3+1]=(values[i*3+1]&0b01111111)+((values[i*3+2]&0b00100000)<<2)
-        values[i*3+0]=(values[i*3+0]&0b01111111)+((values[i*3+2]&0b00010000)<<3)
-        values[i*3+2]=values[i*3+2]&0b00001111
+    if (!saved) {
+        for (let i = 0; i < 10; i++) {
+            values[i*3+1]=(values[i*3+1]&0b01111111)+((values[i*3+2]&0b00100000)<<2)
+            values[i*3+0]=(values[i*3+0]&0b01111111)+((values[i*3+2]&0b00010000)<<3)
+            values[i*3+2]=values[i*3+2]&0b00001111
+        }
     }
     //alert([...values])
     
@@ -1176,24 +1214,26 @@ function fillMidiTable(values, tableId) {
         for (let j = 0; j < 2; j++) {
             const detailButton = document.createElement('span');
             if (j === 1){
-                let currentValue = values[i + j + 1]+1;
+                let currentValue;
+                if (!saved) currentValue = values[i + j + 1]+1;
+                else currentValue = values[i + j + 1];
                 switch (tableId) {
                     case 'midi-table':
-                        if (midiChannelMap.hasOwnProperty(currentValue)) {
+                        if (midiChannelMap.hasOwnProperty(currentValue) && !saved) {
                             detailButton.textContent = midiChannelMap[currentValue];
                         } else {
                             detailButton.textContent = currentValue;
                         }
                         break;
                     case 'midi-table-2':
-                        if (midiChannelMap2.hasOwnProperty(currentValue)) {
+                        if (midiChannelMap2.hasOwnProperty(currentValue) && !saved) {
                             detailButton.textContent = midiChannelMap2[currentValue];
                         } else {
                             detailButton.textContent = currentValue;
                         }
                         break;
                     case 'midi-table-3':
-                        if (midiChannelMap3.hasOwnProperty(currentValue)) {
+                        if (midiChannelMap3.hasOwnProperty(currentValue) && !saved) {
                             detailButton.textContent = midiChannelMap3[currentValue];
                         } else {
                             detailButton.textContent = currentValue;
@@ -1280,9 +1320,10 @@ function fillMidiTable(values, tableId) {
                                 return buttons.length >= 3 ? [
                                     buttons[0].textContent === "OFF" ? 0 : (buttons[0].textContent === "PC" ? 1 : parseInt(buttons[0].textContent.replace("CC", "")) + 2),
                                     parseInt(buttons[1].textContent),
-                                    parseInt(buttons[2].textContent)-1
+                                    buttons[2].textContent
                                 ] : [0, 0, 0];
                             }).flat();
+                            //alert(advanced1)
                             break;
                         case 1: 
                             advanced2 = Array.from(document.querySelectorAll("#midi-table .midi-row")).map(row => {
@@ -1290,7 +1331,7 @@ function fillMidiTable(values, tableId) {
                                 return buttons.length >= 3 ? [
                                     buttons[0].textContent === "OFF" ? 0 : (buttons[0].textContent === "PC" ? 1 : parseInt(buttons[0].textContent.replace("CC", "")) + 2),
                                     parseInt(buttons[1].textContent),
-                                    parseInt(buttons[2].textContent)-1
+                                    buttons[2].textContent
                                 ] : [0, 0, 0];
                             }).flat();
                             break;
@@ -1300,7 +1341,7 @@ function fillMidiTable(values, tableId) {
                                 return buttons.length >= 3 ? [
                                     buttons[0].textContent === "OFF" ? 0 : (buttons[0].textContent === "PC" ? 1 : parseInt(buttons[0].textContent.replace("CC", "")) + 2),
                                     parseInt(buttons[1].textContent),
-                                    parseInt(buttons[2].textContent)-1
+                                    buttons[2].textContent
                                 ] : [0, 0, 0];
                             }).flat();
                         break;
@@ -1315,7 +1356,7 @@ function fillMidiTable(values, tableId) {
                                 return buttons.length >= 3 ? [
                                     buttons[0].textContent === "OFF" ? 0 : (buttons[0].textContent === "PC" ? 1 : parseInt(buttons[0].textContent.replace("CC", "")) + 2),
                                     parseInt(buttons[1].textContent),
-                                    parseInt(buttons[2].textContent)-1
+                                    buttons[2].textContent
                                 ] : [0, 0, 0];
                             }).flat();
                             break;
@@ -1325,7 +1366,7 @@ function fillMidiTable(values, tableId) {
                                 return buttons.length >= 3 ? [
                                     buttons[0].textContent === "OFF" ? 0 : (buttons[0].textContent === "PC" ? 1 : parseInt(buttons[0].textContent.replace("CC", "")) + 2),
                                     parseInt(buttons[1].textContent),
-                                    parseInt(buttons[2].textContent)-1
+                                    buttons[2].textContent
                                 ] : [0, 0, 0];
                             }).flat();
                             break;
@@ -1340,7 +1381,7 @@ function fillMidiTable(values, tableId) {
                                 return buttons.length >= 3 ? [
                                     buttons[0].textContent === "OFF" ? 0 : (buttons[0].textContent === "PC" ? 1 : parseInt(buttons[0].textContent.replace("CC", "")) + 2),
                                     parseInt(buttons[1].textContent),
-                                    parseInt(buttons[2].textContent)-1
+                                    buttons[2].textContent
                                 ] : [0, 0, 0];
                             }).flat();
                             break;
@@ -1350,7 +1391,7 @@ function fillMidiTable(values, tableId) {
                                 return buttons.length >= 3 ? [
                                     buttons[0].textContent === "OFF" ? 0 : (buttons[0].textContent === "PC" ? 1 : parseInt(buttons[0].textContent.replace("CC", "")) + 2),
                                     parseInt(buttons[1].textContent),
-                                    parseInt(buttons[2].textContent)-1
+                                    buttons[2].textContent
                                 ] : [0, 0, 0];
                             }).flat();
                             break;
@@ -1360,7 +1401,7 @@ function fillMidiTable(values, tableId) {
                                 return buttons.length >= 3 ? [
                                     buttons[0].textContent === "OFF" ? 0 : (buttons[0].textContent === "PC" ? 1 : parseInt(buttons[0].textContent.replace("CC", "")) + 2),
                                     parseInt(buttons[1].textContent),
-                                    parseInt(buttons[2].textContent)-1
+                                    buttons[2].textContent
                                 ] : [0, 0, 0];
                             }).flat();
                             break;
@@ -2069,6 +2110,8 @@ async function toggleConnection(button) {
             midiAccess.inputs.forEach(input => input.onmidimessage = null); // Remove listeners
             midiAccess = null;
         }
+
+        location.reload();/* pensar bem */
 
         // Remover elementos visuais
         document.querySelectorAll('.bank').forEach(bank => bank.remove());
@@ -3074,3 +3117,8 @@ function loadMidiStates(patchId, tableId) {
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+// Impede interação com o site até a pagina carregar completamente
+window.addEventListener("load", function() {
+    document.getElementById("loading-overlay").style.display = "none";
+});

@@ -51,7 +51,8 @@ header p {
     position: absolute;
     top: 0%;
     left: 50%;
-    transform: translate(-50%, -50%); /* Move o texto para o centro */
+    transform: translate(-50%, -50%);
+    /* Move o texto para o centro */
     text-align: center;
 }
 
@@ -106,8 +107,9 @@ header p {
     border-radius: 10px;
 }
 
-.bank, .bank-details {
-    width: 100%; 
+.bank,
+.bank-details {
+    width: 100%;
     max-width: 300px;
     box-sizing: border-box;
 }
@@ -135,7 +137,8 @@ header p {
 }
 
 .bank span:last-child {
-    transition: transform 0.3s ease; /* Transição suave */
+    transition: transform 0.3s ease;
+    /* Transição suave */
 }
 
 .bank-details {
@@ -197,26 +200,36 @@ header p {
     transform: scale(1.1);
 }
 
-.copy-icon, .fa-regular, .bank-copy-icon, .fa-solid {
+.copy-icon,
+.fa-regular,
+.bank-copy-icon,
+.fa-solid {
     margin-left: 10px;
     cursor: pointer;
     font-size: 16px;
     transition: transform 0.2s ease, color 0.2s ease;
 }
 
-.copy-icon:hover, .fa-regular:hover, .bank-copy-icon:hover, .fa-solid:hover {
+.copy-icon:hover,
+.fa-regular:hover,
+.bank-copy-icon:hover,
+.fa-solid:hover {
     transform: scale(1.2);
     color: #53bfeb;
 }
 
-.paste-button, .bank-paste-icon, .swap-button {
+.paste-button,
+.bank-paste-icon,
+.swap-button {
     margin-left: 0px;
     cursor: pointer;
     font-size: 16px;
     transition: transform 0.2s ease, color 0.2s ease;
 }
 
-.paste-button:hover, .bank-paste-icon:hover, .swap-button:hover  {
+.paste-button:hover,
+.bank-paste-icon:hover,
+.swap-button:hover {
     transform: scale(1.2);
     color: #53bfeb;
 }
@@ -313,7 +326,11 @@ header p {
     text-align: center;
 }
 
-#table-1, #table-2, #table-3, #table-4, #table-5 {
+#table-1,
+#table-2,
+#table-3,
+#table-4,
+#table-5 {
     display: none;
     margin: 20px;
     background-color: #2a2a40;
@@ -330,7 +347,11 @@ header p {
     background-color: transparent;
 }
 
-#table-1 p, #table-2 p, #table-3 p, #table-4 p, #table-5 p {
+#table-1 p,
+#table-2 p,
+#table-3 p,
+#table-4 p,
+#table-5 p {
     font-size: 20px;
     font-weight: bold;
     text-align: center;
@@ -384,7 +405,7 @@ header p {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;    
+    justify-content: center;
     gap: 20px;
     margin-top: 20px;
 }
@@ -424,7 +445,8 @@ header p {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-#saveButton, #cancelButton {
+#saveButton,
+#cancelButton {
     top: 150px;
     right: 170px;
     display: none;
@@ -433,4 +455,36 @@ header p {
 #extraScroll {
     display: flex;
     height: 10vh;
+}
+
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #9f18fd;
+    border-top: 5px solid #333;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
