@@ -161,7 +161,7 @@ function createBank(letter, index) {
     // Ao clicar no pasteIcon, envia mensagem, exibe alerta e oculta todos os botões de paste
     pasteIcon.onclick = () => {
         sendMessage([0xF0, 0x17, letter.charCodeAt(0) - 65, 0xF7]);
-        notify(`Bank ${letter} updated with the content from ${copiedBank}`);
+        notify(`Bank ${letter} updated with the content from ${copiedBank}`, 'success');
         document.querySelectorAll('.bank-paste-icon').forEach(icon => {
             icon.style.display = 'none';
         });
@@ -179,7 +179,7 @@ function createBank(letter, index) {
     swapIcon.onclick = () => {
         if (swapping) {
             swapping = false;
-            notify(`Switching Bank ${swapBank} with Bank ${letter}`);
+            notify(`Switching Bank ${swapBank} with Bank ${letter}`, 'success');
 
             sendMessage([0xF0,0x18,letter-65,0xF7])
 
@@ -226,9 +226,25 @@ function createBank(letter, index) {
 
     // Evento de clique no Clear (resetar o Bank)
     clearIcon.onclick = () => {
-        notify(`Bank ${letter} was reseted!`);
-        sendMessage([0xF0, 0x19, 0x00, 0xF7]); // Enviar comando de reset
-    };
+        Swal.fire({
+            title: "Are you sure?",
+            text: `All settings of Bank ${letter} will be lost!`,
+            icon: "warning",
+            color: "white",
+            width: "600px",
+            background: "#2a2a40",
+            showCancelButton: true,
+            confirmButtonText: "Yes, reset!",
+            cancelButtonText: "Cancel",
+            confirmButtonColor: "red",
+            cancelButtonColor: "#53bfeb" //voltar
+        }).then((result) => {
+            if (result.isConfirmed) {
+                notify(`Bank ${letter} has been reset!`, 'success');
+                sendMessage([0xF0, 0x19, 0x00, 0xF7]); // Send reset command
+            }
+        });
+    };    
 
     buttonContainer.appendChild(copyIcon);
     buttonContainer.appendChild(pasteIcon);
@@ -597,7 +613,7 @@ function createBankPatches(letter, index) {
         swapButton.onclick = () => {
             if (swapPatchId) {
                 sendMessage([0xF0,0x09,swapPatchId.charCodeAt(0)-65,swapPatchId.slice(-1),0xF7])
-                notify(`Switching ${swapPatchId} with ${patchId}`);
+                notify(`Switching ${swapPatchId} with ${patchId}`, 'success');
                 document.querySelectorAll('.swap-button').forEach(button => {
                     button.style.display = 'none';
                 });
@@ -706,8 +722,25 @@ function createBankPatches(letter, index) {
             patchClearIcon.style.marginLeft = '50px';
 
             patchClearIcon.onclick = () => {
-                notify(`Patch ${patchId} reseted!`);
-                sendMessage([0xF0, 0x14, letter.charCodeAt(0) - 65, j, 0xF7]);
+                Swal.fire({
+                    title: "Are you sure?",
+                    text: `All settings of Patch ${patchId} will be lost!`,
+                    icon: "warning",
+                    color: "white",
+                    width: "600px",
+                    background: "#2a2a40",
+                    showCancelButton: true,
+                    confirmButtonText: "Yes, reset!",
+                    cancelButtonText: "Cancel",
+                    confirmButtonColor: "red",
+                    cancelButtonColor: "#53bfeb" //voltar
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        notify(`Patch ${patchId} reseted!`, 'success');
+                        sendMessage([0xF0, 0x14, letter.charCodeAt(0) - 65, j, 0xF7]);
+                    }
+                });
+                
             };
 
             const mainContent = document.getElementById('mainContent');
@@ -1071,7 +1104,7 @@ async function setupMidiListener() {
                         break;
                     
                     case 0x14:
-                        notify("Clear")
+                        notify("Patch cleared", 'success')
                         const actualPatch = document.querySelector(`.bank-details li[data-patch-id="${activePatch}"]`);
                         if (actualPatch) {
                             activePatch = null;
