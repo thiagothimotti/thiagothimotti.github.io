@@ -237,7 +237,7 @@ function createBank(letter, index) {
             confirmButtonText: "Yes, reset!",
             cancelButtonText: "Cancel",
             confirmButtonColor: "red",
-            cancelButtonColor: "#53bfeb" //voltar
+            cancelButtonColor: "#53bfeb"
         }).then((result) => {
             if (result.isConfirmed) {
                 notify(`Bank ${letter} has been reset!`, 'success');
@@ -840,6 +840,10 @@ async function sendMessage(message) {
         for (let i = 1; i < numPatches; i++) {
             lastMessage.push(message[1]);
         }
+    } else if (message[1] == 0x30){
+        for (let i = 1; i < 32; i++) {
+            lastMessage.push(message[1]);
+        }
     }
 
     console.log('Mensagens enviadas: ', lastMessage)
@@ -1171,7 +1175,7 @@ async function setupMidiListener() {
 
                     // Mensagens exclusivas dos pedais
                     case 0x30:
-                        
+                        extractPresets(sysexData.slice(1))
                         break;
                     case 0x31:
                         //alert(sysexData.slice(-1))
@@ -1184,6 +1188,23 @@ async function setupMidiListener() {
                         } else {
                             console.warn("Elemento .type-display não encontrado.");
                         }
+                        break;
+                    case 0x33:
+                        //alert(sysexData);
+                        //alert(binaryOperation(sysexData[3], sysexData[4], 4))
+                        updateSliders(sysexData[2], binaryOperation(sysexData[3], sysexData[4], 4))
+                        //updateSliders(10, 20)
+                        break;
+                    case 0x35:
+                        //alert(sysexData.slice(1));
+                        let presetConfig =  Array.from(sysexData.slice(1));
+                        presetConfig[3] = binaryOperation(sysexData[4], sysexData[5], 4)
+                        presetConfig.splice(4, 1);
+                        updateButtonTexts(presetConfig);
+                        break;
+                    case 0x37:
+                        //alert('ola')
+                        //updateSelectedTableAlgorithm(1, "Quantum Pitch");
                         break;
 
                     default:

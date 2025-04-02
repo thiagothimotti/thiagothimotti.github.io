@@ -1,6 +1,6 @@
 .preset {
     cursor: pointer;
-    padding: 10px 10px;
+    padding: 7px 10px;
     margin-bottom: 10px;
     background-color: #3a3a57;
     border-radius: 8px;
@@ -22,7 +22,6 @@
 
 .preset-number {
     font-size: 18px;
-    font-weight: bold;
     color: #53bfeb;
     margin-right: 10px;
     margin-top: 4px;
@@ -45,6 +44,8 @@
 
 .preset-arrow {
     color: #53bfeb;
+    margin-top: 3px;
+    margin-right: 5px;
     transition: transform 0.3s ease;
     cursor: pointer;
     transform: rotate(-90deg) scale(1.8);
@@ -65,6 +66,11 @@
     margin-bottom: 10px;
 }
 
+.type-display {
+    font-size: 18px;
+    text-align: center;
+}
+
 .preset-table {
     width: 500px;
     max-width: 500px;
@@ -77,14 +83,21 @@
 
 .preset-table td {
     padding: 5px;
+}
+
+.preset-table td:first-child {
     text-align: left;
+}
+
+.preset-table td:last-child {
+    text-align: right;
+    cursor: pointer;
 }
 
 .preset-table th {
     padding: 5px;
     font-size: 20px;
     text-align: center;
-    font-weight: bold;
 }
 
 .slider {
@@ -92,7 +105,6 @@
     height: 8px;
     -webkit-appearance: none;
     appearance: none;
-    background: linear-gradient(to right, #53bfeb 50%, white 50%);
     border-radius: 4px;
     outline: none;
     transition: background 0.1s;
@@ -129,6 +141,15 @@
     margin-top: 20px;
 }
 
+.algorithm-title {
+    font-size: 14px;
+}
+
+.rotate-arrow {
+    display: inline-block;
+    transform: rotate(180deg);
+}
+
 .preset-config-container {
     width: 265px;
     max-width: 265px;
@@ -138,15 +159,6 @@
     margin-top: -10px;
     margin-bottom: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.preset-config-title {
-    font-size: 15px;
-    font-weight: bold;
-    color: #f1e6ff;
-    text-align: center;
-    margin-top: -3px;
-    margin-bottom: 3px;
 }
 
 .preset-config-row {
