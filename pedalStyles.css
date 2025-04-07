@@ -172,7 +172,7 @@
     font-size: 14px;
 }
 
-.preset-config-button {
+.preset-config-button, .image-button {
     background-color: transparent;
     color: white;
     border: none;
@@ -184,6 +184,43 @@
 
 .preset-config-row:hover {
     background-color: #4a4a67;
+}
+
+.image-container {
+    width: 500px;
+    max-width: 500px;
+    margin-top: 20px;
+    background-color: rgba(159, 24, 253, 0.5);
+    text-align: center;
+    color: white;
+    border-radius: 10px;
+    padding: 5px;
+}
+
+.image-title {
+    width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.image-table {
+    width: 100%;
+    border-collapse: separate;
+}
+
+.image-table tr {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.image-table td {
+    text-align: center;
+    flex: 1; /* Faz com que cada coluna ocupe espaço igual */
+}
+
+.image-table td:last-child {
+    border-left: 1px solid rgba(216, 216, 216, 0.35);
 }
 
 .popup-container {

@@ -195,11 +195,15 @@ async function createTable(index, presetName) {
 
     const mainTable = createFormattedTable();
     const smallTables = await createSmallTables();
+    const imageTable = createImageTable();
 
     mainContent.appendChild(mainTable);
     mainContent.appendChild(smallTables);
+    mainContent.appendChild(imageTable);
 
     sendMessage([0xF0,0x33,0x00,0xF7]);
+    sendMessage([0xF0,0x37,0x00,0xF7]);
+    //sendMessage([0xF0,0x38,0x00,0xF7]);
 }
 
 // Função para criar o título do preset
@@ -506,6 +510,7 @@ function createIndividualTable(number) {
 
     const table = document.createElement("table");
     table.className = "preset-table";
+    table.id = `dsp-table-${number}`;
 
     const thead = document.createElement("thead");
     const titleRow = document.createElement("tr");
@@ -560,6 +565,7 @@ function createIndividualTable(number) {
             nameCell.textContent = label;
             
             const valueCell = document.createElement("td");
+            valueCell.className = 'td button';
             valueCell.textContent = label === "Inactive" ? "Inactive" : `${startValues[index]}`;
             
             if ((index + 1) % 3 === 0 && index !== 0) {
@@ -624,6 +630,89 @@ function createIndividualTable(number) {
     updateLabels();
     return table;
 }
+
+function updateDSPButtons(table, buttonTexts) {
+    if (buttonTexts.length === 0) return;
+
+    // Atualiza o algorithmDisplay
+    const algorithmDisplay = table.querySelector(".topology-container span:nth-child(3)");
+    switch (buttonTexts[0]) {
+        case 0:
+            algorithmDisplay.textContent = 'OFF';
+            break;
+        case 1:
+            algorithmDisplay.textContent = 'Glassy Delay';
+            break;
+        case 2:
+            algorithmDisplay.textContent = 'Bucket Brigade';
+            break;
+        case 3:
+            algorithmDisplay.textContent = 'TransistorTape';
+            break;
+        case 4:
+            algorithmDisplay.textContent = 'Quantum Pitch';
+            break;
+        case 5:
+            algorithmDisplay.textContent = 'Holo Filter';
+            break;
+        case 6:
+            algorithmDisplay.textContent = 'RetroVerse';
+            break;
+        case 7:
+            algorithmDisplay.textContent = 'Momery Man';
+            break;
+        case 8:
+            algorithmDisplay.textContent = 'Nebula Swel';
+            break;
+        case 9:
+            algorithmDisplay.textContent = 'WhammyDelay';
+            break;
+    }
+
+    // Atualiza os botões da tabela
+    const tbody = table.querySelector("tbody");
+    if (!tbody) return;
+
+    let labels = ["Time", "Feedback", "DelayMix", "High Cut", "Low Cut", "Saturation", "Mod Type"];
+    let startValues = buttonTexts.slice(1); // Os valores dos botões começam no segundo elemento
+
+    // Garante que há valores suficientes
+    while (startValues.length < labels.length) {
+        startValues.push("N/A"); // Preenche com "N/A" se faltarem valores
+    }
+
+    // Limpa a tabela antes de recriá-la
+    tbody.innerHTML = "";
+
+    labels.forEach((label, index) => {
+        const row = document.createElement("tr");
+
+        const nameCell = document.createElement("td");
+        nameCell.textContent = label;
+
+        const valueCell = document.createElement("td");
+        valueCell.classList.add("td", "button");
+        valueCell.textContent = startValues[index];
+
+        row.appendChild(nameCell);
+        row.appendChild(valueCell);
+        tbody.appendChild(row);
+    });
+
+    // Adiciona a linha do DSP
+    const dspRow = document.createElement("tr");
+    const emptyCell = document.createElement("td");
+    const dspCell = document.createElement("td");
+    dspCell.textContent = table.querySelector("td:last-child").textContent; // Mantém o nome DSP1 ou DSP2
+    dspCell.style.color = dspCell.textContent === "DSP1" ? "rgb(255, 194, 0)" : "SkyBlue";
+    dspCell.style.textAlign = "right";
+    dspCell.style.fontWeight = "bold";
+
+    dspRow.appendChild(emptyCell);
+    dspRow.appendChild(dspCell);
+    tbody.appendChild(dspRow);
+}
+
 
 function binaryOperation(lsb, msb, deslocamento) {
     let newMsb = msb << deslocamento;
@@ -746,6 +835,87 @@ function updateButtonTexts(buttonTexts) {
         else button.style.color = '#53bfeb';
     });
 }
+
+function createImageTable() {
+    const container = document.createElement("div");
+    container.classList.add("image-container");
+
+    const titleContainer = document.createElement("div");
+    titleContainer.classList.add("image-title");
+
+    const leftArrow = document.createElement("span");
+    leftArrow.classList.add("image-arrow");
+    leftArrow.textContent = "\u276E";
+    leftArrow.style.cursor = "pointer";
+
+    const typeWrapper = document.createElement("span"); // Novo wrapper para alinhamento
+    typeWrapper.classList.add("type-wrapper");
+    typeWrapper.textContent = "Image: ";
+
+    const typeDisplay = document.createElement("span");
+    typeDisplay.classList.add("type-display");
+    const types = ["OFF", "The Haas Effect", "Speill by the Edge", "Ping-Pong", "Wet-Panning", "Dry-Panning", "Cross-Panning", "Transverse"];
+    let currentIndex = 0;
+    typeDisplay.textContent = types[currentIndex];
+    typeDisplay.style.display = "inline-block"; // Permite definir width
+    typeDisplay.style.textAlign = "center";
+    typeDisplay.style.width = '160px';
+
+    const rightArrow = document.createElement("span");
+    rightArrow.classList.add("image-arrow");
+    rightArrow.textContent = "\u276F";
+    rightArrow.style.cursor = "pointer";
+    
+    leftArrow.addEventListener("click", () => {
+        currentIndex = (currentIndex - 1 + types.length) % types.length;
+        typeDisplay.textContent = `${types[currentIndex]}`;
+    });
+    
+    rightArrow.addEventListener("click", () => {
+        currentIndex = (currentIndex + 1) % types.length;
+        typeDisplay.textContent = `${types[currentIndex]}`;
+    });
+    
+    titleContainer.appendChild(typeWrapper);
+    titleContainer.appendChild(leftArrow);
+    titleContainer.appendChild(typeDisplay);
+    titleContainer.appendChild(rightArrow);
+    container.appendChild(titleContainer);
+
+    const table = document.createElement("table");
+    table.classList.add("image-table");
+    
+    const tbody = document.createElement("tbody");
+    const rowsData = [
+        [{ text: "Option 1", buttonText: "Select" }, { text: "Option 2", buttonText: "Select" }],
+        [{ text: "Option 3", buttonText: "Select" }, { text: "Option 4", buttonText: "Select" }]
+    ];
+
+    rowsData.forEach(rowData => {
+        const row = document.createElement("tr");
+        rowData.forEach(cellData => {
+            const cell = document.createElement("td");
+            
+            const textSpan = document.createElement("span");
+            textSpan.textContent = cellData.text;
+            
+            const button = document.createElement("button");
+            button.textContent = cellData.buttonText;
+            button.classList.add("image-button");
+            
+            cell.appendChild(textSpan);
+            cell.appendChild(button);
+            row.appendChild(cell);
+        });
+        tbody.appendChild(row);
+    });
+
+    table.appendChild(tbody);
+    container.appendChild(table);
+    
+    return container;
+}
+
 
 function createPopup(options, callback, event) {
     const popup = document.createElement("div");

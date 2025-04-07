@@ -846,7 +846,7 @@ async function sendMessage(message) {
         }
     }
 
-    console.log('Mensagens enviadas: ', lastMessage)
+    console.log('Mensagens enviadas: ', [...lastMessage])
 
     try {
         const outputs = Array.from(midiAccess.outputs.values());
@@ -1203,8 +1203,9 @@ async function setupMidiListener() {
                         updateButtonTexts(presetConfig);
                         break;
                     case 0x37:
-                        //alert('ola')
-                        //updateSelectedTableAlgorithm(1, "Quantum Pitch");
+                        alert(sysexData.slice(1))
+                        const dspTable1 = document.getElementById("dsp-table-1");
+                        updateDSPButtons(dspTable1, sysexData.slice(1))
                         break;
 
                     default:
