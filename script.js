@@ -56,12 +56,14 @@ async function initializeSite() {
 
     setupMidiListener();
     
-
+    let lim = 0;
     while (nomeControladora === null) {
         console.log('Aguardando nomeControladora...');
         sendMessage([0xF0,0x01,0x00,0xF7])
         // Aqui você pode aguardar algum tempo antes de verificar novamente
         await new Promise(resolve => setTimeout(resolve, 300)); // espera 1 segundo
+        lim++;
+        if (lim > 10) return;
     }
     lastMessage = [];
 
@@ -951,265 +953,280 @@ async function setupMidiListener() {
                 // Exibe a mensagem SysEx completa
                 const sysexData = message.data.slice(1, -1); // Remove o 0xF0 de início e 0xF7 de fim
                 //console.log("Dados SysEx:", sysexData);
-                switch (lastMessage[0]) {
-                    case 1:
-                        if (sysexData["0"] === 2 || sysexData["0"] === 0){
-                            nomeControladora = "supernova";
-                            document.getElementById('editor-title').textContent = 'Web Editor - Supernova';
-                        } else if (sysexData["0"] === 1 || sysexData["0"] === 3) {
-                            nomeControladora = "titan";
-                            document.getElementById('editor-title').textContent = 'Web Editor - Titan';
-                        } else if (sysexData["0"] === 4) {
-                            nomeControladora = "timespace";
-                            document.getElementById('editor-title').textContent = 'Web Editor - TimeSpace';
-                        } else if (sysexData["0"] === 5) {
-                            nomeControladora = "spacewalk";
-                            document.getElementById('editor-title').textContent = 'Web Editor - SpaceWalk';
-                        }
-                        console.log(nomeControladora)
-                        break;
-                    case 2:
-                        loops = Array.from(sysexData);
-                        console.log('loops ', loops)
-                        break;
-                    case 4:
-                        remotes = Array.from(sysexData);
-                        console.log('remotes ', remotes)
-                        break;
-                    case 6:
-                        sendMessage([0xF0,0x0A,currentBankLetter.charCodeAt(0)-65,0xF7]);
-                        break;
-                    case 10:
-                        console.log(Array.from(sysexData).map(num => String.fromCharCode(num)).join(''));
-                        patchesNames.push(Array.from(sysexData.slice(2)).map(num => String.fromCharCode(num)).join(''));
-                        console.log(patchesNames)
-                        writeAllNames(patchesNames, currentBankLetter)
-                        if (lastMessage[1] != 10){
-                            patchesNames = [];
-                        }
-                        break;
-                    case 0x0B:
-                        console.log('suas configurações do banco: ', sysexData)
-                        const buttons = document.querySelectorAll('#bnkCfg button');
-                        for (let i=0; i<2; i++) {
-                            if (sysexData[i] === 0){
-                                buttons[i].textContent = 'OFF';
-                                buttons[i].style.color = 'red';
-                            } else {
-                                if (currentBankLetter.charCodeAt(0) <= sysexData[i]+65) {
-                                    buttons[i].textContent = `Load from ${String.fromCharCode(sysexData[i]+64)}`;
-                                    buttons[i].style.color = 'lime';
-                                } else {
-                                    buttons[i].textContent = `Load from ${String.fromCharCode(sysexData[i]+64)}`;
-                                    buttons[i].style.color = 'lime';
-                                }
+                if (lastMessage[0] < 0x30){
+                    switch (lastMessage[0]) {
+                        case 1:
+                            if (sysexData["0"] === 2 || sysexData["0"] === 0){
+                                nomeControladora = "supernova";
+                                document.getElementById('editor-title').textContent = 'Web Editor - Supernova';
+                            } else if (sysexData["0"] === 1 || sysexData["0"] === 3) {
+                                nomeControladora = "titan";
+                                document.getElementById('editor-title').textContent = 'Web Editor - Titan';
+                            } else if (sysexData["0"] === 4) {
+                                nomeControladora = "timespace";
+                                document.getElementById('editor-title').textContent = 'Web Editor - TimeSpace';
+                            } else if (sysexData["0"] === 5) {
+                                nomeControladora = "spacewalk";
+                                document.getElementById('editor-title').textContent = 'Web Editor - SpaceWalk';
                             }
-                        }
-                        //alert([...sysexData].map(num => Number(num).toString(2).padStart(8, '0')).join(' '));
-                        sysexData[2] = sysexData[2]+(sysexData[3]<<4)
-                        sysexData[3] = sysexData[4]+(sysexData[5]<<4)
-                        //alert([...sysexData].map(num => Number(num).toString(2).padStart(8, '0')).join(' '));
-                        for (let i=2; i<4; i++){
-                            switch (sysexData[i]) {
-                                case 0:
+                            console.log(nomeControladora)
+                            break;
+                        case 2:
+                            loops = Array.from(sysexData);
+                            console.log('loops ', loops)
+                            break;
+                        case 4:
+                            remotes = Array.from(sysexData);
+                            console.log('remotes ', remotes)
+                            break;
+                        case 6:
+                            sendMessage([0xF0,0x0A,currentBankLetter.charCodeAt(0)-65,0xF7]);
+                            break;
+                        case 10:
+                            console.log(Array.from(sysexData).map(num => String.fromCharCode(num)).join(''));
+                            patchesNames.push(Array.from(sysexData.slice(2)).map(num => String.fromCharCode(num)).join(''));
+                            console.log(patchesNames)
+                            writeAllNames(patchesNames, currentBankLetter)
+                            if (lastMessage[1] != 10){
+                                patchesNames = [];
+                            }
+                            break;
+                        case 0x0B:
+                            console.log('suas configurações do banco: ', sysexData)
+                            const buttons = document.querySelectorAll('#bnkCfg button');
+                            for (let i=0; i<2; i++) {
+                                if (sysexData[i] === 0){
                                     buttons[i].textContent = 'OFF';
                                     buttons[i].style.color = 'red';
+                                } else {
+                                    if (currentBankLetter.charCodeAt(0) <= sysexData[i]+65) {
+                                        buttons[i].textContent = `Load from ${String.fromCharCode(sysexData[i]+64)}`;
+                                        buttons[i].style.color = 'lime';
+                                    } else {
+                                        buttons[i].textContent = `Load from ${String.fromCharCode(sysexData[i]+64)}`;
+                                        buttons[i].style.color = 'lime';
+                                    }
+                                }
+                            }
+                            //alert([...sysexData].map(num => Number(num).toString(2).padStart(8, '0')).join(' '));
+                            sysexData[2] = sysexData[2]+(sysexData[3]<<4)
+                            sysexData[3] = sysexData[4]+(sysexData[5]<<4)
+                            //alert([...sysexData].map(num => Number(num).toString(2).padStart(8, '0')).join(' '));
+                            for (let i=2; i<4; i++){
+                                switch (sysexData[i]) {
+                                    case 0:
+                                        buttons[i].textContent = 'OFF';
+                                        buttons[i].style.color = 'red';
+                                        break;
+                                    case 1:
+                                        buttons[i].textContent = 'Locked';
+                                        buttons[i].style.color = 'lime';
+                                        break;
+                                    default:
+                                        sysexData[i] = sysexData[i] - 2;
+                                        let bankToGo = String.fromCharCode(Math.floor(sysexData[i] / 9) + 65);
+                                        let patchToGo = sysexData[i] % 9;
+                                        if (patchToGo == 0) buttons[i].textContent = `Load from ${bankToGo}`; 
+                                        else buttons[i].textContent = `Load from ${bankToGo}${patchToGo}`;                                        buttons[i].style.color = 'lime';
+                                        break;
+                                }
+                                
+                            }
+                            break;
+                        case 0x0D:
+
+                            const tableMapping = {
+                                0: "midi-table",
+                                1: "midi-table-2",
+                                2: "midi-table-3"
+                            };
+                            
+                            const tableId = tableMapping[sysexData[1]];
+
+                            const novaOrdem = [
+                                0,1,2, 15,16,17, 3,4,5, 18,19,20, 6,7,8, 21,22,23, 9,10,11, 27,28,29, 12,13,14,24,25,26, 
+                            ];
+                            
+                            const results = novaOrdem.map(index => sysexData.slice(3)[index]);
+
+                            if (sysexData[1] === 0) {
+                                if (sysexData[2] === 0 && advanced1.length !== 0){
+                                    //alert(advanced1)
+                                    fillMidiTable(advanced1, tableId, true);
                                     break;
-                                case 1:
-                                    buttons[i].textContent = 'Locked';
-                                    buttons[i].style.color = 'lime';
+                                }else if (sysexData[2] === 1 && advanced2.length !== 0){
+                                    //alert(advanced2)
+                                    fillMidiTable(advanced2, tableId, true);
                                     break;
-                                default:
-                                    sysexData[i] = sysexData[i] - 2;
-                                    let bankToGo = String.fromCharCode(Math.floor(sysexData[i] / 9) + 65);
-                                    let patchToGo = sysexData[i] % 9;
-                                    if (patchToGo == 0) buttons[i].textContent = `Load from ${bankToGo}`; 
-                                    else buttons[i].textContent = `Load from ${bankToGo}${patchToGo}`;                                        buttons[i].style.color = 'lime';
+                                }else if (sysexData[2] === 2 && advanced3.length !== 0){
+                                    //alert(advanced3)
+                                    fillMidiTable(advanced3, tableId, true);
                                     break;
+                                }
+                            } else if (sysexData[1] === 1) {
+                                if (sysexData[2] === 0 && usb1.length !== 0){
+                                    fillMidiTable(usb1, tableId, true);
+                                    break;
+                                }else if (sysexData[2] === 1 && usb2.length !== 0){
+                                    fillMidiTable(usb2, tableId, true);
+                                    break;
+                                }
+                            } else if (sysexData[1] === 2) {
+                                if (sysexData[2] === 0 && air1.length !== 0){
+                                    fillMidiTable(air1, tableId, true);
+                                    break;
+                                }else if (sysexData[2] === 1 && air2.length !== 0){
+                                    fillMidiTable(air2, tableId), true;
+                                    break;
+                                }else if (sysexData[2] === 2 && air3.length !== 0){
+                                    fillMidiTable(air3, tableId, true);
+                                    break;
+                                }
                             }
                             
-                        }
-                        break;
-                    case 0x0D:
-
-                        const tableMapping = {
-                            0: "midi-table",
-                            1: "midi-table-2",
-                            2: "midi-table-3"
-                        };
+                            if (tableId) {
+                                const values = sysexData.slice(3);
+                                fillMidiTable(results, tableId, false);
+                            }
+                            break;
                         
-                        const tableId = tableMapping[sysexData[1]];
+                        case 0x10:
+                            console.log(sysexData.slice(1));
+                            updatePatchTypes(currentBankLetter, sysexData.slice(1));
+                            break;
 
-                        const novaOrdem = [
-                            0,1,2, 15,16,17, 3,4,5, 18,19,20, 6,7,8, 21,22,23, 9,10,11, 27,28,29, 12,13,14,24,25,26, 
-                        ];
+                        case 0x12:
+                            notify("Changes saved", 'success')
+                            break;
+
+                        case 0x13:
+                            notify("Changes canceled")
+                            const selectedPatch = document.querySelector(`.bank-details li[data-patch-id="${activePatch}"]`);
+                            if (selectedPatch) {
+                                activePatch = null;
+                                selectedPatch.click();
+                            } else {
+                                console.warn("Nenhum patch selecionado para simular o clique.");
+                            }
+                            break;
                         
-                        const results = novaOrdem.map(index => sysexData.slice(3)[index]);
-
-                        if (sysexData[1] === 0) {
-                            if (sysexData[2] === 0 && advanced1.length !== 0){
-                                //alert(advanced1)
-                                fillMidiTable(advanced1, tableId, true);
-                                break;
-                            }else if (sysexData[2] === 1 && advanced2.length !== 0){
-                                //alert(advanced2)
-                                fillMidiTable(advanced2, tableId, true);
-                                break;
-                            }else if (sysexData[2] === 2 && advanced3.length !== 0){
-                                //alert(advanced3)
-                                fillMidiTable(advanced3, tableId, true);
-                                break;
+                        case 0x14:
+                            notify("Patch cleared", 'success')
+                            const actualPatch = document.querySelector(`.bank-details li[data-patch-id="${activePatch}"]`);
+                            if (actualPatch) {
+                                activePatch = null;
+                                actualPatch.click();
+                            } else {
+                                console.warn("Nenhum patch selecionado para simular o clique.");
                             }
-                        } else if (sysexData[1] === 1) {
-                            if (sysexData[2] === 0 && usb1.length !== 0){
-                                fillMidiTable(usb1, tableId, true);
-                                break;
-                            }else if (sysexData[2] === 1 && usb2.length !== 0){
-                                fillMidiTable(usb2, tableId, true);
-                                break;
+                            break;
+
+                        case 0x1B:
+                            loopsNames = sysexData.slice(1);
+                            loopsNamesChars = Array.from(loopsNames).map(num => String.fromCharCode(num));
+                            break;
+                        case 0x1C:
+                            remoteNames = sysexData.slice(1);
+                            remoteNamesChars = Array.from(remoteNames).map(num => String.fromCharCode(num));
+                            break;
+
+                        case 0x1D:
+                            midiChannelNames = sysexData.slice(1);
+                            midiChannelNamesChars = Array.from(midiChannelNames).map(num => String.fromCharCode(num));
+                            for (let i = 0; i < midiChannelNamesChars.length; i += 2) {
+                                let key = midiChannelNamesChars[i] + midiChannelNamesChars[i + 1];  // Concatenando os dois valores como chave
+                                if (key.trim() !== "") {
+                                    midiChannelMap[key] = Math.floor(i / 2) + 1;  // Atribuindo um valor crescente de 1 a 16
+                                }
                             }
-                        } else if (sysexData[1] === 2) {
-                            if (sysexData[2] === 0 && air1.length !== 0){
-                                fillMidiTable(air1, tableId, true);
-                                break;
-                            }else if (sysexData[2] === 1 && air2.length !== 0){
-                                fillMidiTable(air2, tableId), true;
-                                break;
-                            }else if (sysexData[2] === 2 && air3.length !== 0){
-                                fillMidiTable(air3, tableId, true);
-                                break;
+                            for (let key in midiChannelMap) {
+                                let value = midiChannelMap[key];
+                                midiChannelMap[value] = key;  // Adiciona o par inverso (valor-chave)
                             }
-                        }
-                        
-                        if (tableId) {
-                            const values = sysexData.slice(3);
-                            fillMidiTable(results, tableId, false);
-                        }
-                        break;
-                    
-                    case 0x10:
-                        console.log(sysexData.slice(1));
-                        updatePatchTypes(currentBankLetter, sysexData.slice(1));
-                        break;
-
-                    case 0x12:
-                        notify("Changes saved", 'success')
-                        break;
-
-                    case 0x13:
-                        notify("Changes canceled")
-                        const selectedPatch = document.querySelector(`.bank-details li[data-patch-id="${activePatch}"]`);
-                        if (selectedPatch) {
-                            activePatch = null;
-                            selectedPatch.click();
-                        } else {
-                            console.warn("Nenhum patch selecionado para simular o clique.");
-                        }
-                        break;
-                    
-                    case 0x14:
-                        notify("Patch cleared", 'success')
-                        const actualPatch = document.querySelector(`.bank-details li[data-patch-id="${activePatch}"]`);
-                        if (actualPatch) {
-                            activePatch = null;
-                            actualPatch.click();
-                        } else {
-                            console.warn("Nenhum patch selecionado para simular o clique.");
-                        }
-                        break;
-
-                    case 0x1B:
-                        loopsNames = sysexData.slice(1);
-                        loopsNamesChars = Array.from(loopsNames).map(num => String.fromCharCode(num));
-                        break;
-                    case 0x1C:
-                        remoteNames = sysexData.slice(1);
-                        remoteNamesChars = Array.from(remoteNames).map(num => String.fromCharCode(num));
-                        break;
-
-                    case 0x1D:
-                        midiChannelNames = sysexData.slice(1);
-                        midiChannelNamesChars = Array.from(midiChannelNames).map(num => String.fromCharCode(num));
-                        for (let i = 0; i < midiChannelNamesChars.length; i += 2) {
-                            let key = midiChannelNamesChars[i] + midiChannelNamesChars[i + 1];  // Concatenando os dois valores como chave
-                            if (key.trim() !== "") {
-                                midiChannelMap[key] = Math.floor(i / 2) + 1;  // Atribuindo um valor crescente de 1 a 16
+                            //alert(JSON.stringify(midiChannelMap, null, 2));
+                            break;
+                        case 0x1E:
+                            midiChannelNames2 = sysexData.slice(1);
+                            midiChannelNamesChars2 = Array.from(midiChannelNames2).map(num => String.fromCharCode(num));
+                            for (let i = 0; i < midiChannelNamesChars2.length; i += 2) {
+                                let key = midiChannelNamesChars2[i] + midiChannelNamesChars2[i + 1];  // Concatenando os dois valores como chave
+                                if (key.trim() !== "") {
+                                    midiChannelMap2[key] = Math.floor(i / 2) + 1;  // Atribuindo um valor crescente de 1 a 16
+                                }
                             }
-                        }
-                        for (let key in midiChannelMap) {
-                            let value = midiChannelMap[key];
-                            midiChannelMap[value] = key;  // Adiciona o par inverso (valor-chave)
-                        }
-                        //alert(JSON.stringify(midiChannelMap, null, 2));
-                        break;
-                    case 0x1E:
-                        midiChannelNames2 = sysexData.slice(1);
-                        midiChannelNamesChars2 = Array.from(midiChannelNames2).map(num => String.fromCharCode(num));
-                        for (let i = 0; i < midiChannelNamesChars2.length; i += 2) {
-                            let key = midiChannelNamesChars2[i] + midiChannelNamesChars2[i + 1];  // Concatenando os dois valores como chave
-                            if (key.trim() !== "") {
-                                midiChannelMap2[key] = Math.floor(i / 2) + 1;  // Atribuindo um valor crescente de 1 a 16
+                            for (let key in midiChannelMap2) {
+                                let value = midiChannelMap2[key];
+                                midiChannelMap2[value] = key;  // Adiciona o par inverso (valor-chave)
                             }
-                        }
-                        for (let key in midiChannelMap2) {
-                            let value = midiChannelMap2[key];
-                            midiChannelMap2[value] = key;  // Adiciona o par inverso (valor-chave)
-                        }
-                        //alert(JSON.stringify(midiChannelMap2, null, 2));
-                        break;
-                    case 0x1F:
-                        midiChannelNames3 = sysexData.slice(1);
-                        midiChannelNamesChars3 = Array.from(midiChannelNames3).map(num => String.fromCharCode(num));
-                        for (let i = 0; i < midiChannelNamesChars3.length; i += 2) {
-                            let key = midiChannelNamesChars3[i] + midiChannelNamesChars3[i + 1];  // Concatenando os dois valores como chave
-                            if (key.trim() !== "") {
-                                midiChannelMap3[key] = Math.floor(i / 2) + 1;  // Atribuindo um valor crescente de 1 a 16
+                            //alert(JSON.stringify(midiChannelMap2, null, 2));
+                            break;
+                        case 0x1F:
+                            midiChannelNames3 = sysexData.slice(1);
+                            midiChannelNamesChars3 = Array.from(midiChannelNames3).map(num => String.fromCharCode(num));
+                            for (let i = 0; i < midiChannelNamesChars3.length; i += 2) {
+                                let key = midiChannelNamesChars3[i] + midiChannelNamesChars3[i + 1];  // Concatenando os dois valores como chave
+                                if (key.trim() !== "") {
+                                    midiChannelMap3[key] = Math.floor(i / 2) + 1;  // Atribuindo um valor crescente de 1 a 16
+                                }
                             }
-                        }
-                        for (let key in midiChannelMap3) {
-                            let value = midiChannelMap3[key];
-                            midiChannelMap3[value] = key;  // Adiciona o par inverso (valor-chave)
-                        }
-                        //alert(JSON.stringify(midiChannelMap3, null, 2));
-                        break;
+                            for (let key in midiChannelMap3) {
+                                let value = midiChannelMap3[key];
+                                midiChannelMap3[value] = key;  // Adiciona o par inverso (valor-chave)
+                            }
+                            //alert(JSON.stringify(midiChannelMap3, null, 2));
+                            break;
 
-                    // Mensagens exclusivas dos pedais
-                    case 0x30:
-                        extractPresets(sysexData.slice(1))
-                        break;
-                    case 0x31:
-                        //alert(sysexData.slice(-1))
-                        const topologyTypes = ["Single", "Dual", "Series", "Mixed", "Cascade"];
+                        default:
+                            break;
+                    }
+                } else {
+                    switch(sysexData[0]){
+                        // Mensagens exclusivas dos pedais
+                        case 0x30:
+                            extractPresets(sysexData.slice(1))
+                            break;
+                        case 0x31:
+                            //alert(sysexData.slice(-1))
+                            const topologyTypes = ["Single", "Dual", "Series", "Mixed", "Cascade"];
 
-                        const topologyDisplay = document.querySelector(".type-display");
-                        
-                        if (topologyDisplay) {
-                            topologyDisplay.textContent = topologyTypes[sysexData.slice(-1)];
-                        } else {
-                            console.warn("Elemento .type-display não encontrado.");
-                        }
-                        break;
-                    case 0x33:
-                        //alert(sysexData);
-                        //alert(binaryOperation(sysexData[3], sysexData[4], 4))
-                        updateSliders(sysexData[2], binaryOperation(sysexData[3], sysexData[4], 4))
-                        //updateSliders(10, 20)
-                        break;
-                    case 0x35:
-                        //alert(sysexData.slice(1));
-                        let presetConfig =  Array.from(sysexData.slice(1));
-                        presetConfig[3] = binaryOperation(sysexData[4], sysexData[5], 4)
-                        presetConfig.splice(4, 1);
-                        updateButtonTexts(presetConfig);
-                        break;
-                    case 0x37:
-                        alert(sysexData.slice(1))
-                        const dspTable1 = document.getElementById("dsp-table-1");
-                        updateDSPButtons(dspTable1, sysexData.slice(1))
-                        break;
-
-                    default:
-                        break;
+                            const topologyDisplay = document.querySelector(".type-display");
+                            
+                            if (topologyDisplay) {
+                                topologyDisplay.textContent = topologyTypes[sysexData.slice(-1)];
+                            } else {
+                                console.warn("Elemento .type-display não encontrado.");
+                            }
+                            break;
+                        case 0x33:
+                            //alert(sysexData);
+                            //alert(binaryOperation(sysexData[3], sysexData[4], 4))
+                            updateSliders(sysexData[2], binaryOperation(sysexData[3], sysexData[4], 4))
+                            //updateSliders(10, 20)
+                            break;
+                        case 0x35:
+                            //alert(sysexData.slice(1));
+                            let presetConfig =  Array.from(sysexData.slice(1));
+                            presetConfig[3] = binaryOperation(sysexData[4], sysexData[5], 4)
+                            presetConfig.splice(4, 1);
+                            updateButtonTexts(presetConfig);
+                            break;
+                        case 0x37:
+                            algorithmDSP[0] = sysexData[1];
+                            //alert(sysexData.slice(2))
+                            let aux =  Array.from(sysexData.slice(2));
+                            aux[0] = binaryOperation(aux[0], aux[1], 5)
+                            aux.splice(1, 1);
+                            algorithmDSP1 = aux;
+                            break;
+                        case 0x38:
+                            algorithmDSP[1] = sysexData[1];
+                            //alert(sysexData.slice(2))
+                            let aux2 =  Array.from(sysexData.slice(2));
+                            aux2[0] = binaryOperation(aux2[0], aux2[1], 5)
+                            aux2.splice(1, 1);
+                            algorithmDSP2 = aux2;
+                            break;
+                    }
                 }
                 console.log('removendo ', lastMessage[0])
                 lastMessage.shift()

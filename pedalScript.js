@@ -61,6 +61,10 @@ const parameterRanges = {
     "Speed": { valor_inicial: 0, valor_final: 100, complemento: "%" }
 };
 
+let algorithmDSP = [1, 1];
+let algorithmDSP1 = [0,0,0,0,0,0,0,0,0,0,0,0]
+let algorithmDSP2 = [0,0,0,0,0,0,0,0,0,0,0,0]
+
 //alert("Script dos pedais carregado");
 
 function createPresets() {
@@ -187,6 +191,9 @@ async function createTable(index, presetName) {
     const mainContent = document.getElementById("mainContent");
     mainContent.innerHTML = "";
 
+    sendMessage([0xF0,0x37,0x00,0xF7]);
+    sendMessage([0xF0,0x38,0x00,0xF7]);
+
     const presetTitle = createPresetTitle(presetName);
     mainContent.appendChild(presetTitle);
 
@@ -202,8 +209,6 @@ async function createTable(index, presetName) {
     mainContent.appendChild(imageTable);
 
     sendMessage([0xF0,0x33,0x00,0xF7]);
-    sendMessage([0xF0,0x37,0x00,0xF7]);
-    //sendMessage([0xF0,0x38,0x00,0xF7]);
 }
 
 // Função para criar o título do preset
@@ -448,10 +453,11 @@ async function createSmallTables() {
     
     smallTablesContainer.className = "small-tables-container";
 
-    const table1 = createIndividualTable(1);
+    //alert([...algorithmDSP])
+    const table1 = createIndividualTable(1, algorithmDSP[0]);
     table1.style.width = "240px";
     
-    const table2 = createIndividualTable(2);
+    const table2 = createIndividualTable(2, algorithmDSP[1]);
     table2.style.width = "240px";
 
     smallTablesContainer.appendChild(table1);
@@ -502,15 +508,16 @@ function updateSliders(value1, value2) {
 }
 
 // Função para criar as tabelas DSP
-function createIndividualTable(number) {
+function createIndividualTable(number, currentAlgorithmIndex) {
     const algorithmValues = [
-        "Glassy Delay", "Bucket Brigade", "TransistorTape", "Quantum Pitch", "Holo Filter", "RetroVerse", "Momery Man", "Nebula Swel", "WhammyDelay"
+        "OFF", "Glassy Delay", "Bucket Brigade", "TransistorTape", "Quantum Pitch", "Holo Filter", "RetroVerse", "Momery Man", "Nebula Swel", "WhammyDelay"
     ];
-    let currentAlgorithmIndex = 0;
+    //let currentAlgorithmIndex = 0;
 
     const table = document.createElement("table");
     table.className = "preset-table";
     table.id = `dsp-table-${number}`;
+    table.style.position = "relative";
 
     const thead = document.createElement("thead");
     const titleRow = document.createElement("tr");
@@ -549,7 +556,7 @@ function createIndividualTable(number) {
 
     const tbody = document.createElement("tbody");
     
-    function updateLabels() {
+    function updateLabels(readingValues) {
         let labels = ["Time", "Feedback", "DelayMix", ...algorithmData[algorithmDisplay.textContent] || []];
         let startValues = algorithmStart[algorithmDisplay.textContent];
 
@@ -558,6 +565,29 @@ function createIndividualTable(number) {
         }
         
         tbody.innerHTML = "";
+        if (algorithmDisplay.textContent === "OFF") {
+            const emptyRow = document.createElement("tr");
+            emptyRow.style.height = "1px";
+            tbody.appendChild(emptyRow);
+            const dspRow = document.createElement("tr");
+            const emptyCell = document.createElement("td");
+            const dspCell = document.createElement("td");
+dspCell.textContent = `DSP${number}`;
+dspCell.style.color = number == 1 ? 'rgb(255, 194, 0)' : 'SkyBlue';
+dspCell.style.textAlign = "right";
+dspCell.style.fontWeight = "bold";
+dspCell.style.position = "absolute";
+dspCell.style.bottom = "10px";
+dspCell.style.right = "10px";
+            
+            dspRow.appendChild(emptyCell);
+            dspRow.appendChild(dspCell);
+            tbody.appendChild(dspRow);
+            
+            table.appendChild(tbody);
+            return;
+        }
+
         labels.forEach((label, index) => {
             const row = document.createElement("tr");
             
@@ -566,9 +596,29 @@ function createIndividualTable(number) {
             
             const valueCell = document.createElement("td");
             valueCell.className = 'td button';
-            valueCell.textContent = label === "Inactive" ? "Inactive" : `${startValues[index]}`;
+            if (label === "Inactive") {
+                valueCell.textContent = "Inactive";
+            } else {
+                if(readingValues) {
+                    const range = parameterRanges[label];
+                    let valorInicial = startValues[index];
+                    
+                    // Soma o valor inicial com o valor recebido para exibir corretamente
+                    if (range && typeof range.valor_inicial === 'number') {
+                        let extra;
+                        if (number == 1) extra = algorithmDSP1[index] ?? 0;
+                        else extra = algorithmDSP2[index] ?? 0;
+                        valorInicial = range.valor_inicial + extra;
+                        //alert(`${range.valor_inicial} + ${extra}`)
+                        valueCell.textContent = `${valorInicial} ${range.complemento}`;
+                    } else {
+                        // Para valores que não são numéricos (ex: "Fixed", "Gradual")
+                        valueCell.textContent = `${valorInicial}`;
+                    }
+                } else valueCell.textContent = `${startValues[index]}`;
+            }
             
-            if ((index + 1) % 3 === 0 && index !== 0) {
+            if ((index + 1) % 3 === 0 && index !== 0 && (index+1) < labels.length) {
                 nameCell.style.borderBottom = "1px solid rgba(216, 216, 216, 0.3)";
                 valueCell.style.borderBottom = "1px solid rgba(216, 216, 216, 0.3)";
                 row.style.color = "lime";
@@ -589,6 +639,19 @@ function createIndividualTable(number) {
             
                 createPopup(options, (selectedValue) => {
                     valueCell.textContent = selectedValue;
+
+                    setTimeout(() => {
+                        const valueCells = tbody.querySelectorAll('td.button');
+                        const currentValues = Array.from(valueCells).map(cell => cell.textContent);
+
+
+                
+                        if (number === 1) {
+                            alert (`tabela 1 - ${currentValues}`);
+                        } else if (number === 2) {
+                            alert (`tabela 2 - ${currentValues}`);
+                        }
+                    }, 0);
                 }, event);
             });            
 
@@ -614,7 +677,7 @@ function createIndividualTable(number) {
 
     function updateAlgorithmDisplay() {
         algorithmDisplay.textContent = algorithmValues[currentAlgorithmIndex];
-        updateLabels();
+        updateLabels(false);
     }
     
     leftArrow.addEventListener("click", function () {
@@ -627,53 +690,34 @@ function createIndividualTable(number) {
         updateAlgorithmDisplay();
     });
     
-    updateLabels();
+    updateLabels(true);
     return table;
 }
 
-function updateDSPButtons(table, buttonTexts) {
+function updateDSPButtons(tableNum, buttonTexts) {
     if (buttonTexts.length === 0) return;
 
+    const table = document.getElementById(`dsp-table-${tableNum}`);
     // Atualiza o algorithmDisplay
     const algorithmDisplay = table.querySelector(".topology-container span:nth-child(3)");
     switch (buttonTexts[0]) {
-        case 0:
-            algorithmDisplay.textContent = 'OFF';
-            break;
-        case 1:
-            algorithmDisplay.textContent = 'Glassy Delay';
-            break;
-        case 2:
-            algorithmDisplay.textContent = 'Bucket Brigade';
-            break;
-        case 3:
-            algorithmDisplay.textContent = 'TransistorTape';
-            break;
-        case 4:
-            algorithmDisplay.textContent = 'Quantum Pitch';
-            break;
-        case 5:
-            algorithmDisplay.textContent = 'Holo Filter';
-            break;
-        case 6:
-            algorithmDisplay.textContent = 'RetroVerse';
-            break;
-        case 7:
-            algorithmDisplay.textContent = 'Momery Man';
-            break;
-        case 8:
-            algorithmDisplay.textContent = 'Nebula Swel';
-            break;
-        case 9:
-            algorithmDisplay.textContent = 'WhammyDelay';
-            break;
+        case 0: algorithmDisplay.textContent = 'OFF'; break;
+        case 1: algorithmDisplay.textContent = 'Glassy Delay'; break;
+        case 2: algorithmDisplay.textContent = 'Bucket Brigade'; break;
+        case 3: algorithmDisplay.textContent = 'TransistorTape'; break;
+        case 4: algorithmDisplay.textContent = 'Quantum Pitch'; break;
+        case 5: algorithmDisplay.textContent = 'Holo Filter'; break;
+        case 6: algorithmDisplay.textContent = 'RetroVerse'; break;
+        case 7: algorithmDisplay.textContent = 'Momery Man'; break;
+        case 8: algorithmDisplay.textContent = 'Nebula Swel'; break;
+        case 9: algorithmDisplay.textContent = 'WhammyDelay'; break;
     }
 
     // Atualiza os botões da tabela
     const tbody = table.querySelector("tbody");
     if (!tbody) return;
 
-    let labels = ["Time", "Feedback", "DelayMix", "High Cut", "Low Cut", "Saturation", "Mod Type"];
+    let labels = ["Time", "Feedback", "DelayMix", ...algorithmData[algorithmDisplay.textContent] || []];
     let startValues = buttonTexts.slice(1); // Os valores dos botões começam no segundo elemento
 
     // Garante que há valores suficientes
