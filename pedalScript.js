@@ -3,6 +3,11 @@ console.log(nomeControladora);
 
 let activePreset = null;
 
+// Cores
+let blue = '#53bfeb';
+let blueTransparent = 'rgba(83, 191, 235, 0.5)';
+let purpleTransparent = 'rgba(159, 24, 253, 0.5)';
+
 const algorithmData = {
     "Glassy Delay": ["High Cut", "Low Cut", "Saturation", "Mod Type"],
     "Bucket Brigade": ["Tone", "Compression", "Modulation", "Grit", "Ducking", "Low Cut"],
@@ -10,7 +15,7 @@ const algorithmData = {
     "Quantum Pitch": ["Interval A", "Tone A", "Level A", "Interval B", "Tone B", "Level B", "Mode"],
     "Holo Filter": ["Type", "Ressonance", "Tone", "Envelope", "Sensitivity/Range", "Responce/Rate"],
     "RetroVerse": ["Sensitivity", "Release"],
-    "Momery Man": ["Tone", "Compression", "Grit", "Mod Type", "Modulation", "Ducking"],
+    "Memory Man": ["Tone", "Compression", "Grit", "Mod Type", "Modulation", "Ducking"],
     "Nebula Swel": ["Sensitivity", "Responce"],
     "WhammyDelay": ["Heel", "Toe", "Tone", "Mode", "Speed"]
 };
@@ -22,44 +27,83 @@ const algorithmStart = {
     "Quantum Pitch": ["63ms", "0%", "100%", "-12", "60%", "100%", "0", "20%", "0%", "Fixed"],
     "Holo Filter": ["0ms", "80%", "80%", "LPF", "70%", "50%", "RMS", "40%", "50%"],
     "RetroVerse": ["800ms", "80%", "80%", "70%", "50%"],
-    "Momery Man": ["200ms", "80%", "80%", "60%", "75%", "0%", "Vibrato", "10%", "10%"],
+    "Memory Man": ["200ms", "80%", "80%", "60%", "75%", "0%", "Vibrato", "10%", "10%"],
     "Nebula Swel": ["0ms", "0%", "80%", "50%", "50%"],
     "WhammyDelay": ["600ms", "80%", "80%", "-12", "7", "50%", "Auto", "0%"]
 };
 
 const parameterRanges = {
-    "Time": { valor_inicial: 0, valor_final: 900, complemento: "ms" },
-    "Feedback": { valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "DelayMix": { valor_inicial: 0, valor_final: 120, complemento: "%" },
-    "High Cut": { valor_inicial: 500, valor_final: 8000, complemento: "Hz" },
-    "Low Cut": { valor_inicial: 50, valor_final: 1500, complemento: "Hz" },
-    "Saturation": { valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Tone": { valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Compression": { valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Modulation": { valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Grit": { valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Ducking": { valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Wow & Flutter": { valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Degradation": { valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Interval A": { valor_inicial: -12, valor_final: 12, complemento: "" },
-    "Tone A": { valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Level A": { valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Interval B": { valor_inicial: -12, valor_final: 12, complemento: "" },
-    "Tone B": { valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Level B": { valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Mode": { valor_inicial: "Fixed", valor_final: "Gradual", complemento: "" },
-    "Type": { valor_inicial: "HPF", valor_final: "LPF", complemento: "Tipo de efeito" },
-    "Ressonance": { valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Envelope": { valor_inicial: "RMS", valor_final: "Sine", complemento: "%" },
-    "Sensitivity/Range": { valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Response/Rate": { valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Sensitivity": { valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Release": { valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Responce": { valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Heel": { valor_inicial: -12, valor_final: 12, complemento: "" },
-    "Toe": { valor_inicial: -12, valor_final: 12, complemento: "" },
-    "Speed": { valor_inicial: 0, valor_final: 100, complemento: "%" }
+    "Time": { tipo: "nenhum", valor_inicial: 0, valor_final: 900, complemento: "ms" },
+    "Feedback": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "DelayMix": { tipo: "porcentagem", valor_inicial: 0, valor_final: 120, complemento: "%" },
+    "High Cut": { tipo: "lista", valores: ["OFF", 500, 507, 525, 560, 617, 702, 821, 980, 1183, 1437, 
+        1747, 2120, 2559, 3072, 3664, 4340, 5105, 5967, 6930, 8000], complemento: "Hz" },
+    "Low Cut": { tipo: "lista", valores: ["OFF", 50, 51, 54, 61, 72, 89, 112, 142, 182, 231, 291, 363,
+         448, 547, 661, 792, 940, 1107, 1293, 1500], complemento: "Hz" },
+    "Saturation": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Mod Type": { tipo: "lista",  valores: ["OFF", "Vibrato", "Tremolo", "Chorus", "Phaser", "Flanger"], 
+        complemento: "" },
+    "Tone": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Compression": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Modulation": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Grit": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Ducking": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Wow & Flutter": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Degradation": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Interval A": { tipo: "lista", valores: [-12, -11, -10, -9, -8, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 
+        4, 5, 6, 7, 8, 9, 10, 11, 12], complemento: "" },
+    "Tone A": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Level A": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Interval B": { tipo: "lista", valores: [-12, -11, -10, -9, -8, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 
+        4, 5, 6, 7, 8, 9, 10, 11, 12], complemento: "" },
+    "Tone B": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Level B": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Mode": { tipo: "lista",  valores: ["Fixed", "Gradual"], complemento: "" },
+    "Type": { tipo: "lista",  valores: ["LPF", "HPF", "BPF"], complemento: "" },
+    "Ressonance": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Envelope": { tipo: "lista", valores: ["RMS", "Triangle", "Square", "Sine"], complemento: "" },
+    "Sensitivity/Range": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Response/Rate": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Sensitivity": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Release": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Responce": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Heel": { tipo: "lista", valores: [-12, -11, -10, -9, -8, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 
+        6, 7, 8, 9, 10, 11, 12], complemento: "" },
+    "Toe": { tipo: "lista", valores: [-12, -11, -10, -9, -8, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 
+        7, 8, 9, 10, 11, 12], complemento: "" },
+    "Speed": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" }
 };
+
+const timeAlg = {
+    "Glassy Delay": { min: 0, max: 900, start: 400 },
+    "Bucket Brigade": { min: 0, max: 944, start: 400 },
+    "TransistorTape": { min: 2, max: 937, start: 400 },
+    "Quantum Pitch": { min: 63, max: 823, start: 400 },
+    "Holo Filter": { min: 0, max: 948, start: 400 },
+    "RetroVerse": { min: 0, max: 830, start: 400 },
+    "Memory Man": { min: 0, max: 940, start: 400 },
+    "Nebula Swel": { min: 0, max: 948, start: 400 },
+    "WhammyDelay": { min: 63, max: 823, start: 400 }
+}
+
+const imageStereo = {
+    "The Haas Effect": { Linhas: ["Delay"], start: [44] },
+    "Spill by the Edge": { Linhas: ["Spill", "Distance"], start: [50, 40] },
+    "Ping-Pong": { Linhas: ["Spread"], start: [50] },
+    "Wet-Panning": { Linhas: ["Speed", "Depth"], start: [30, 100] },
+    "Dry-Panning": { Linhas: ["Speed", "Depth"], start: [40, 100] },
+    "Cross-Panning": { Linhas: ["Speed", "Depth"], start: [25, 100] },
+    "Transverse": { Linhas: ["Speed", "Depth"], start: [30, 100] }
+}
+
+const imageRanges = {
+    "Delay": { tipo: "lista", valor_inicial: 0, valor_final: 50, complemento: "ms" },
+    "Spill": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Distance": { tipo: "lista", valor_inicial: 0, valor_final: 50, complemento: "ft" },
+    "Spread": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Speed": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Depth": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+}
 
 let algorithmDSP = [1, 1];
 let algorithmDSP1 = [0,0,0,0,0,0,0,0,0,0,0,0]
@@ -123,6 +167,10 @@ function createPresets() {
         preset.appendChild(iconContainer);
         preset.appendChild(arrow);
 
+        if (i % 2 === 1) {
+            preset.classList.add("preset-impar");
+        }
+        
         preset.addEventListener("click", function () {
             if (preset.classList.contains("selected")) {
                 return;
@@ -130,6 +178,7 @@ function createPresets() {
         
             document.querySelectorAll(".preset").forEach(p => {
                 p.classList.remove("selected");
+                p.style.backgroundColor = "";
                 p.querySelector(".preset-arrow").style.transform = "rotate(-90deg) scale(1.8)"; // Resetar seta
             });
         
@@ -138,6 +187,12 @@ function createPresets() {
             attachPresetConfig(preset);
             preset.classList.add("selected");
             arrow.style.transform = "rotate(90deg) scale(1.8)"; // Rotacionar seta
+
+            if (i % 2 === 0) {
+                preset.style.backgroundColor = blueTransparent;
+            } else {
+                preset.style.backgroundColor = purpleTransparent;
+            }
         
             if (activePreset && activePreset !== preset) {
                 activePreset.querySelector(".preset-icon-container").style.display = "none";
@@ -314,8 +369,8 @@ function createFormattedTable() {
         <span style="font-size: 12px; cursor: pointer;" class="rotate-arrow"> \u276E</span>
     `;
 
-    const row1 = createTableRow("Dry Level", -100, 100);
-    const row2 = createTableRow("Dry Pan", -100, 100);
+    const row1 = createTableRow("Dry Level");
+    const row2 = createTableRow("Dry Pan");
 
     titleCell.addEventListener("click", () => {
         if (titleCell.innerText.trim() === "Style: \u276E Pan Control \u276E") {
@@ -327,6 +382,7 @@ function createFormattedTable() {
             `;
             updateTableRow(row1, "Dry Level Left", 0, 100);
             updateTableRow(row2, "Dry Level Right", 0, 100);
+            sendMessage([0xf0,0x34,0x01,100,4,6,0xf7])
         } else {
             titleCell.innerHTML = `
                 <span style="font-size: 16px;">Style:</span>
@@ -336,6 +392,7 @@ function createFormattedTable() {
             `;
             updateTableRow(row1, "Dry Level", 0, 100);
             updateTableRow(row2, "Dry Pan", -100, 100);
+            sendMessage([0xf0,0x34,0x00,100,4,6,0xf7])
         }
     });
 
@@ -357,7 +414,7 @@ function updateTableRow(row, newLabel, min, max) {
     row.children[2].style.color = 'lime';
     if (min != 0 || newLabel == 'Dry Level') {
         if (newLabel == 'Dry Level'){
-            slider.value = min;
+            slider.value = max;
             row.children[2].textContent = `${slider.value}%`;
         } else {
             slider.value = (min + max) / 2;
@@ -373,7 +430,7 @@ function updateTableRow(row, newLabel, min, max) {
         row.children[2].style.width = '50px';
     }
     if (newLabel == 'Dry Pan') slider.style.background = 'white';
-    else slider.style.background = `linear-gradient(to right, #53bfeb ${((slider.value - slider.min) / (slider.max - slider.min)) * 100}%, white ${((slider.value - slider.min) / (slider.max - slider.min)) * 100}%)`;
+    else slider.style.background = `linear-gradient(to right, ${blue} ${((slider.value - slider.min) / (slider.max - slider.min)) * 100}%, white ${((slider.value - slider.min) / (slider.max - slider.min)) * 100}%)`;
 }
 
 // Função para criar linhas da tabela Dry
@@ -399,14 +456,14 @@ function createTableRow(name) {
     if (name != 'Dry Pan') {
         slider.min = "0";
         valueCell.textContent = "0";
-        slider.style.background = `linear-gradient(to right, #53bfeb ${((slider.value - slider.min) / (slider.max - slider.min)) * 100}%, white ${((slider.value - slider.min) / (slider.max - slider.min)) * 100}%)`;
+        slider.style.background = `linear-gradient(to right, ${blue} ${((slider.value - slider.min) / (slider.max - slider.min)) * 100}%, white ${((slider.value - slider.min) / (slider.max - slider.min)) * 100}%)`;
     }
     else {
         slider.min = "-100";
         valueCell.textContent = "Center";
     }
     
-
+    let debounceTimeout; // Variavel para detectar se o usuario parou de interagir com o slider
     slider.addEventListener("input", function () {
         if (slider.value == 0 && name != 'Dry Level') {
             valueCell.textContent = 'Center';
@@ -420,7 +477,7 @@ function createTableRow(name) {
             }
             else {
                 valueCell.textContent = `Right ${slider.value}%`;
-                valueCell.style.color = "#53bfeb";
+                valueCell.style.color = blue;
             }
         }
         else {
@@ -436,7 +493,23 @@ function createTableRow(name) {
         if (nameCell.textContent == 'Dry Pan') percentage = 0;
 
         // Atualiza o fundo do slider
-        this.style.background = `linear-gradient(to right, #53bfeb ${percentage}%, white ${percentage}%)`;
+        this.style.background = `linear-gradient(to right, ${blue} ${percentage}%, white ${percentage}%)`;
+
+        const sliders = document.querySelectorAll(".slider");
+        const sliderValues = Array.from(sliders).map(s => parseInt(s.value));
+        let type = 1;
+        if (nameCell.textContent === 'Dry Level' || nameCell.textContent === 'Dry Pan') {
+            sliderValues[1] = sliderValues[1]+100;
+            type = 0;
+        }
+        [sliderValues[1], sliderValues[2]] = BinaryOperationSend(sliderValues[1], 4);
+        console.log(sliderValues);
+
+        clearTimeout(debounceTimeout); // Impede o envio da mensagem caso receba outro input
+        debounceTimeout = setTimeout(() => {
+            sendMessage([0xf0,0x34,type,sliderValues[0],sliderValues[1],sliderValues[2],0xf7]);
+            console.log("Mensagem enviada:", sliderValues);
+        }, 1000); // 1 segundo
     });
 
     row.appendChild(nameCell);
@@ -455,10 +528,10 @@ async function createSmallTables() {
 
     //alert([...algorithmDSP])
     const table1 = createIndividualTable(1, algorithmDSP[0]);
-    table1.style.width = "240px";
+    table1.style.width = "300px"; // era 240
     
     const table2 = createIndividualTable(2, algorithmDSP[1]);
-    table2.style.width = "240px";
+    table2.style.width = "300px"; // era 240
 
     smallTablesContainer.appendChild(table1);
     smallTablesContainer.appendChild(table2);
@@ -481,7 +554,7 @@ function updateSliders(value1, value2) {
         // Atualiza o primeiro slider
         sliders[0].value = value1;
         valueDisplays[0].textContent = `${value1}%`;
-        sliders[0].style.background = `linear-gradient(to right, #53bfeb ${((value1 - sliders[0].min) / (sliders[0].max - sliders[0].min)) * 100}%, white ${(value1 - sliders[0].min) / (sliders[0].max - sliders[0].min) * 100}%)`;
+        sliders[0].style.background = `linear-gradient(to right, ${blue} ${((value1 - sliders[0].min) / (sliders[0].max - sliders[0].min)) * 100}%, white ${(value1 - sliders[0].min) / (sliders[0].max - sliders[0].min) * 100}%)`;
 
         // Atualiza o segundo slider
         sliders[1].value = value2 -100;
@@ -495,11 +568,11 @@ function updateSliders(value1, value2) {
             }
             else {
                 valueDisplays[1].textContent = `Right ${sliders[1].value}%`;
-                valueDisplays[1].style.color = "#53bfeb";
+                valueDisplays[1].style.color = blue;
             }
         } else {
             valueDisplays[1].textContent = `${value2}%`;
-            sliders[1].style.background = `linear-gradient(to right, #53bfeb ${((value2 - sliders[1].min) / (sliders[1].max - sliders[1].min)) * 100}%, white ${(value2 - sliders[1].min) / (sliders[1].max - sliders[1].min) * 100}%)`;
+            sliders[1].style.background = `linear-gradient(to right, ${blue} ${((value2 - sliders[1].min) / (sliders[1].max - sliders[1].min)) * 100}%, white ${(value2 - sliders[1].min) / (sliders[1].max - sliders[1].min) * 100}%)`;
         }
         
     } else {
@@ -510,12 +583,12 @@ function updateSliders(value1, value2) {
 // Função para criar as tabelas DSP
 function createIndividualTable(number, currentAlgorithmIndex) {
     const algorithmValues = [
-        "OFF", "Glassy Delay", "Bucket Brigade", "TransistorTape", "Quantum Pitch", "Holo Filter", "RetroVerse", "Momery Man", "Nebula Swel", "WhammyDelay"
+        "OFF", "Glassy Delay", "Bucket Brigade", "TransistorTape", "Quantum Pitch", "Holo Filter", "RetroVerse", "Memory Man", "Nebula Swel", "WhammyDelay"
     ];
     //let currentAlgorithmIndex = 0;
 
     const table = document.createElement("table");
-    table.className = "preset-table";
+    table.className = "preset-table2";
     table.id = `dsp-table-${number}`;
     table.style.position = "relative";
 
@@ -530,6 +603,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
     const algorithmTitle = document.createElement("h2");
     algorithmTitle.className = "algorithm-title";
     algorithmTitle.textContent = "Algorithm:";
+    algorithmTitle.style.marginRight = "40px"
     
     const leftArrow = document.createElement("span");
     leftArrow.textContent = "\u276E";
@@ -537,7 +611,8 @@ function createIndividualTable(number, currentAlgorithmIndex) {
     
     const algorithmDisplay = document.createElement("span");
     algorithmDisplay.textContent = algorithmValues[currentAlgorithmIndex];
-    algorithmDisplay.style.width = '103px';
+    algorithmDisplay.style.width = '125px';
+    algorithmDisplay.style.fontSize = '17px';
     
     const rightArrow = document.createElement("span");
     rightArrow.textContent = "\u276E";
@@ -572,13 +647,13 @@ function createIndividualTable(number, currentAlgorithmIndex) {
             const dspRow = document.createElement("tr");
             const emptyCell = document.createElement("td");
             const dspCell = document.createElement("td");
-dspCell.textContent = `DSP${number}`;
-dspCell.style.color = number == 1 ? 'rgb(255, 194, 0)' : 'SkyBlue';
-dspCell.style.textAlign = "right";
-dspCell.style.fontWeight = "bold";
-dspCell.style.position = "absolute";
-dspCell.style.bottom = "10px";
-dspCell.style.right = "10px";
+            dspCell.textContent = `DSP${number}`;
+            dspCell.style.color = number == 1 ? 'rgb(255, 194, 0)' : blue;
+            dspCell.style.textAlign = "right";
+            dspCell.style.fontWeight = "bold";
+            dspCell.style.position = "absolute";
+            dspCell.style.bottom = "10px";
+            dspCell.style.right = "10px";
             
             dspRow.appendChild(emptyCell);
             dspRow.appendChild(dspCell);
@@ -618,42 +693,136 @@ dspCell.style.right = "10px";
                 } else valueCell.textContent = `${startValues[index]}`;
             }
             
-            if ((index + 1) % 3 === 0 && index !== 0 && (index+1) < labels.length) {
-                nameCell.style.borderBottom = "1px solid rgba(216, 216, 216, 0.3)";
-                valueCell.style.borderBottom = "1px solid rgba(216, 216, 216, 0.3)";
+            if ((index + 1) % 3 === 0) {
+                if ((index+1) < labels.length){
+                    nameCell.style.borderBottom = "1px solid rgba(216, 216, 216, 0.3)";
+                    valueCell.style.borderBottom = "1px solid rgba(216, 216, 216, 0.3)";
+                }
                 row.style.color = "lime";
             } else if((index + 2) % 3 === 0 && index !== 0) row.style.color = "red";
-            else row.style.color = "#53bfeb";
+            else row.style.color = blue;
 
-            valueCell.addEventListener("click", (event) => {
-                const label = labels[index];
-                if (label === "Inactive") return;
-            
-                const rangeData = parameterRanges[label]; // Obter o intervalo do JSON
-                if (!rangeData) return;
-            
-                const options = [];
-                for (let i = rangeData.valor_inicial; i <= rangeData.valor_final; i++) {
-                    options.push(`${i} ${rangeData.complemento}`);
-                }
-            
-                createPopup(options, (selectedValue) => {
-                    valueCell.textContent = selectedValue;
+            const labelName = labels[index];
+            const rangeData = parameterRanges[labelName];
+            if (!rangeData) return;
 
-                    setTimeout(() => {
-                        const valueCells = tbody.querySelectorAll('td.button');
-                        const currentValues = Array.from(valueCells).map(cell => cell.textContent);
+            // Cria a linha como sendo uma linha para lista
+            if (rangeData.tipo === "lista") {
+                valueCell.addEventListener("click", (event) => {
+                    const options = rangeData.valores.map(v => `${v} ${rangeData.complemento}`);
+                    createPopup(options, (selectedValue) => {
+                        valueCell.textContent = selectedValue;
+                    }, event);
+                });
+            }
 
+            // Cria a linha como sendo uma linha para porcentagem
+            else if (rangeData.tipo === "porcentagem") {
+                const slider = document.createElement("input");
+                slider.type = "range";
+                slider.min = rangeData.valor_inicial;
+                slider.max = rangeData.valor_final;
+                slider.value = parseInt((startValues[index] || "").replace(/[^0-9]/g, "")) || 0;
+                slider.className = "mini-slider";
+                slider.style.width = "100px";
+                slider.style.marginRight = "5px";
 
+                const percentage = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+                slider.style.background = `linear-gradient(to right, ${blue} ${percentage}%, white ${percentage}%)`;
+
+                const display = document.createElement("span");
+                display.textContent = `${slider.value}${rangeData.complemento}`;
+                display.style.fontSize = "15px";
+                display.style.display = "inline-block";
+                display.style.width = "30px";
+                display.style.textAlign = "right";
+
+                slider.addEventListener("input", () => {
+                    display.textContent = `${slider.value}${rangeData.complemento}`;
+                    slider.style.background = `linear-gradient(to right, ${blue} ${(slider.value - slider.min) / (slider.max - slider.min) * 100}%, white ${(slider.value - slider.min) / (slider.max - slider.min) * 100}%)`;
+                });
+
+                // Scroll do mouse controla o slider
+                slider.addEventListener("wheel", (event) => {
+                    event.preventDefault(); // Impede que a pagina seja rolada ao scrolar o mouse
                 
-                        if (number === 1) {
-                            alert (`tabela 1 - ${currentValues}`);
-                        } else if (number === 2) {
-                            alert (`tabela 2 - ${currentValues}`);
-                        }
-                    }, 0);
-                }, event);
-            });            
+                    const step = 1; // Variacção do croll para cada "tic" do scroll
+                    let newValue = parseInt(slider.value);
+                
+                    if (event.deltaY < 0) {
+                        newValue += step;
+                    } else {
+                        newValue -= step;
+                    }
+                
+                    newValue = Math.max(parseInt(slider.min), Math.min(parseInt(slider.max), newValue));
+                    
+                    slider.value = newValue;
+                    display.textContent = `${newValue}${rangeData.complemento}`;
+                    
+                    const percentage = (newValue - slider.min) / (slider.max - slider.min) * 100;
+                    slider.style.background = `linear-gradient(to right, ${blue} ${percentage}%, white ${percentage}%)`;
+                });
+                
+                valueCell.innerHTML = "";
+                valueCell.appendChild(slider);
+                valueCell.appendChild(display);
+            }
+
+            // Cria a linha como sendo uma linha sem tipo (usado no Time)
+            else {
+                const container = document.createElement("div");
+                container.style.display = "flex";
+                container.style.alignItems = "center";
+                container.style.justifyContent = "flex-end";
+                container.style.gap = "0px";
+
+                const input = document.createElement("input");
+                input.type = "number";
+                
+                const minMax = timeAlg[algorithmDisplay.textContent];
+                input.min = minMax.min;
+                input.max = minMax.max;
+                input.value = startValues[index]?.match(/\d+/)?.[0] ?? currentAlgorithmIndex;
+                input.style.width = "60px";
+                input.style.fontSize = "16px";
+                input.style.textAlign = "right";
+                input.style.background = "transparent";
+                input.style.border = "none";
+                input.style.color = blue;
+                input.style.borderRadius = "4px";
+                input.style.padding = "2px";
+
+                function validateInputValue() {
+                    let val = parseInt(input.value);
+                    if (isNaN(val)) val = input.min;
+                    if (val < input.min) val = input.min;
+                    if (val > input.max) val = input.max;
+                    input.value = val;
+                }
+                
+                input.addEventListener("blur", validateInputValue); // Ao clicar fora
+                input.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter") {
+                        input.blur(); // Simula um clique fora ao dar enter
+                    }
+                });
+
+                input.addEventListener("focus", () => {
+                    input.select();
+                });
+
+                const suffix = document.createElement("span");
+                suffix.textContent = "ms";
+                suffix.style.fontSize = "14px";
+                suffix.style.color = blue;
+
+                container.appendChild(input);
+                container.appendChild(suffix);
+                valueCell.innerHTML = "";
+                valueCell.appendChild(container);
+            }
+
 
             row.appendChild(nameCell);
             row.appendChild(valueCell);
@@ -679,6 +848,14 @@ dspCell.style.right = "10px";
         algorithmDisplay.textContent = algorithmValues[currentAlgorithmIndex];
         updateLabels(false);
     }
+
+    algorithmDisplay.addEventListener("click", function () {
+        createPopup(algorithmValues, (selectedValue) => {
+            currentAlgorithmIndex = algorithmValues.indexOf(selectedValue);;
+            updateAlgorithmDisplay();
+        }, event);
+        
+    });
     
     leftArrow.addEventListener("click", function () {
         currentAlgorithmIndex = (currentAlgorithmIndex - 1 + algorithmValues.length) % algorithmValues.length;
@@ -708,7 +885,7 @@ function updateDSPButtons(tableNum, buttonTexts) {
         case 4: algorithmDisplay.textContent = 'Quantum Pitch'; break;
         case 5: algorithmDisplay.textContent = 'Holo Filter'; break;
         case 6: algorithmDisplay.textContent = 'RetroVerse'; break;
-        case 7: algorithmDisplay.textContent = 'Momery Man'; break;
+        case 7: algorithmDisplay.textContent = 'Memory Man'; break;
         case 8: algorithmDisplay.textContent = 'Nebula Swel'; break;
         case 9: algorithmDisplay.textContent = 'WhammyDelay'; break;
     }
@@ -757,12 +934,17 @@ function updateDSPButtons(tableNum, buttonTexts) {
     tbody.appendChild(dspRow);
 }
 
-
 function binaryOperation(lsb, msb, deslocamento) {
     let newMsb = msb << deslocamento;
     let result = lsb + newMsb;
     
     return result;
+}
+
+function BinaryOperationSend(result, deslocamento) {
+    const lsb = result & ((1 << deslocamento) - 1); // pega os bits baixos
+    const msb = result >> deslocamento;            // pega os bits altos
+    return [lsb, msb];
 }
 
 function createPresetConfigSection() {
@@ -799,14 +981,14 @@ function createPresetConfigSection() {
 
         if (setting === "Bypass Load State") {
             button.textContent = "Keep Same";
-            button.style.color = '#53bfeb';
+            button.style.color = blue;
 
             button.addEventListener("click", () => {
                 createPopup(["Keep Same", "Turn On", "Turn Off"], (selectedOption) => {
                     button.textContent = selectedOption;
                     switch(button.textContent){
                         case 'Keep Same':
-                            button.style.color = '#53bfeb';
+                            button.style.color = blue;
                             break;
                         case 'Turn On':
                             button.style.color = 'lime';
@@ -827,7 +1009,7 @@ function createPresetConfigSection() {
 
         }else if (setting === "Spill Over") {
             button.textContent = "Inactive";
-            row.style.borderBottom = 'solid rgba(216, 216, 216, 0.2) 1px';
+            row.style.borderBottom = 'solid rgba(216, 216, 216, 0.2) 1px'; /* Separador do preset config, tirar? */
             
         }else if (setting === "Preset BPM") {
             button.textContent = "Off";
@@ -837,7 +1019,7 @@ function createPresetConfigSection() {
                 createPopup(bpmOptions, (selectedOption) => {
                     button.textContent = selectedOption;
                     if (button.textContent == 'Off') button.style.color = 'red';
-                    else button.style.color = '#53bfeb';
+                    else button.style.color = blue;
                 }, event);
             });
         }
@@ -876,88 +1058,209 @@ function updateButtonTexts(buttonTexts) {
         if (button.textContent == 'On' || button.textContent == 'Turn On') button.style.color = 'lime';
         else if (button.textContent == 'Off' || button.textContent == 'Turn Off') button.style.color = 'red';
         else if (button.textContent == 'Inactive') button.style.color = 'white';
-        else button.style.color = '#53bfeb';
+        else button.style.color = blue;
     });
 }
 
 function createImageTable() {
-    const container = document.createElement("div");
-    container.classList.add("image-container");
+    const mainContainer = document.createElement("div");
+    mainContainer.classList.add("main-image-table-container");
 
-    const titleContainer = document.createElement("div");
-    titleContainer.classList.add("image-title");
+    const leftTableContainer = document.createElement("div");
+    leftTableContainer.classList.add("image-container");
 
-    const leftArrow = document.createElement("span");
-    leftArrow.classList.add("image-arrow");
-    leftArrow.textContent = "\u276E";
-    leftArrow.style.cursor = "pointer";
+    const rightTableContainer = document.createElement("div");
+    rightTableContainer.classList.add("image-container");
 
-    const typeWrapper = document.createElement("span"); // Novo wrapper para alinhamento
-    typeWrapper.classList.add("type-wrapper");
-    typeWrapper.textContent = "Image: ";
+    const leftTable = document.createElement("table");
+    leftTable.classList.add("image-table");
 
-    const typeDisplay = document.createElement("span");
-    typeDisplay.classList.add("type-display");
-    const types = ["OFF", "The Haas Effect", "Speill by the Edge", "Ping-Pong", "Wet-Panning", "Dry-Panning", "Cross-Panning", "Transverse"];
-    let currentIndex = 0;
-    typeDisplay.textContent = types[currentIndex];
-    typeDisplay.style.display = "inline-block"; // Permite definir width
-    typeDisplay.style.textAlign = "center";
-    typeDisplay.style.width = '160px';
+    const leftTbody = document.createElement("tbody");
+    const titleRow = document.createElement("tr");
+    titleRow.colSpan = 2;
+    const titleCell = document.createElement("td");
+    titleCell.colSpan = 2;
+    titleCell.style.fontWeight = "bold";
+    titleCell.style.fontSize = "14px";
+    titleCell.style.display = "flex";
+    titleCell.style.justifyContent = "space-between";
+    titleCell.style.alignItems = "center";
 
-    const rightArrow = document.createElement("span");
-    rightArrow.classList.add("image-arrow");
-    rightArrow.textContent = "\u276F";
-    rightArrow.style.cursor = "pointer";
-    
-    leftArrow.addEventListener("click", () => {
-        currentIndex = (currentIndex - 1 + types.length) % types.length;
-        typeDisplay.textContent = `${types[currentIndex]}`;
+    const imageLabel = document.createElement("label");
+    imageLabel.textContent = "Image: ";
+
+    const clickableLabel = document.createElement("label");
+    clickableLabel.textContent = "OFF";
+    clickableLabel.style.color = "red";
+    clickableLabel.style.cursor = "pointer";
+    clickableLabel.style.marginLeft = "5px";
+
+    // Ação de clique (por enquanto não faz nada)
+    clickableLabel.addEventListener("click", () => {
+        const images = ["OFF", "The Haas Effect", "Spill by the Edge", "Ping-Pong", "Wet-Panning", 
+            "Dry-Panning", "Cross-Panning", "Transverse"];
+        createPopup(images, (selectedOption) => {
+            clickableLabel.textContent = selectedOption;
+            clickableLabel.style.color = (selectedOption === 'OFF') ? 'red' : 'lime';
+        
+            // Limpa linhas antigas (mantendo apenas a primeira)
+            while (leftTbody.rows.length > 1) {
+                leftTbody.deleteRow(1);
+            }
+        
+            // Se for OFF, não adiciona nada
+            if (selectedOption === "OFF") return;
+        
+            const config = imageStereo[selectedOption];
+            if (!config) return;
+        
+            config.Linhas.forEach((linha, index) => {
+                const row = document.createElement("tr");
+            
+                const labelCell = document.createElement("td");
+                labelCell.textContent = linha;
+                labelCell.style.fontSize = "14px";
+            
+                const buttonCell = document.createElement("td");
+                buttonCell.style.width = "200px";
+            
+                const rangeInfo = imageRanges[linha];
+                const complemento = rangeInfo?.complemento || "";
+            
+                if (complemento === "%") {
+                    const miniSlider = document.createElement("input");
+                    miniSlider.type = "range";
+                    miniSlider.min = rangeInfo.valor_inicial;
+                    miniSlider.max = rangeInfo.valor_final;
+                    miniSlider.value = config.start[index];
+                    miniSlider.style.width = "80px";
+            
+                    const sliderValue = document.createElement("span");
+                    sliderValue.textContent = `${miniSlider.value}${complemento}`;
+                    sliderValue.style.marginLeft = "8px";
+                    sliderValue.style.width = "40px";
+                    sliderValue.style.color = "lime";
+                    sliderValue.style.display = "inline-block";
+            
+                    miniSlider.addEventListener("input", () => {
+                        sliderValue.textContent = `${miniSlider.value}${complemento}`;
+                        sliderValue.style.width = "40px";
+                    });
+            
+                    buttonCell.appendChild(miniSlider);
+                    buttonCell.appendChild(sliderValue);
+                } else {
+                    const button = document.createElement("button");
+                    button.classList.add("image-button");
+                    button.textContent = `${config.start[index]}${complemento}`;
+                    button.style.width = "80px";
+                    buttonCell.appendChild(button);
+                    buttonCell.style.textAlign = "right";
+                }
+            
+                row.appendChild(labelCell);
+                row.appendChild(buttonCell);
+                leftTbody.appendChild(row);
+            });
+        }, event);
     });
-    
-    rightArrow.addEventListener("click", () => {
-        currentIndex = (currentIndex + 1) % types.length;
-        typeDisplay.textContent = `${types[currentIndex]}`;
-    });
-    
-    titleContainer.appendChild(typeWrapper);
-    titleContainer.appendChild(leftArrow);
-    titleContainer.appendChild(typeDisplay);
-    titleContainer.appendChild(rightArrow);
-    container.appendChild(titleContainer);
 
-    const table = document.createElement("table");
-    table.classList.add("image-table");
-    
+    titleCell.appendChild(imageLabel);
+    titleCell.appendChild(clickableLabel);
+    titleRow.appendChild(titleCell);
+    leftTbody.appendChild(titleRow);
+    leftTable.appendChild(leftTbody);
+    leftTableContainer.appendChild(leftTable);
+
+    // Segunda tabela com sliders e botões que exibem valor
+    const rightTable = document.createElement("table");
+    rightTable.classList.add("image-table");
+
+    const dspData = ["Dsp 1 Pan:", "Dsp 2 Pan:"];
     const tbody = document.createElement("tbody");
-    const rowsData = [
-        [{ text: "Option 1", buttonText: "Select" }, { text: "Option 2", buttonText: "Select" }],
-        [{ text: "Option 3", buttonText: "Select" }, { text: "Option 4", buttonText: "Select" }]
-    ];
 
-    rowsData.forEach(rowData => {
+    dspData.forEach((label, index) => {
         const row = document.createElement("tr");
-        rowData.forEach(cellData => {
-            const cell = document.createElement("td");
-            
-            const textSpan = document.createElement("span");
-            textSpan.textContent = cellData.text;
-            
-            const button = document.createElement("button");
-            button.textContent = cellData.buttonText;
-            button.classList.add("image-button");
-            
-            cell.appendChild(textSpan);
-            cell.appendChild(button);
-            row.appendChild(cell);
+
+        const labelCell = document.createElement("td");
+        labelCell.textContent = label;
+        labelCell.style.width = "100px";
+        labelCell.style.fontSize = "15px";
+
+        const controlCell = document.createElement("td");
+        controlCell.style.display = "flex";
+        controlCell.style.alignItems = "center";
+        controlCell.style.gap = "6px";
+        controlCell.style.justifyContent = "flex-end";
+
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.min = -100;
+        slider.max = 100;
+        slider.value = 0;
+        slider.className = "mini-slider";
+        slider.style.width = "80px";
+
+        const displayValue = document.createElement("button");
+        displayValue.classList.add("image-button");
+        displayValue.style.color = "lime";
+        displayValue.style.width = "100px"
+
+        function updateDisplay(value) {
+            if (value == 0) {
+                displayValue.textContent = "Center";
+                displayValue.style.color = "lime";
+            } else if (value < 0) {
+                displayValue.textContent = `Left ${-value}%`;
+                displayValue.style.color = "rgb(255, 194, 0)";
+            } else {
+                displayValue.textContent = `Right ${value}%`;
+                displayValue.style.color = "var(--blue)";
+            }
+
+            const percentage = ((value - slider.min) / (slider.max - slider.min)) * 100;
+            slider.style.background = `linear-gradient(to right, var(--blue) ${percentage}%, white ${percentage}%)`;
+        }
+
+        // Inicializa o texto
+        updateDisplay(slider.value);
+
+        // Atualiza valor ao interagir com o slider
+        slider.addEventListener("input", () => {
+            updateDisplay(parseInt(slider.value));
         });
+
+        // Scroll também afeta o slider
+        slider.addEventListener("wheel", (event) => {
+            event.preventDefault();
+            const step = 1;
+            let newValue = parseInt(slider.value) + (event.deltaY < 0 ? step : -step);
+            newValue = Math.max(parseInt(slider.min), Math.min(parseInt(slider.max), newValue));
+            slider.value = newValue;
+            updateDisplay(newValue);
+        });
+
+        // Botão "Center" zera o slider ao clicar
+        displayValue.addEventListener("click", () => {
+            slider.value = 0;
+            updateDisplay(0);
+        });
+
+        controlCell.appendChild(slider);
+        controlCell.appendChild(displayValue);
+
+        row.appendChild(labelCell);
+        row.appendChild(controlCell);
         tbody.appendChild(row);
     });
 
-    table.appendChild(tbody);
-    container.appendChild(table);
-    
-    return container;
+    rightTable.appendChild(tbody);
+    rightTableContainer.appendChild(rightTable);
+
+    mainContainer.appendChild(leftTableContainer);
+    mainContainer.appendChild(rightTableContainer);
+
+    return mainContainer;
 }
 
 
