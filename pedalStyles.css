@@ -121,10 +121,11 @@
     padding: 5px;
     font-size: 20px;
     text-align: center;
+    font-weight: normal;
 }
 
 .slider {
-    width: 410px; /* era 290 */
+    width: 375px; /* era 290 */
     height: 8px;
     -webkit-appearance: none;
     appearance: none;
@@ -153,7 +154,7 @@
 
 .value-display {
     text-align: center;
-    font-weight: bold;
+    /*font-weight: bold;*/
     width: 90px;
 }
 
@@ -298,7 +299,6 @@ input[type=number]::-webkit-outer-spin-button {
 }
 
 .image-table td {
-    padding: 8px;
     text-align: left;
 }
 

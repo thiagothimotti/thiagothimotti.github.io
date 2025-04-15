@@ -171,23 +171,49 @@ function createPresets() {
             preset.classList.add("preset-impar");
         }
         
-        preset.addEventListener("click", function () {
+        preset.addEventListener("click", function (event) {
+            
             if (preset.classList.contains("selected")) {
+
+                // Ignora cliques no input
+                if (event.target.tagName === "INPUT") return;
+                
+                preset.classList.remove("selected");
+                preset.style.backgroundColor = "";
+                arrow.style.transform = "rotate(-90deg) scale(1.8)";
+                preset.querySelector(".preset-icon-container").style.display = "none";
+                
+                // Remove a tabela de configuração se existir
+                const existingConfig = document.getElementById("preset-config-table");
+                if (existingConfig) {
+                    existingConfig.remove();
+                }
+
+                mainContent.innerHTML = '';
+        
+                activePreset = null;
                 return;
             }
         
+            // Limpa seleção anterior
             document.querySelectorAll(".preset").forEach(p => {
                 p.classList.remove("selected");
                 p.style.backgroundColor = "";
-                p.querySelector(".preset-arrow").style.transform = "rotate(-90deg) scale(1.8)"; // Resetar seta
+                p.querySelector(".preset-arrow").style.transform = "rotate(-90deg) scale(1.8)";
             });
+        
+            // Remove qualquer config existente antes de abrir outro preset
+            const existingConfig = document.getElementById("preset-config-table");
+            if (existingConfig) {
+                existingConfig.remove();
+            }
         
             sendMessage([0xF0, 0x43, i, 0xF7]);
         
             attachPresetConfig(preset);
             preset.classList.add("selected");
-            arrow.style.transform = "rotate(90deg) scale(1.8)"; // Rotacionar seta
-
+            arrow.style.transform = "rotate(90deg) scale(1.8)";
+        
             if (i % 2 === 0) {
                 preset.style.backgroundColor = blueTransparent;
             } else {
@@ -288,7 +314,8 @@ function createTopologySection() {
     const typeDisplay = document.createElement("span");
     typeDisplay.className = "type-display";
     typeDisplay.textContent = getType(currentTypeIndex);
-    typeDisplay.style.width = '70px'
+    typeDisplay.style.width = '70px';
+    typeDisplay.style.cursor = "pointer";
 
     const leftArrow = document.createElement("span");
     leftArrow.className = "arrow left-arrow";
@@ -360,40 +387,70 @@ function createFormattedTable() {
 
     const titleRow = document.createElement("tr");
     const titleCell = document.createElement("th");
-    titleCell.colSpan = 3; // Título na linha toda
+    titleCell.colSpan = 3; // Titulo na linha toda
     titleCell.className = "table-title";
-    titleCell.innerHTML = `
-        <span style="font-size: 16px; font-weight;">Style:</span>
-        <span style="font-size: 12px; cursor: pointer; margin-left: 10px;"> \u276E </span>
-        <span style="font-size: 14px; margin-left: 10px; margin-right: 10px;">Pan Control</span>
-        <span style="font-size: 12px; cursor: pointer;" class="rotate-arrow"> \u276E</span>
-    `;
+
+    const styleLabel = document.createElement("span");
+    styleLabel.style.fontSize = "16px";
+    styleLabel.textContent = "Style:";
+    styleLabel.style.fontWeight = "bold";
+
+    const arrowLeft = document.createElement("span");
+    arrowLeft.style.fontSize = "12px";
+    arrowLeft.style.cursor = "pointer";
+    arrowLeft.style.marginLeft = "10px";
+    arrowLeft.innerHTML = "\u276E";
+
+    const modeLabel = document.createElement("span");
+    modeLabel.style.fontSize = "16px";
+    modeLabel.style.marginLeft = "10px";
+    modeLabel.style.marginRight = "10px";
+    modeLabel.style.cursor = "pointer";
+    modeLabel.textContent = "Pan Control";
+    modeLabel.style.display = "inline-block";
+    modeLabel.style.width = "100px"
+
+    const arrowRight = document.createElement("span");
+    arrowRight.style.fontSize = "12px";
+    arrowRight.style.cursor = "pointer";
+    arrowRight.classList.add("rotate-arrow");
+    arrowRight.innerHTML = "\u276E";
+
+    titleCell.appendChild(styleLabel);
+    titleCell.appendChild(arrowLeft);
+    titleCell.appendChild(modeLabel);
+    titleCell.appendChild(arrowRight);
 
     const row1 = createTableRow("Dry Level");
     const row2 = createTableRow("Dry Pan");
 
-    titleCell.addEventListener("click", () => {
-        if (titleCell.innerText.trim() === "Style: \u276E Pan Control \u276E") {
-            titleCell.innerHTML = `
-                <span style="font-size: 16px;">Style:</span>
-                <span style="font-size: 12px; cursor: pointer; margin-left: 10px;"> \u276E </span>
-                <span style="font-size: 14px; margin-left: 10px; margin-right: 10px;">Indiv. Level</span>
-                <span style="font-size: 12px; cursor: pointer;" class="rotate-arrow"> \u276E</span>
-            `;
+    function setMode(mode) {
+        modeLabel.textContent = mode;
+
+        if (mode === "Indiv. Level") {
             updateTableRow(row1, "Dry Level Left", 0, 100);
             updateTableRow(row2, "Dry Level Right", 0, 100);
-            sendMessage([0xf0,0x34,0x01,100,4,6,0xf7])
+            sendMessage([0xf0, 0x34, 0x01, 100, 4, 6, 0xf7]);
         } else {
-            titleCell.innerHTML = `
-                <span style="font-size: 16px;">Style:</span>
-                <span style="font-size: 12px; cursor: pointer; margin-left: 10px;"> \u276E </span>
-                <span style="font-size: 14px; margin-left: 10px; margin-right: 10px;">Pan Control</span>
-                <span style="font-size: 12px; cursor: pointer;" class="rotate-arrow"> \u276E</span>
-            `;
             updateTableRow(row1, "Dry Level", 0, 100);
             updateTableRow(row2, "Dry Pan", -100, 100);
-            sendMessage([0xf0,0x34,0x00,100,4,6,0xf7])
+            sendMessage([0xf0, 0x34, 0x00, 100, 4, 6, 0xf7]);
         }
+    }
+
+    function toggleMode() {
+        const current = modeLabel.textContent.trim();
+        setMode(current === "Pan Control" ? "Indiv. Level" : "Pan Control");
+    }
+
+    arrowLeft.addEventListener("click", toggleMode);
+    arrowRight.addEventListener("click", toggleMode);
+
+    modeLabel.addEventListener("click", (event) => {
+        const options = ["Pan Control", "Indiv. Level"];
+        createPopup(options, (selectedValue) => {
+            setMode(selectedValue);
+        }, event);
     });
 
     titleRow.appendChild(titleCell);
@@ -420,13 +477,13 @@ function updateTableRow(row, newLabel, min, max) {
             slider.value = (min + max) / 2;
             row.children[2].textContent = `Center`;
         }
-        slider.style.width = "290px";
+        slider.style.width = "375px";
         row.children[2].style.width = '90px';
     }
     else {
         slider.value = max;
         row.children[2].textContent = `${slider.value}%`;
-        slider.style.width = "280px";
+        slider.style.width = "375px";
         row.children[2].style.width = '50px';
     }
     if (newLabel == 'Dry Pan') slider.style.background = 'white';
@@ -439,6 +496,8 @@ function createTableRow(name) {
 
     const nameCell = document.createElement("td");
     nameCell.textContent = name;
+    nameCell.style.minWidth = "110px";
+    nameCell.style.maxWidth = "110px";
 
     const sliderCell = document.createElement("td");
     const slider = document.createElement("input");
@@ -502,14 +561,16 @@ function createTableRow(name) {
             sliderValues[1] = sliderValues[1]+100;
             type = 0;
         }
+        // alert(sliderValues);
         [sliderValues[1], sliderValues[2]] = BinaryOperationSend(sliderValues[1], 4);
         console.log(sliderValues);
+        // alert(sliderValues);
 
         clearTimeout(debounceTimeout); // Impede o envio da mensagem caso receba outro input
         debounceTimeout = setTimeout(() => {
             sendMessage([0xf0,0x34,type,sliderValues[0],sliderValues[1],sliderValues[2],0xf7]);
-            console.log("Mensagem enviada:", sliderValues);
-        }, 1000); // 1 segundo
+            // alert(`Dados da mensagem: ${sliderValues}`);
+        }, 100); // 0,1 segundo
     });
 
     row.appendChild(nameCell);
@@ -608,16 +669,20 @@ function createIndividualTable(number, currentAlgorithmIndex) {
     const leftArrow = document.createElement("span");
     leftArrow.textContent = "\u276E";
     leftArrow.style.cursor = "pointer";
+    leftArrow.style.fontWeight = "normal";
     
     const algorithmDisplay = document.createElement("span");
     algorithmDisplay.textContent = algorithmValues[currentAlgorithmIndex];
     algorithmDisplay.style.width = '125px';
-    algorithmDisplay.style.fontSize = '17px';
+    algorithmDisplay.style.fontSize = '16px';
+    algorithmDisplay.style.fontWeight = "normal";
+    algorithmDisplay.style.cursor = "pointer";
     
     const rightArrow = document.createElement("span");
     rightArrow.textContent = "\u276E";
     rightArrow.style.cursor = "pointer";
     rightArrow.style.transform = 'rotate(180deg)';
+    rightArrow.style.fontWeight = "normal";
     
     algorithmContainer.appendChild(algorithmTitle);
     algorithmContainer.appendChild(leftArrow);
@@ -667,10 +732,50 @@ function createIndividualTable(number, currentAlgorithmIndex) {
             const row = document.createElement("tr");
             
             const nameCell = document.createElement("td");
-            nameCell.textContent = label;
+            nameCell.style.paddingLeft = '5px';
+
+            // Cria container pro label + botão
+            const labelContainer = document.createElement("div");
+            labelContainer.style.display = "flex";
+            labelContainer.style.alignItems = "center";
+            labelContainer.style.gap = "6px";
+
+            const labelText = document.createElement("span");
+            labelText.textContent = label;
+            labelContainer.appendChild(labelText);
+
+            // Adiciona o botão fig rit no time
+            if (label === "Time") {
+                const toggleButton = document.createElement("button");
+                toggleButton.textContent = "Fig. Rit.";
+                toggleButton.className = "time-toggle-button";
+                toggleButton.style.padding = "2px 6px";
+                toggleButton.style.fontSize = "12px";
+                toggleButton.style.borderRadius = "4px";
+                toggleButton.style.border = "1px solid rgb(167, 167, 167)";
+                toggleButton.style.background = "transparent";
+                toggleButton.style.color = "rgb(167, 167, 167)";
+                toggleButton.style.cursor = "pointer";
+                toggleButton.style.marginLeft = "100px";
+                toggleButton.style.minWidth = "56px";
+                
+                toggleButton.dataset.pressed = "false";
+                toggleButton.addEventListener("click", () => {
+                    const isPressed = toggleButton.dataset.pressed === "true";
+                    toggleButton.dataset.pressed = isPressed ? "false" : "true";
+                    //toggleButton.style.background = isPressed ? "rgb(167, 167, 167)" : "lime";
+                    toggleButton.style.color = isPressed ? "rgb(167, 167, 167)" : "lime";
+                    toggleButton.style.border = isPressed ? "1px solid rgb(167, 167, 167)" : "1px solid lime";
+                });
+
+                labelContainer.appendChild(toggleButton);
+            }
+
+            nameCell.appendChild(labelContainer);
             
             const valueCell = document.createElement("td");
             valueCell.className = 'td button';
+            valueCell.style.paddingRight = '5px';
             if (label === "Inactive") {
                 valueCell.textContent = "Inactive";
             } else {
@@ -696,7 +801,9 @@ function createIndividualTable(number, currentAlgorithmIndex) {
             if ((index + 1) % 3 === 0) {
                 if ((index+1) < labels.length){
                     nameCell.style.borderBottom = "1px solid rgba(216, 216, 216, 0.3)";
+                    nameCell.style.paddingBottom = "5px";
                     valueCell.style.borderBottom = "1px solid rgba(216, 216, 216, 0.3)";
+                    valueCell.style.paddingBottom = "5px";
                 }
                 row.style.color = "lime";
             } else if((index + 2) % 3 === 0 && index !== 0) row.style.color = "red";
@@ -724,7 +831,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                 slider.max = rangeData.valor_final;
                 slider.value = parseInt((startValues[index] || "").replace(/[^0-9]/g, "")) || 0;
                 slider.className = "mini-slider";
-                slider.style.width = "100px";
+                slider.style.width = "95px";
                 slider.style.marginRight = "5px";
 
                 const percentage = (slider.value - slider.min) / (slider.max - slider.min) * 100;
@@ -784,7 +891,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                 input.min = minMax.min;
                 input.max = minMax.max;
                 input.value = startValues[index]?.match(/\d+/)?.[0] ?? currentAlgorithmIndex;
-                input.style.width = "60px";
+                input.style.width = "30px";
                 input.style.fontSize = "16px";
                 input.style.textAlign = "right";
                 input.style.background = "transparent";
@@ -792,6 +899,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                 input.style.color = blue;
                 input.style.borderRadius = "4px";
                 input.style.padding = "2px";
+                input.style.cursor = "pointer"
 
                 function validateInputValue() {
                     let val = parseInt(input.value);
@@ -833,7 +941,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
         const emptyCell = document.createElement("td");
         const dspCell = document.createElement("td");
         dspCell.textContent = `DSP${number}`;
-        dspCell.style.color = number == 1 ? 'rgb(255, 194, 0)' : 'SkyBlue';
+        dspCell.style.color = number == 1 ? 'rgb(255, 194, 0)' : blue;
         dspCell.style.textAlign = "right";
         dspCell.style.fontWeight = "bold";
         
@@ -925,7 +1033,7 @@ function updateDSPButtons(tableNum, buttonTexts) {
     const emptyCell = document.createElement("td");
     const dspCell = document.createElement("td");
     dspCell.textContent = table.querySelector("td:last-child").textContent; // Mantém o nome DSP1 ou DSP2
-    dspCell.style.color = dspCell.textContent === "DSP1" ? "rgb(255, 194, 0)" : "SkyBlue";
+    dspCell.style.color = dspCell.textContent === "DSP1" ? "rgb(255, 194, 0)" : blue;
     dspCell.style.textAlign = "right";
     dspCell.style.fontWeight = "bold";
 
@@ -974,6 +1082,7 @@ function createPresetConfigSection() {
         const label = document.createElement("span");
         label.textContent = setting;
         label.className = "preset-config-label";
+        label.style.paddingLeft = "8px"
 
         const button = document.createElement("button");
         button.textContent = "Off";
@@ -1009,6 +1118,7 @@ function createPresetConfigSection() {
 
         }else if (setting === "Spill Over") {
             button.textContent = "Inactive";
+            row.style.paddingBottom = "3px";
             row.style.borderBottom = 'solid rgba(216, 216, 216, 0.2) 1px'; /* Separador do preset config, tirar? */
             
         }else if (setting === "Preset BPM") {
@@ -1076,26 +1186,29 @@ function createImageTable() {
     leftTable.classList.add("image-table");
 
     const leftTbody = document.createElement("tbody");
-    const titleRow = document.createElement("tr");
+    const titleRow = document.createElement("td");
     titleRow.colSpan = 2;
     const titleCell = document.createElement("td");
-    titleCell.colSpan = 2;
-    titleCell.style.fontWeight = "bold";
-    titleCell.style.fontSize = "14px";
+    //titleCell.colSpan = 2;
+    titleCell.style.fontSize = "16px";
     titleCell.style.display = "flex";
     titleCell.style.justifyContent = "space-between";
     titleCell.style.alignItems = "center";
+    titleCell.style.marginBottom = "10px";
+    
 
     const imageLabel = document.createElement("label");
     imageLabel.textContent = "Image: ";
+    imageLabel.style.fontWeight = "bold";
+    imageLabel.style.padding = "10px";
 
     const clickableLabel = document.createElement("label");
     clickableLabel.textContent = "OFF";
     clickableLabel.style.color = "red";
     clickableLabel.style.cursor = "pointer";
     clickableLabel.style.marginLeft = "5px";
+    clickableLabel.style.padding = "8px";
 
-    // Ação de clique (por enquanto não faz nada)
     clickableLabel.addEventListener("click", () => {
         const images = ["OFF", "The Haas Effect", "Spill by the Edge", "Ping-Pong", "Wet-Panning", 
             "Dry-Panning", "Cross-Panning", "Transverse"];
@@ -1103,12 +1216,11 @@ function createImageTable() {
             clickableLabel.textContent = selectedOption;
             clickableLabel.style.color = (selectedOption === 'OFF') ? 'red' : 'lime';
         
-            // Limpa linhas antigas (mantendo apenas a primeira)
-            while (leftTbody.rows.length > 1) {
-                leftTbody.deleteRow(1);
+            while (leftTbody.rows.length >= 1) {
+                leftTbody.deleteRow(0);
             }
         
-            // Se for OFF, não adiciona nada
+            // Se OFF não adiciona nada
             if (selectedOption === "OFF") return;
         
             const config = imageStereo[selectedOption];
@@ -1116,48 +1228,54 @@ function createImageTable() {
         
             config.Linhas.forEach((linha, index) => {
                 const row = document.createElement("tr");
+                if (index == 0) row.style.color = blue;
+                else row.style.color = "red";
             
                 const labelCell = document.createElement("td");
                 labelCell.textContent = linha;
-                labelCell.style.fontSize = "14px";
+                labelCell.style.fontSize = "16px";
+                labelCell.style.padding = "5px";
             
                 const buttonCell = document.createElement("td");
                 buttonCell.style.width = "200px";
+                buttonCell.style.padding = "5px";
             
                 const rangeInfo = imageRanges[linha];
                 const complemento = rangeInfo?.complemento || "";
             
-                if (complemento === "%") {
-                    const miniSlider = document.createElement("input");
-                    miniSlider.type = "range";
-                    miniSlider.min = rangeInfo.valor_inicial;
-                    miniSlider.max = rangeInfo.valor_final;
-                    miniSlider.value = config.start[index];
-                    miniSlider.style.width = "80px";
-            
-                    const sliderValue = document.createElement("span");
+                const miniSlider = document.createElement("input"); // aqui
+                miniSlider.className = "mini-slider";
+                miniSlider.type = "range";
+                miniSlider.min = rangeInfo.valor_inicial;
+                miniSlider.max = rangeInfo.valor_final;
+                miniSlider.value = config.start[index];
+                miniSlider.style.width = "100px";
+
+                const sliderValue = document.createElement("span");
+                sliderValue.textContent = `${miniSlider.value}${complemento}`;
+                sliderValue.style.marginLeft = "8px";
+                sliderValue.style.width = "40px";
+                //sliderValue.style.color = "lime";
+                sliderValue.style.display = "inline-block";
+
+                let percentage = ((parseFloat(miniSlider.value) - miniSlider.min) / (miniSlider.max - miniSlider.min)) * 100;
+                miniSlider.style.background = `linear-gradient(to right, var(--blue) ${percentage}%, white ${percentage}%)`;
+
+                // O ERRO TA AQUI
+                // Atualiza o valor exibido quando o slider for movido
+                miniSlider.addEventListener("input", () => {
                     sliderValue.textContent = `${miniSlider.value}${complemento}`;
-                    sliderValue.style.marginLeft = "8px";
-                    sliderValue.style.width = "40px";
-                    sliderValue.style.color = "lime";
-                    sliderValue.style.display = "inline-block";
-            
-                    miniSlider.addEventListener("input", () => {
-                        sliderValue.textContent = `${miniSlider.value}${complemento}`;
-                        sliderValue.style.width = "40px";
-                    });
-            
-                    buttonCell.appendChild(miniSlider);
-                    buttonCell.appendChild(sliderValue);
-                } else {
-                    const button = document.createElement("button");
-                    button.classList.add("image-button");
-                    button.textContent = `${config.start[index]}${complemento}`;
-                    button.style.width = "80px";
-                    buttonCell.appendChild(button);
-                    buttonCell.style.textAlign = "right";
-                }
-            
+                
+                    const value = parseFloat(miniSlider.value);
+                    const min = parseFloat(miniSlider.min);
+                    const max = parseFloat(miniSlider.max);
+                
+                    percentage = ((value - min) / (max - min)) * 100;
+                    miniSlider.style.background = `linear-gradient(to right, var(--blue) ${percentage}%, white ${percentage}%)`;
+                });
+
+                buttonCell.appendChild(miniSlider);
+                buttonCell.appendChild(sliderValue);
                 row.appendChild(labelCell);
                 row.appendChild(buttonCell);
                 leftTbody.appendChild(row);
@@ -1181,31 +1299,39 @@ function createImageTable() {
 
     dspData.forEach((label, index) => {
         const row = document.createElement("tr");
-
-        const labelCell = document.createElement("td");
-        labelCell.textContent = label;
-        labelCell.style.width = "100px";
-        labelCell.style.fontSize = "15px";
-
-        const controlCell = document.createElement("td");
-        controlCell.style.display = "flex";
-        controlCell.style.alignItems = "center";
-        controlCell.style.gap = "6px";
-        controlCell.style.justifyContent = "flex-end";
-
+    
+        const cell = document.createElement("td");
+        cell.colSpan = 2; // usa toda a largura da linha
+        cell.style.padding = "8px 0";
+    
+        const wrapper = document.createElement("div");
+        wrapper.style.display = "flex";
+        wrapper.style.flexDirection = "column";
+        wrapper.style.alignItems = "center";
+        wrapper.style.gap = "6px";
+    
         const slider = document.createElement("input");
         slider.type = "range";
         slider.min = -100;
         slider.max = 100;
         slider.value = 0;
         slider.className = "mini-slider";
-        slider.style.width = "80px";
-
-        const displayValue = document.createElement("button");
-        displayValue.classList.add("image-button");
+        slider.style.width = "200px";
+    
+        const labelRow = document.createElement("div");
+        labelRow.style.display = "flex";
+        labelRow.style.justifyContent = "center";
+        labelRow.style.alignItems = "center";
+        labelRow.style.gap = "6px";
+        labelRow.style.fontSize = "14px";
+    
+        const labelText = document.createElement("span");
+        labelText.textContent = label;
+        labelText.style.color = "white";
+    
+        const displayValue = document.createElement("span");
         displayValue.style.color = "lime";
-        displayValue.style.width = "100px"
-
+    
         function updateDisplay(value) {
             if (value == 0) {
                 displayValue.textContent = "Center";
@@ -1217,20 +1343,17 @@ function createImageTable() {
                 displayValue.textContent = `Right ${value}%`;
                 displayValue.style.color = "var(--blue)";
             }
-
-            const percentage = ((value - slider.min) / (slider.max - slider.min)) * 100;
-            slider.style.background = `linear-gradient(to right, var(--blue) ${percentage}%, white ${percentage}%)`;
+    
+            //const percentage = ((value - slider.min) / (slider.max - slider.min)) * 100;
+            //slider.style.background = `linear-gradient(to right, var(--blue) ${percentage}%, white ${percentage}%)`;
         }
-
-        // Inicializa o texto
+    
         updateDisplay(slider.value);
-
-        // Atualiza valor ao interagir com o slider
+    
         slider.addEventListener("input", () => {
             updateDisplay(parseInt(slider.value));
         });
-
-        // Scroll também afeta o slider
+    
         slider.addEventListener("wheel", (event) => {
             event.preventDefault();
             const step = 1;
@@ -1239,18 +1362,21 @@ function createImageTable() {
             slider.value = newValue;
             updateDisplay(newValue);
         });
-
-        // Botão "Center" zera o slider ao clicar
-        displayValue.addEventListener("click", () => {
+    
+        displayValue.style.cursor = "pointer";
+        // Centraliza ao clicar no numero
+        /*displayValue.addEventListener("click", () => {
             slider.value = 0;
             updateDisplay(0);
-        });
-
-        controlCell.appendChild(slider);
-        controlCell.appendChild(displayValue);
-
-        row.appendChild(labelCell);
-        row.appendChild(controlCell);
+        });*/
+    
+        labelRow.appendChild(labelText);
+        labelRow.appendChild(displayValue);
+    
+        wrapper.appendChild(slider);
+        wrapper.appendChild(labelRow);
+        cell.appendChild(wrapper);
+        row.appendChild(cell);
         tbody.appendChild(row);
     });
 
