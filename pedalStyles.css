@@ -166,13 +166,15 @@
 }
 
 .preset-table2 {
+    position: relative;
+    padding: 5px;
+    padding-bottom: 15px; /* espaço para o DSP no final */
     display: block;
     width: 620px; /* tinha tamanho 500 */
     max-width: 620px; /* tinha tamanho 500 */
     background-color: var(--purpleTransparent);
     color: white;
     border-radius: 10px;
-    padding: 5px;
     overflow: hidden;
 }
 
@@ -315,7 +317,7 @@ input[type=number]::-webkit-outer-spin-button {
 }
 
 .image-table td:last-child {
-    text-align: right;
+    text-align: center;
 }
 
 .popup-container {

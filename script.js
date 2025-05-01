@@ -1204,7 +1204,7 @@ async function setupMidiListener() {
                             //updateSliders(10, 20)
                             break;
                         case 0x35:
-                            //alert(sysexData.slice(1));
+                            //alert(sysexData);
                             let presetConfig =  Array.from(sysexData.slice(1));
                             presetConfig[3] = binaryOperation(sysexData[4], sysexData[5], 4)
                             presetConfig.splice(4, 1);
@@ -1217,6 +1217,7 @@ async function setupMidiListener() {
                             aux[0] = binaryOperation(aux[0], aux[1], 5)
                             aux.splice(1, 1);
                             algorithmDSP1 = aux;
+                            alert([...algorithmDSP1])
                             break;
                         case 0x38:
                             algorithmDSP[1] = sysexData[1];
@@ -1225,6 +1226,14 @@ async function setupMidiListener() {
                             aux2[0] = binaryOperation(aux2[0], aux2[1], 5)
                             aux2.splice(1, 1);
                             algorithmDSP2 = aux2;
+                            alert([...algorithmDSP2])
+                            break;
+                        case 0x3B:
+                            //alert(sysexData)
+                            const imageTableLeft = document.getElementById("imageTable");
+                            const imageTableRight = document.getElementById("DSPPanTable");
+                            const algorithmDisplay = document.getElementById("imageDisplay");
+                            updateImageTablesFromArray(sysexData, imageTableLeft, imageTableRight, algorithmDisplay)
                             break;
                     }
                 }
