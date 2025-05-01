@@ -825,7 +825,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
         //alert(`Valores da tabela DSP${number}:\n\n` + displayValues.join("\n"));
         //alert([...paramAlternativo])
         //alert(indexAlg)
-        alert([0xf0, 0x38 + number, indexAlg, ...displayValues, ...paramAlternativo, 0xf7])
+        //alert([0xf0, 0x38 + number, indexAlg, ...displayValues, ...paramAlternativo, 0xf7])
         sendMessage([0xf0, 0x38 + number, indexAlg, ...displayValues, ...paramAlternativo, 0xf7])
     }
     // Seta o debounce para o envio da mensagem
@@ -1957,7 +1957,7 @@ function createImageTable() {
 
         const result = [imageIndex, ...leftValues.slice(0, 3), ...rightValues];
 
-        alert([0xF0,0x3C,result,0xF7]);
+        //alert([0xF0,0x3C,result,0xF7]);
         sendMessage([0xF0,0x3C,...result,0xF7]);
     }
 

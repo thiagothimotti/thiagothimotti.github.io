@@ -1217,7 +1217,7 @@ async function setupMidiListener() {
                             aux[0] = binaryOperation(aux[0], aux[1], 5)
                             aux.splice(1, 1);
                             algorithmDSP1 = aux;
-                            alert([...algorithmDSP1])
+                            //alert([...algorithmDSP1])
                             break;
                         case 0x38:
                             algorithmDSP[1] = sysexData[1];
@@ -1226,7 +1226,7 @@ async function setupMidiListener() {
                             aux2[0] = binaryOperation(aux2[0], aux2[1], 5)
                             aux2.splice(1, 1);
                             algorithmDSP2 = aux2;
-                            alert([...algorithmDSP2])
+                            //alert([...algorithmDSP2])
                             break;
                         case 0x3B:
                             //alert(sysexData)
