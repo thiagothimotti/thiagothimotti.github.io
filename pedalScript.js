@@ -13,7 +13,7 @@ const algorithmData = {
     "Bucket Brigade": ["Tone", "Compression", "Modulation", "Grit", "Ducking", "Low Cut"],
     "TransistorTape": ["Tone", "Wow & Flutter", "Degradation", "High Cut"],
     "Quantum Pitch": ["Interval A", "Tone A", "Level A", "Interval B", "Tone B", "Level B", "Mode"],
-    "Holo Filter": ["Type", "Ressonance", "Tone", "Envelope", "Sensitivity/Range", "Responce/Rate"],
+    "Holo Filter": ["Type", "Ressonance", "Tone", "Envelope", "Sensitivity/Range", "Response/Rate"],
     "RetroVerse": ["Sensitivity", "Release"],
     "Memory Man": ["Tone", "Compression", "Grit", "Mod Type", "Modulation", "Ducking"],
     "Nebula Swel": ["Sensitivity", "Responce"],
@@ -364,6 +364,7 @@ function createTopologySection() {
 
     const typeDisplay = document.createElement("span");
     typeDisplay.className = "type-display";
+    typeDisplay.id = "topology-type-display";
     typeDisplay.textContent = getType(currentTypeIndex);
     typeDisplay.style.width = '70px';
     typeDisplay.style.cursor = "pointer";
@@ -374,6 +375,13 @@ function createTopologySection() {
             currentTypeIndex = topologyOptions.indexOf(selectedOption);
             typeDisplay.textContent = selectedOption;
             sendMessage([0xF0, 0x32, currentTypeIndex, 0xF7]);
+
+            const dsp2 = document.getElementById("dsp-table-2");
+            if (dsp2 && dsp2.updateLabels) {
+                dsp2.updateLabels(true);
+            }
+            if (selectedOption == "Mixed") setPanDisplayVisibility([false, true]);
+            else setPanDisplayVisibility([true, true]);
         }, event);
     });
 
@@ -395,6 +403,13 @@ function createTopologySection() {
         currentTypeIndex = (currentTypeIndex - 1 + 5) % 5;
         typeDisplay.textContent = getType(currentTypeIndex);
         sendMessage([0xF0, 0x32, currentTypeIndex, 0xF7])
+
+        const dsp2 = document.getElementById("dsp-table-2");
+        if (dsp2 && dsp2.updateLabels) {
+            dsp2.updateLabels(true);
+        }
+        if (typeDisplay.textContent == "Mixed") setPanDisplayVisibility([false, true]);
+        else setPanDisplayVisibility([true, true]);
     });
 
     const rightArrow = document.createElement("span");
@@ -415,6 +430,13 @@ function createTopologySection() {
         currentTypeIndex = (currentTypeIndex + 1) % 5;
         typeDisplay.textContent = getType(currentTypeIndex);
         sendMessage([0xF0, 0x32, currentTypeIndex, 0xF7])
+
+        const dsp2 = document.getElementById("dsp-table-2");
+        if (dsp2 && dsp2.updateLabels) {
+            dsp2.updateLabels(true);
+        }
+        if (typeDisplay.textContent == "Mixed") setPanDisplayVisibility([false, true]);
+        else setPanDisplayVisibility([true, true]);
     });
 
     topologyContainer.appendChild(topologyTitle);
@@ -814,7 +836,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
             return rawText;
         }).filter(val => val !== null && val !== "");
 
-
+        const time = displayValues[0];
         const [lsb, msb] = BinaryOperationSend(displayValues[0], 5);
         displayValues.splice(0, 1, lsb, msb);
 
@@ -827,6 +849,10 @@ function createIndividualTable(number, currentAlgorithmIndex) {
         //alert(indexAlg)
         //alert([0xf0, 0x38 + number, indexAlg, ...displayValues, ...paramAlternativo, 0xf7])
         sendMessage([0xf0, 0x38 + number, indexAlg, ...displayValues, ...paramAlternativo, 0xf7])
+        
+        //alert(algorithmDSP2)
+        algorithmDSP2 = [time, ...displayValues.slice(2), ...paramAlternativo];
+        //alert (algorithmDSP2);
     }
     // Seta o debounce para o envio da mensagem
     function scheduleDSPAlert() {
@@ -901,39 +927,11 @@ function createIndividualTable(number, currentAlgorithmIndex) {
             inactiveRow.appendChild(inactiveCell);
             tbody.appendChild(inactiveRow);
 
-            const dspRow = document.createElement("tr");
-            const emptyCell = document.createElement("td");
-            const dspCell = document.createElement("td");
-            dspCell.textContent = `DSP${number}`;
-            dspCell.style.color = number == 1 ? 'rgb(255, 194, 0)' : blue;
-            dspCell.style.textAlign = "right";
-            dspCell.style.fontWeight = "bold";
-            dspRow.appendChild(emptyCell);
-            dspRow.appendChild(dspCell);
-            tbody.appendChild(dspRow);
-            table.appendChild(tbody);
             return;
         }
 
         tbody.innerHTML = "";
         if (algorithmDisplay.textContent === "OFF") {
-            const emptyRow = document.createElement("tr");
-            emptyRow.classList.add("modtype-empty-row");
-            emptyRow.style.height = "1px";
-            tbody.appendChild(emptyRow);
-            const dspRow = document.createElement("tr");
-            const emptyCell = document.createElement("td");
-            const dspCell = document.createElement("td");
-            dspCell.textContent = `DSP${number}`;
-            dspCell.style.color = number == 1 ? 'rgb(255, 194, 0)' : blue;
-            dspCell.style.textAlign = "right";
-            dspCell.style.fontWeight = "bold";
-            dspCell.style.position = "absolute";
-            dspCell.style.bottom = "10px";
-            dspCell.style.right = "10px";
-            dspRow.appendChild(emptyCell);
-            dspRow.appendChild(dspCell);
-            tbody.appendChild(dspRow);
             table.appendChild(tbody);
             return;
         }
@@ -1025,9 +1023,11 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                         span.style.minHeight = "18px";
                         //span.style.color = "lime";
                         span.addEventListener("click", ev => {
-                            createPopup(figValues, sel => span.textContent = sel, ev);
-                            scheduleDSPAlert();
-                        });
+                            createPopup(figValues, sel => {
+                                span.textContent = sel;
+                                scheduleDSPAlert();
+                            }, ev);
+                        });                        
                         container.appendChild(span);
                     } else {
                         const input = document.createElement("input");
@@ -1155,26 +1155,9 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                 updateModTypeExtraRows(tbody, modType, readingValues);
             }
         });
-
-        const emptyRow = document.createElement("tr");
-        emptyRow.classList.add("modtype-empty-row");
-        emptyRow.style.height = "1px";
-        tbody.appendChild(emptyRow);
-        const dspRow = document.createElement("tr");
-        const emptyCell = document.createElement("td");
-        const dspCell = document.createElement("td");
-        dspCell.textContent = `DSP${number}`;
-        dspCell.style.color = number == 1 ? 'rgb(255, 194, 0)' : blue;
-        dspCell.style.textAlign = "right";
-        dspCell.style.fontWeight = "bold";
-        dspCell.style.position = "absolute";
-        dspCell.style.bottom = "10px";
-        dspCell.style.right = "10px";
-        dspRow.appendChild(emptyCell);
-        dspRow.appendChild(dspCell);
-        tbody.appendChild(dspRow);
         table.appendChild(tbody);
     }
+    table.updateLabels = updateLabels; // Permite chamar a função de forea do createTable
 
     function updateModTypeExtraRows(tbody, modType, readingValues) {
         modType = modType.trim();
@@ -1182,6 +1165,13 @@ function createIndividualTable(number, currentAlgorithmIndex) {
         // Remove linhas antigas
         tbody.querySelectorAll(".modtype-extra-row").forEach(el => el.remove());
         tbody.querySelectorAll(".modtype-empty-row").forEach(el => el.remove());
+        // Remove a linha DSP se já existir
+        tbody.querySelectorAll("tr").forEach(tr => {
+            const lastCell = tr.lastElementChild;
+            if (lastCell && lastCell.textContent?.includes("DSP")) {
+                tr.remove();
+            }
+        });
 
         if (!modTypeData[modType] || modType === "OFF") return;
 
@@ -1420,7 +1410,33 @@ function createIndividualTable(number, currentAlgorithmIndex) {
     });
 
     updateLabels(true);
-    return table;
+
+    // Envolve a tabela em um contêiner com posição relativa
+    const wrapper = document.createElement("div");
+    wrapper.style.position = "relative";
+    wrapper.style.display = "inline-flex";
+    wrapper.style.flexDirection = "column";
+    wrapper.style.paddingBottom = "10px";
+    wrapper.style.maxWidth = "300px";
+    wrapper.style.background = purpleTransparent;
+    wrapper.style.borderRadius = "12px";
+
+    // Cria a label fixa do DSP
+    const dspLabel = document.createElement("div");
+    dspLabel.textContent = `DSP${number}`;
+    dspLabel.style.position = "absolute";
+    dspLabel.style.bottom = "5px";
+    dspLabel.style.right = "15px";
+    dspLabel.style.fontWeight = "bold";
+    dspLabel.style.color = number === 1 ? 'rgb(255, 194, 0)' : blue;
+    dspLabel.style.textAlign = "right";
+    dspLabel.style.fontSize = "16px";
+
+    // Adiciona a tabela e a label no wrapper
+    wrapper.appendChild(table);
+    wrapper.appendChild(dspLabel);
+
+    return wrapper;
 }
 
 function updateDSPButtons(tableNum, buttonTexts) {
@@ -1471,19 +1487,6 @@ function updateDSPButtons(tableNum, buttonTexts) {
         row.appendChild(valueCell);
         tbody.appendChild(row);
     });
-
-    // Adiciona a linha do DSP
-    const dspRow = document.createElement("tr");
-    const emptyCell = document.createElement("td");
-    const dspCell = document.createElement("td");
-    dspCell.textContent = table.querySelector("td:last-child").textContent; // Mantém o nome DSP1 ou DSP2
-    dspCell.style.color = dspCell.textContent === "DSP1" ? "rgb(255, 194, 0)" : blue;
-    dspCell.style.textAlign = "right";
-    dspCell.style.fontWeight = "bold";
-
-    dspRow.appendChild(emptyCell);
-    dspRow.appendChild(dspCell);
-    tbody.appendChild(dspRow);
 }
 
 function binaryOperation(lsb, msb, deslocamento) {
@@ -1615,8 +1618,8 @@ function sendPresetConfigValues() {
     //alert([...values]);
     const [lsb, msb] = BinaryOperationSend(values[3], 4);
     values.splice(3, 1, lsb, msb);
-    sendMessage([0xF0, 0x36, [...values], 0xF7])
-    //alert([0xF0,0x36,[...values],0xF7])
+    sendMessage([0xF0, 0x36, ...values, 0xF7])
+    //alert([0xF0,0x36,...values,0xF7])
 }
 
 function updateButtonTexts(buttonTexts) {
@@ -1710,9 +1713,16 @@ function createImageTable() {
         const selected = imageOptions[index];
         currentImageIndex = index;
         imageDisplay.textContent = selected;
-        //imageDisplay.style.color = selected === "OFF" ? "red" : "lime";
         updateImageRows(selected);
+    
+        if (selected === "Transverse" || selected === "Ping-Pong") {
+            setPanDisplayVisibility([false, false]);
+        } else {
+            setPanDisplayVisibility([true, true]);
+        }
+        collectAndAlertImageValues()
     }
+    
 
     leftArrow.addEventListener("click", () => {
         currentImageIndex = (currentImageIndex - 1 + imageOptions.length) % imageOptions.length;
@@ -2035,6 +2045,45 @@ async function updateImageTablesFromArray(values, imageTableLeft, imageTableRigh
     }
 }
 
+function setPanDisplayVisibility([pan1Visible, pan2Visible]) {
+    const panTable = document.getElementById("DSPPanTable");
+    if (!panTable) return;
+
+    const rows = panTable.querySelectorAll("tr");
+
+    [pan1Visible, pan2Visible].forEach((isVisible, index) => {
+        const row = rows[index];
+        if (!row) return;
+
+        const slider = row.querySelector("input[type='range']");
+        const displaySpan = row.querySelector("span:last-child"); // assume que o último span é o valor
+
+        if (!slider || !displaySpan) return;
+
+        if (!isVisible) {
+            slider.disabled = true;
+            slider.style.filter = "opacity(0%)";
+            slider.style.pointerEvents = "none";
+            displaySpan.textContent = "Inactive";
+            displaySpan.style.color = "gray";
+        } else {
+            slider.disabled = false;
+            slider.style.filter = "none";
+            slider.style.pointerEvents = "auto";
+            const value = parseInt(slider.value);
+            if (value === 0) {
+                displaySpan.textContent = "Center";
+                displaySpan.style.color = "lime";
+            } else if (value < 0) {
+                displaySpan.textContent = `Left ${-value}%`;
+                displaySpan.style.color = "rgb(255, 194, 0)";
+            } else {
+                displaySpan.textContent = `Right ${value}%`;
+                displaySpan.style.color = "var(--blue)";
+            }
+        }
+    });
+}
 
 function createPopup(options, callback, event) {
     const popup = document.createElement("div");

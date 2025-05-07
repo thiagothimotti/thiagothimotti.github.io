@@ -173,6 +173,7 @@
     width: 620px; /* tinha tamanho 500 */
     max-width: 620px; /* tinha tamanho 500 */
     background-color: var(--purpleTransparent);
+    background-color: transparent;
     color: white;
     border-radius: 10px;
     overflow: hidden;
