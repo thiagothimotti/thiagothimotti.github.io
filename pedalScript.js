@@ -159,7 +159,7 @@ let algorithmDSP2 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     Red:    0xF800,
     Yellow: 0xFFE0,
     Blue:   0x001F
-};*/
+};
 
 const colorMap = {
     Purple: "rgb(115, 0, 255)",
@@ -170,7 +170,18 @@ const colorMap = {
     Red:    "rgb(255, 0, 0)",
     Yellow: "rgb(255, 255, 0)",
     Blue:   "rgb(0, 0, 255)"
-};
+};*/
+
+const colorMap = {
+    Purple: "#7300ff",
+    Pink:   "#ff0073",
+    Cyan:   "#00ffff",
+    Green:  "#00ff00",
+    Orange: "#ff8200",
+    Red:    "#ff0000",
+    Yellow: "#ffff00",
+    Blue:   "#0000ff"
+}
 
 function rgb565ToCss(rgb565) {
     const r = ((rgb565 >> 11) & 0x1F) * 255 / 31;

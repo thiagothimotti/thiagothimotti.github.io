@@ -1219,7 +1219,7 @@ async function setupMidiListener() {
                             aux.splice(1, 1);
                             algorithmDSP1 = aux;
                             const tableDSP1 = document.getElementById("dsp-table-1");
-                            tableDSP1.updateLabels(true);
+                            if (tableDSP1) tableDSP1.updateLabels(true);
                             //alert([...algorithmDSP1])
                             break;
                         case 0x38:
