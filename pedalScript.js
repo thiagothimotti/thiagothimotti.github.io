@@ -1134,7 +1134,10 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                     toggleButton.style.color = isPressed ? "rgb(167, 167, 167)" : green;
                     toggleButton.style.border = isPressed ? "1px solid rgb(167, 167, 167)" : "1px solid lime";
                     renderTimeCell();
-                    scheduleDSPAlert();
+                    //scheduleDSPAlert();
+                    if (isPressed) sendMessage([0xF0,0x46,0,number-1,0xF7]);
+                    else sendMessage([0xF0,0x46,1,number-1,0xF7]);
+                    sendMessage([0xF0,0x36 + number,0x00,0xF7]);
                 });
 
                 renderTimeCell();
@@ -1478,7 +1481,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
         updateAlgorithmDisplay(false);
         //scheduleDSPAlert();
         /**///alert(currentAlgorithmIndex)
-        sendMessage([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7]);
+        //sendMessage([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7]);
         //alert([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7])
         sendMessage([0xF0,0x36 + number,0x00,0xF7]);//aqui
         //alert([0xF0,0x36 + number,0x00,0xF7])
@@ -1489,7 +1492,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
         currentAlgorithmIndex = (currentAlgorithmIndex + 1) % algorithmValues.length;
         updateAlgorithmDisplay(false);
         //scheduleDSPAlert();
-        /**/sendMessage([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7]);
+        /**///sendMessage([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7]);
         sendMessage([0xF0,0x36 + number,0x00,0xF7]);
     });
 
