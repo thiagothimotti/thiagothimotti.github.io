@@ -1481,7 +1481,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
         updateAlgorithmDisplay(false);
         //scheduleDSPAlert();
         /**///alert(currentAlgorithmIndex)
-        //sendMessage([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7]);
+        sendMessage([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7]);
         //alert([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7])
         sendMessage([0xF0,0x36 + number,0x00,0xF7]);//aqui
         //alert([0xF0,0x36 + number,0x00,0xF7])
@@ -1492,7 +1492,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
         currentAlgorithmIndex = (currentAlgorithmIndex + 1) % algorithmValues.length;
         updateAlgorithmDisplay(false);
         //scheduleDSPAlert();
-        /**///sendMessage([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7]);
+        /**/sendMessage([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7]);
         sendMessage([0xF0,0x36 + number,0x00,0xF7]);
     });
 
