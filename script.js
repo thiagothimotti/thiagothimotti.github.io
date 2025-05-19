@@ -1213,10 +1213,13 @@ async function setupMidiListener() {
                         case 0x37:
                             algorithmDSP[0] = sysexData[1];
                             //alert(sysexData.slice(2))
+                            alert(sysexData)
                             let aux =  Array.from(sysexData.slice(2));
                             aux[0] = binaryOperation(aux[0], aux[1], 5)
                             aux.splice(1, 1);
                             algorithmDSP1 = aux;
+                            const tableDSP1 = document.getElementById("dsp-table-1");
+                            tableDSP1.updateLabels(true);
                             //alert([...algorithmDSP1])
                             break;
                         case 0x38:

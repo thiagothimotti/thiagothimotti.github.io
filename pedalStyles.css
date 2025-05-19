@@ -340,22 +340,25 @@ input[type=number]::-webkit-outer-spin-button {
     table-layout: fixed;
 }
 
-.right-command-table td {
-  padding: 5px 14px; /* somente padding horizontal por padrão */
+.right-command-table {
+    align-items: flex-start;
 }
 
 .right-command-table tr:first-child td {
-  padding-top: 10px; /* ou o valor que desejar */
+    padding-top: 10px;
 }
 
 .right-command-table tr:last-child td {
-  padding-bottom: 15px; /* ou o valor que desejar */
+    padding-bottom: 15px;
+}
+.right-command-table td {
+    padding: 5px 14px;
 }
 
 .command-center-table tr:nth-child(1) td,
 .command-center-table tr:nth-child(2) td {
     padding-bottom: 5px;
-    padding-left: 5px;
+    padding-left: 8px;
 }
 
 .command-center-table input[type="text"] {
@@ -377,18 +380,32 @@ input[type=number]::-webkit-outer-spin-button {
     cursor: pointer;
     font-size: 16px;
 }
+
 .command-extra-row {
-    padding-top: 3px;
+    /*padding-top: 3px;
     padding-bottom: 5px;
-    padding-left: 5px;
+    padding-left: 5px;*/
     vertical-align: middle;
 }
 
 .command-extra-row td {
-    padding-top: 3px;
+    /*padding-top: 3px;
     padding-bottom: 5px;
-    padding-left: 5px;
+    padding-left: 5px;*/
     vertical-align: middle;
+}
+
+.command-center-table-3 td {
+    padding-bottom: 5px;
+    padding-left: 8px;
+}
+
+.command-center-table-3 tr:first-child td {
+    padding-top: 10px;
+}
+
+.command-center-table-3 tr:last-child td {
+    padding-bottom: 10px;
 }
 
 .popup-container {
