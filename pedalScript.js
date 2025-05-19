@@ -155,6 +155,31 @@ let algorithmDSP = [1, 1];
 let algorithmDSP1 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 let algorithmDSP2 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
+const colorMap = {
+    Purple: 0x701F,
+    Pink:   0xF80E,
+    Cyan:   0x07FF,
+    Green:  0x07E0,
+    Orange: 0xFC00,
+    Red:    0xF800,
+    Yellow: 0xFFE0,
+    Blue:   0x001F
+};
+
+function rgb565ToCss(rgb565) {
+    const r = ((rgb565 >> 11) & 0x1F) * 255 / 31;
+    const g = ((rgb565 >> 5) & 0x3F) * 255 / 63;
+    const b = (rgb565 & 0x1F) * 255 / 31;
+    return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+}
+
+//blue = rgb565ToCss(colorMap["Cyan"]);
+let green = rgb565ToCss(colorMap["Green"]);
+let red = rgb565ToCss(colorMap["Red"]);
+let yellow = rgb565ToCss(colorMap["Yellow"]);
+let orange = rgb565ToCss(colorMap["Orange"]);
+let purple = rgb565ToCss(colorMap["Purple"]);
+
 //alert("Script dos pedais carregado");
 
 function createPresets() {
@@ -341,6 +366,19 @@ async function createTable(index, presetName) {
 
     sendMessage([0xF0, 0x33, 0x00, 0xF7]);
     sendMessage([0xF0, 0x3B, 0x00, 0xF7]);
+
+    const commandCenterTitle = document.createElement("h2");
+    commandCenterTitle.textContent = "Command Center";
+    commandCenterTitle.style.marginTop = "20px";
+    commandCenterTitle.style.textAlign = "center";
+
+    mainContent.appendChild(commandCenterTitle);
+    mainContent.appendChild(createCommandCenterTables());
+    mainContent.appendChild(createCommandCenterPage3());
+
+
+    sendMessage([0xF0, 0x3D, 0x00, 0xF7]);
+    sendMessage([0xF0, 0x3E, 0x00, 0xF7]);
 }
 
 // Função para criar o título do preset
@@ -551,7 +589,7 @@ function updateTableRow(row, newLabel, min, max) {
     const slider = row.children[1].querySelector("input");
     slider.min = min;
     slider.max = max;
-    row.children[2].style.color = 'lime';
+    row.children[2].style.color = green;
     if (min != 0 || newLabel == 'Dry Level') {
         if (newLabel == 'Dry Level') {
             slider.value = max;
@@ -593,7 +631,7 @@ function createTableRow(name) {
 
     const valueCell = document.createElement("td");
     valueCell.className = "value-display";
-    valueCell.style.color = "lime";
+    valueCell.style.color = green;
 
     if (name != 'Dry Pan') {
         slider.min = "0";
@@ -616,10 +654,10 @@ function createTableRow(name) {
         if (nameCell.textContent === 'Dry Pan') {
             valueCell.textContent = value == 0 ? 'Center' :
                 (value < 0 ? `Left ${-value}%` : `Right ${value}%`);
-            valueCell.style.color = value < 0 ? "rgb(255, 194, 0)" : blue;
+            valueCell.style.color = value < 0 ? orange : blue;
         } else {
             valueCell.textContent = `${value}%`;
-            valueCell.style.color = "lime";
+            valueCell.style.color = green;
         }
 
         slider.style.background = nameCell.textContent === 'Dry Pan'
@@ -664,20 +702,20 @@ function createTableRow(name) {
         if (nameCell.textContent === "Dry Pan" || nameCell.textContent === "Dry Level Right" || nameCell.textContent === "Dry Level Left") {
             if (newValue == 0 && nameCell.textContent === "Dry Pan") {
                 valueCell.textContent = "Center";
-                valueCell.style.color = "lime";
+                valueCell.style.color = green;
             } else if (newValue < 0 && nameCell.textContent === "Dry Pan") {
                 valueCell.textContent = `Left ${-newValue}%`;
-                valueCell.style.color = "rgb(255, 194, 0)";
+                valueCell.style.color = orange;
             } else if (newValue > 0 && nameCell.textContent === "Dry Pan") {
                 valueCell.textContent = `Right ${newValue}%`;
                 valueCell.style.color = blue;
             } else {
                 valueCell.textContent = `${newValue}%`;
-                valueCell.style.color = "lime";
+                valueCell.style.color = green;
             }
         } else {
             valueCell.textContent = `${newValue}%`;
-            valueCell.style.color = "lime";
+            valueCell.style.color = green;
         }
 
         if (nameCell.textContent === "Dry Pan") {
@@ -751,7 +789,7 @@ function updateSliders(value1, value2) {
                 valueDisplays[1].textContent = "Center"
             else if (sliders[1].value < 0) {
                 valueDisplays[1].textContent = `Left ${sliders[1].value * -1}%`;
-                valueDisplays[1].style.color = "rgb(255, 194, 0)";
+                valueDisplays[1].style.color = orange;
             }
             else {
                 valueDisplays[1].textContent = `Right ${sliders[1].value}%`;
@@ -999,7 +1037,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                 if (readingValues) {
                     const toggleState = (number === 1 ? algorithmDSP1[12] : algorithmDSP2[12]) === 1;
                     toggleButton.dataset.pressed = toggleState ? "true" : "false";
-                    toggleButton.style.color = toggleState ? "lime" : "rgb(167, 167, 167)";
+                    toggleButton.style.color = toggleState ? green : "rgb(167, 167, 167)";
                     toggleButton.style.border = toggleState ? "1px solid lime" : "1px solid rgb(167, 167, 167)";
                 }
 
@@ -1062,7 +1100,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                 toggleButton.addEventListener("click", () => {
                     const isPressed = toggleButton.dataset.pressed === "true";
                     toggleButton.dataset.pressed = isPressed ? "false" : "true";
-                    toggleButton.style.color = isPressed ? "rgb(167, 167, 167)" : "lime";
+                    toggleButton.style.color = isPressed ? "rgb(167, 167, 167)" : green;
                     toggleButton.style.border = isPressed ? "1px solid rgb(167, 167, 167)" : "1px solid lime";
                     renderTimeCell();
                     scheduleDSPAlert();
@@ -1139,7 +1177,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                     valueCell.style.borderBottom = "1px solid rgba(216, 216, 216, 0.3)";
                     valueCell.style.paddingBottom = "5px";
                 }
-                row.style.color = "lime";
+                row.style.color = green;
             } else if ((index + 2) % 3 === 0 && index !== 0) {
                 row.style.color = "red";
             } else {
@@ -1239,7 +1277,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                     if (readingValues) {
                         const isPressed = (number === 1 ? algorithmDSP1[13] : algorithmDSP2[13]) === 1;
                         toggleButton.dataset.pressed = isPressed ? "true" : "false";
-                        toggleButton.style.color = isPressed ? "lime" : "rgb(167, 167, 167)";
+                        toggleButton.style.color = isPressed ? green : "rgb(167, 167, 167)";
                         toggleButton.style.border = isPressed ? "1px solid lime" : "1px solid rgb(167, 167, 167)";
                     }
 
@@ -1312,7 +1350,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                     toggleButton.addEventListener("click", () => {
                         const isPressed = toggleButton.dataset.pressed === "true";
                         toggleButton.dataset.pressed = isPressed ? "false" : "true";
-                        toggleButton.style.color = isPressed ? "rgb(167, 167, 167)" : "lime";
+                        toggleButton.style.color = isPressed ? "rgb(167, 167, 167)" : green;
                         toggleButton.style.border = isPressed ? "1px solid rgb(167, 167, 167)" : "1px solid lime";
                         renderSliderOrFig();
                         scheduleDSPAlert();
@@ -1367,11 +1405,13 @@ function createIndividualTable(number, currentAlgorithmIndex) {
 
             // Cores
             if ((modTypeIndex + 1) % 3 === 0) {
-                extraNameCell.style.borderBottom = "1px solid rgba(216, 216, 216, 0.3)";
-                extraNameCell.style.paddingBottom = "5px";
-                extraValueCell.style.borderBottom = "1px solid rgba(216, 216, 216, 0.3)";
-                extraValueCell.style.paddingBottom = "5px";
-                extraRow.style.color = "lime";
+                if ((modTypeIndex + 1) < modTypeData[modType].length+5) {
+                    extraNameCell.style.borderBottom = "1px solid rgba(216, 216, 216, 0.3)";
+                    extraNameCell.style.paddingBottom = "5px";
+                    extraValueCell.style.borderBottom = "1px solid rgba(216, 216, 216, 0.3)";
+                    extraValueCell.style.paddingBottom = "5px";
+                }
+                extraRow.style.color = green;
             } else if ((modTypeIndex + 2) % 3 === 0) {
                 extraRow.style.color = "red";
             } else {
@@ -1392,21 +1432,27 @@ function createIndividualTable(number, currentAlgorithmIndex) {
     }
 
     algorithmDisplay.addEventListener("click", function () {
+        if (document.querySelector(".type-display").textContent == "Single" && number == 2) return;
         createPopup(algorithmValues, (selectedValue) => {
             currentAlgorithmIndex = algorithmValues.indexOf(selectedValue);;
             updateAlgorithmDisplay(false);
+            scheduleDSPAlert();
         }, event);
 
     });
 
     leftArrow.addEventListener("click", function () {
+        if (document.querySelector(".type-display").textContent == "Single" && number == 2) return;
         currentAlgorithmIndex = (currentAlgorithmIndex - 1 + algorithmValues.length) % algorithmValues.length;
         updateAlgorithmDisplay(false);
+        scheduleDSPAlert();
     });
 
     rightArrow.addEventListener("click", function () {
+        if (document.querySelector(".type-display").textContent == "Single" && number == 2) return;
         currentAlgorithmIndex = (currentAlgorithmIndex + 1) % algorithmValues.length;
         updateAlgorithmDisplay(false);
+        scheduleDSPAlert();
     });
 
     updateLabels(true);
@@ -1428,7 +1474,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
     dspLabel.style.bottom = "5px";
     dspLabel.style.right = "15px";
     dspLabel.style.fontWeight = "bold";
-    dspLabel.style.color = number === 1 ? 'rgb(255, 194, 0)' : blue;
+    dspLabel.style.color = number === 1 ? orange : blue;
     dspLabel.style.textAlign = "right";
     dspLabel.style.fontSize = "16px";
 
@@ -1547,7 +1593,7 @@ function createPresetConfigSection() {
                             button.style.color = blue;
                             break;
                         case 'Turn On':
-                            button.style.color = 'lime';
+                            button.style.color = green;
                             break;
                         case 'Turn Off':
                             button.style.color = 'red';
@@ -1561,7 +1607,7 @@ function createPresetConfigSection() {
             button.addEventListener("click", () => {
                 button.textContent = button.textContent === "Off" ? "On" : "Off";
                 if (button.textContent === "Off") button.style.color = 'red';
-                else button.style.color = 'lime';
+                else button.style.color = green;
                 sendPresetConfigValues();
             });
 
@@ -1645,7 +1691,7 @@ function updateButtonTexts(buttonTexts) {
                 else button.textContent = 'Off';
                 break;
         }
-        if (button.textContent == 'On' || button.textContent == 'Turn On') button.style.color = 'lime';
+        if (button.textContent == 'On' || button.textContent == 'Turn On') button.style.color = green;
         else if (button.textContent == 'Off' || button.textContent == 'Turn Off') button.style.color = 'red';
         else if (button.textContent == 'Inactive') button.style.color = 'white';
         else button.style.color = blue;
@@ -1876,15 +1922,15 @@ function createImageTable() {
         labelText.style.color = "white";
 
         const displayValue = document.createElement("span");
-        displayValue.style.color = "lime";
+        displayValue.style.color = green;
 
         function updateDisplay(value) {
             if (value == 0) {
                 displayValue.textContent = "Center";
-                displayValue.style.color = "lime";
+                displayValue.style.color = green;
             } else if (value < 0) {
                 displayValue.textContent = `Left ${-value}%`;
-                displayValue.style.color = "rgb(255, 194, 0)";
+                displayValue.style.color = orange;
             } else {
                 displayValue.textContent = `Right ${value}%`;
                 displayValue.style.color = "var(--blue)";
@@ -2061,28 +2107,818 @@ function setPanDisplayVisibility([pan1Visible, pan2Visible]) {
         if (!slider || !displaySpan) return;
 
         if (!isVisible) {
-            slider.disabled = true;
-            slider.style.filter = "opacity(0%)";
-            slider.style.pointerEvents = "none";
+            slider.style.filter = "grayscale(100%)"; // aplica o filtro cinza
+            slider.style.pointerEvents = "none"; // impede interação com o slider
             displaySpan.textContent = "Inactive";
             displaySpan.style.color = "gray";
         } else {
-            slider.disabled = false;
-            slider.style.filter = "none";
-            slider.style.pointerEvents = "auto";
+            slider.style.filter = "none"; // remove o filtro cinza
+            slider.style.pointerEvents = "auto"; // permite interação
             const value = parseInt(slider.value);
             if (value === 0) {
                 displaySpan.textContent = "Center";
-                displaySpan.style.color = "lime";
+                displaySpan.style.color = green;
             } else if (value < 0) {
                 displaySpan.textContent = `Left ${-value}%`;
-                displaySpan.style.color = "rgb(255, 194, 0)";
+                displaySpan.style.color = orange;
             } else {
                 displaySpan.textContent = `Right ${value}%`;
                 displaySpan.style.color = "var(--blue)";
             }
         }
     });
+}
+
+function createCommandCenterTables() {
+    const wrapper = document.createElement("div");
+    wrapper.className = "command-center-wrapper";
+
+    for (let page = 1; page <= 2; page++) {
+        const table = document.createElement("table");
+        table.className = "command-center-table";
+        table.id = `command-center-table-${page}`;
+
+        const tbody = document.createElement("tbody");
+
+        const row1 = document.createElement("tr");
+        const cell1Label = document.createElement("td");
+        cell1Label.textContent = `Foot ${page} Mode:`;
+
+        const cell1Button = document.createElement("td");
+        const modeButton = document.createElement("button");
+        modeButton.textContent = "On/Off | Hold";
+        modeButton.className = "foot-mode-button";
+        modeButton.textAlign = "left";
+
+        const modeOptions = [
+            "On/Off | Hold", "On/Off | Mmtry", "On/Off | TgAct", "Tap | Scroll", "Tap | On/Off",
+            "Momentary", "Toggle Action", "Scroll Mode", "ScrollUp", "ScrollDown", "Hold"
+        ];
+
+        modeButton.addEventListener("click", (event) => {
+            createPopup(modeOptions, (selected) => {
+                modeButton.textContent = selected;
+        
+                // Remove todas as linhas extras antes de adicionar novas
+                table.querySelectorAll(".command-extra-row").forEach(row => row.remove());
+                table.querySelectorAll(".outer-row").forEach(row => row.remove());
+        
+                if (selected.includes("Hold")) {
+                    addHoldOptions(table, tbody);
+                }
+                const triggersAction = ["Mmtry", "TgAct", "Momentary", "Toggle Action"];
+                if (triggersAction.some(keyword => selected.includes(keyword))) {
+                    addActionOptions(table, tbody);
+                }
+                adjustBackgroundHeights(wrapper);
+
+            }, event);
+        });
+        
+
+        cell1Button.appendChild(modeButton);
+        row1.appendChild(cell1Label);
+        row1.appendChild(cell1Button);
+
+        const row2 = document.createElement("tr");
+        const cell2 = document.createElement("td");
+        cell2.colSpan = 2;
+
+        const nameLabel = document.createElement("span");
+        nameLabel.textContent = "Name: ";
+
+        const nameInput = document.createElement("input");
+        nameInput.type = "text";
+        nameInput.maxLength = 4;
+
+        const colorLabel = document.createElement("span");
+        colorLabel.textContent = " Color: ";
+
+        const colorButton = document.createElement("button");
+        colorButton.textContent = "Purple";
+        colorButton.className = "color-button";
+        colorButton.style.maxWidth = "70px";
+        colorButton.style.textAlign = "center";
+        colorButton.style.backgroundColor ="rgba(0, 0, 0, 0.5)";
+        colorButton.style.borderRadius = "10px";
+
+        const colorOptions = ["Purple", "Pink", "Cyan", "Green", "Orange", "Red", "Yellow", "Blue"];
+        colorButton.addEventListener("click", (event) => {
+            createPopup(colorOptions, (selected) => {
+                colorButton.textContent = selected;
+                const rgb = rgb565ToCss(colorMap[selected]);
+                colorButton.style.color = rgb;
+            }, event);
+        });
+
+        cell2.appendChild(nameLabel);
+        cell2.appendChild(nameInput);
+        cell2.appendChild(colorLabel);
+        cell2.appendChild(colorButton);
+        row2.appendChild(cell2);
+
+        tbody.appendChild(row1);
+        tbody.appendChild(row2);
+        table.appendChild(tbody);
+        
+        const backgroundDiv = document.createElement("div");
+        backgroundDiv.className = "command-bg";
+        backgroundDiv.style.backgroundColor = "rgba(159, 24, 253, 0.5)";
+        backgroundDiv.style.borderRadius = "10px";
+        backgroundDiv.style.position = "absolute";
+        backgroundDiv.style.maxWidth = "300px";
+        backgroundDiv.style.inset = "0";
+        backgroundDiv.style.zIndex = "0";
+        backgroundDiv.style.margin = "0";
+        backgroundDiv.style.borderRadius = "10px";
+        backgroundDiv.style.backgroundColor = "rgba(159, 24, 253, 0.5)";
+
+        const fswLabel = document.createElement("div");
+        fswLabel.textContent = `FSW${page}`;
+        fswLabel.style.position = "absolute";
+        fswLabel.style.bottom = "5px";
+        fswLabel.style.right = "15px";
+        fswLabel.style.color = page == 1? orange: blue;
+        fswLabel.style.fontWeight = "bold";
+        fswLabel.style.fontSize = "16px";
+        fswLabel.style.pointerEvents = "none";
+
+        backgroundDiv.appendChild(fswLabel);
+
+        const container = document.createElement("div");
+        container.style.position = "relative";
+        container.style.display = "inline-block";
+        container.style.width = "fit-content";
+
+        table.style.position = "relative";
+        table.style.zIndex = "1";
+
+        container.appendChild(backgroundDiv);
+        container.appendChild(table);
+        wrapper.appendChild(container);
+
+    }
+
+    function adjustBackgroundHeights(wrapper) {
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                const containers = wrapper.querySelectorAll("div");
+                let maxHeight = 0;
+
+                containers.forEach(div => {
+                    const table = div.querySelector(".command-center-table");
+                    if (table) {
+                        const height = table.offsetHeight+40;
+                        if (height > maxHeight) maxHeight = height;
+                    }
+                });
+
+                containers.forEach(div => {
+                    const bg = div.querySelector(".command-bg");
+                    if (bg) {
+                        bg.style.height = `${maxHeight}px`;
+                    }
+                });
+            });
+        });
+    }
+
+    adjustBackgroundHeights(wrapper);
+
+    return wrapper;
+}
+
+function addHoldOptions(table, tbody) {
+
+    const holdRow = document.createElement("tr");
+    holdRow.className = "hold-mode-row command-extra-row";
+
+    const holdLabel = document.createElement("td");
+    holdLabel.textContent = "Hold Mode:";
+
+    const holdButtonCell = document.createElement("td");
+    const holdButton = document.createElement("button");
+    holdButton.textContent = "Freeze";
+    holdButton.className = "hold-mode-button";
+    holdButton.style.width = "100px";
+
+    const holdOptions = ["Freeze", "Infinite"];
+    holdButton.addEventListener("click", (event) => {
+        createPopup(holdOptions, (selected) => {
+            holdButton.textContent = selected;
+        }, event);
+    });
+
+    holdButtonCell.appendChild(holdButton);
+    holdRow.appendChild(holdLabel);
+    holdRow.appendChild(holdButtonCell);
+
+    const targetRow = document.createElement("tr");
+    targetRow.className = "target-row command-extra-row";
+
+    const targetLabel = document.createElement("td");
+    targetLabel.textContent = "Target:";
+
+    const targetButtonCell = document.createElement("td");
+    const targetButton = document.createElement("button");
+    targetButton.textContent = "DSP1";
+    targetButton.className = "target-button";
+    targetButton.style.width = "130px";
+    targetButton.style.color = orange;
+
+    const targetOptions = ["DSP1", "DSP2", "DSP1 + DSP2"];
+    targetButton.addEventListener("click", (event) => {
+        createPopup(targetOptions, (selected) => {
+            targetButton.textContent = selected;
+
+            const targetText = selected;
+            targetButton.innerHTML = targetText;
+            if (targetText === "DSP2") {
+                targetButton.style.color = blue;
+            } else if (targetText === "DSP1") {
+                targetButton.style.color = orange;
+            } else if (targetText === "DSP1 + DSP2") {
+                targetButton.innerHTML = `<span style="color:${orange};">DSP1</span><span style="color:white;"> + </span><span style="color:${blue};">DSP2</span>`;
+            } else {
+                targetButton.style.color = green;
+            }
+        }, event);
+    });
+
+    targetButtonCell.appendChild(targetButton);
+    targetRow.appendChild(targetLabel);
+    targetRow.appendChild(targetButtonCell);
+
+    tbody.appendChild(holdRow);
+    tbody.appendChild(targetRow);
+}
+
+function addActionOptions(table, tbody) {
+    const actionOptions = ["OFF", "Fdback", "DlyMix", "DryLvl", "AlterI", "AlterII"];
+
+    for (let i = 0; i < 2; i++) {
+        const outerRow = document.createElement("tr");
+        outerRow.classList.add("outer-row");
+
+        const outerCell = document.createElement("td");
+        outerCell.colSpan = 2;
+
+        const innerTable = document.createElement("table");
+        innerTable.style.width = "100%";
+        innerTable.style.tableLayout = "fixed";
+        innerTable.style.borderCollapse = "collapse";
+
+        const colgroup = document.createElement("colgroup");
+        const col1 = document.createElement("col");
+        col1.style.width = "45px";
+        const col2 = document.createElement("col");
+        col2.style.width = "auto";
+        colgroup.appendChild(col1);
+        colgroup.appendChild(col2);
+        innerTable.appendChild(colgroup);
+
+        const actionRow = document.createElement("tr");
+
+        const labelCell = document.createElement("td");
+        labelCell.textContent = "Actn:";
+        labelCell.style.whiteSpace = "nowrap";
+
+        const contentCell = document.createElement("td");
+        contentCell.style.display = "flex";
+        contentCell.style.alignItems = "center";
+        contentCell.style.gap = "0px";
+
+        const actionButton = document.createElement("button");
+        actionButton.textContent = "OFF";
+        actionButton.className = "action-button";
+        actionButton.style.width = "60px";
+        actionButton.style.maxWidth = "60px";
+        actionButton.style.color = red;
+        actionButton.style.marginLeft = "-10px";
+
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.className = "mini-slider";
+        slider.min = 0;
+        slider.max = 100;
+        slider.value = 50;
+        slider.style.width = "90px";
+        slider.style.display = "none";
+        slider.disabled = true;
+
+        const valueDisplay = document.createElement("span");
+        valueDisplay.textContent = "50%";
+        valueDisplay.style.display = "none";
+        valueDisplay.style.minWidth = "40px";
+        valueDisplay.style.textAlign = "right";
+        valueDisplay.style.color = green;
+
+        const updateSliderBackground = () => {
+            const pct = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+            slider.style.background = `linear-gradient(to right, var(--blue) ${pct}%, white ${pct}%)`;
+            valueDisplay.textContent = `${slider.value}%`;
+        };
+
+        slider.addEventListener("input", updateSliderBackground);
+
+        slider.addEventListener("wheel", (event) => {
+            event.preventDefault();
+            const step = 1;
+            const current = parseInt(slider.value);
+            const direction = event.deltaY < 0 ? 1 : -1;
+            const newValue = Math.min(parseInt(slider.max), Math.max(parseInt(slider.min), current + direction * step));
+            slider.value = newValue;
+            updateSliderBackground();
+        });
+
+        const dspButton = document.createElement("button");
+        dspButton.textContent = "DSP1";
+        dspButton.style.display = "none";
+        dspButton.disabled = true;
+        dspButton.style.width = "50px";
+        dspButton.style.color = orange;
+
+        actionButton.addEventListener("click", (event) => {
+            createPopup(actionOptions, (selected) => {
+                actionButton.textContent = selected;
+                actionButton.style.color = (selected === "OFF") ? red : green;
+
+                const isActive = selected !== "OFF";
+
+                if (selected === "DlyMix") {
+                    slider.max = 120;
+                } else {
+                    slider.max = 100;
+                }
+
+                slider.style.display = isActive ? "inline-block" : "none";
+                slider.disabled = !isActive;
+
+                valueDisplay.style.display = isActive ? "inline-block" : "none";
+
+                dspButton.style.display = isActive ? "inline-block" : "none";
+                dspButton.disabled = !isActive;
+
+                const wasDryLvl = dspButton.textContent === "DryR" || dspButton.textContent === "DryL" || dspButton.textContent === "DryL+R";
+                if (wasDryLvl && selected !== "DryLvl") {
+                    dspButton.innerHTML = "DSP1";
+                    dspButton.style.color = orange;
+                    dspButton.style.fontSize = "16px";
+                } else if (!wasDryLvl && selected == "DryLvl") {
+                    dspButton.innerHTML = "DryR";
+                    dspButton.style.color = rgb565ToCss(colorMap["Pink"]);
+                    dspButton.style.fontSize = "16px";
+                }
+                updateSliderBackground();
+            }, event);
+        });
+
+        dspButton.addEventListener("click", (event) => {
+            const selectedParam = actionButton.textContent;
+            let options = (selectedParam === "DryLvl")
+                ? ["DryR", "DryL", "DryL+R"]
+                : ["DSP1", "DSP2", "D1+D2"];
+
+            createPopup(options, (selected) => {
+                if (selectedParam === "DryLvl") {
+                    dspButton.innerHTML = selected;
+                    dspButton.style.color = rgb565ToCss(colorMap["Pink"]);
+                    //dspButton.style.fontSize = selected === "DryL+R" ? "10px" : "16px";
+                } else {
+                    if (selected === "DSP1") {
+                        dspButton.innerHTML = "DSP1";
+                        dspButton.style.color = orange;
+                    } else if (selected === "DSP2") {
+                        dspButton.innerHTML = "DSP2";
+                        dspButton.style.color = blue;
+                    } else if (selected === "D1+D2") {
+                        dspButton.innerHTML = `<span style="color:${orange};">D1</span><span style="color:white;">+</span><span style="color:${blue};">D2</span>`;
+                        dspButton.style.fontSize = "15px";
+                    }
+                }
+
+                extractCommandCenterData(table);
+            }, event);
+        });
+
+        contentCell.appendChild(actionButton);
+        contentCell.appendChild(slider);
+        contentCell.appendChild(valueDisplay);
+        contentCell.appendChild(dspButton);
+
+        actionRow.appendChild(labelCell);
+        actionRow.appendChild(contentCell);
+        innerTable.appendChild(actionRow);
+        outerCell.appendChild(innerTable);
+        outerRow.appendChild(outerCell);
+        tbody.appendChild(outerRow);
+    }
+}
+
+function updateCommandCenter(dataArray, table) {
+
+    const modeOptions = [
+        "On/Off | Hold", "On/Off | Mmtry", "On/Off | TgAct", "Tap | Scroll", "Tap | On/Off",
+        "Momentary", "Toggle Action", "Scroll Mode", "ScrollUp", "ScrollDown", "Hold"
+    ];
+
+    const colorOptions = ["Purple", "Pink", "Cyan", "Green", "Orange", "Red", "Yellow", "Blue"];
+
+    //alert(dataArray)
+    const footModeIndex = dataArray[0];
+    const footName = dataArray.slice(1, 5).map(c => String.fromCharCode(c)).join('');
+    const footColorIndex = dataArray[5];
+    const holdMode = dataArray[6];
+    const holdTarget = dataArray[7];
+    const actionParam = dataArray[8];
+    const actionValue = dataArray[9];
+    const actionTarget = dataArray[10];
+    const actionParam2 = dataArray[11];
+    const actionValue2 = dataArray[12];
+    const actionTarget2 = dataArray[13];
+
+    const nameInput = table.querySelector('input[type="text"]');
+    if (nameInput) {
+        nameInput.value = footName;
+    }
+
+   // Atualiza o modo e simula o comportamento do clique
+    const modeButton = table.querySelector('.foot-mode-button');
+    if (modeButton && modeOptions[footModeIndex]) {
+        const selected = modeOptions[footModeIndex];
+        modeButton.textContent = selected;
+
+        table.querySelectorAll(".command-extra-row").forEach(row => row.remove());
+        table.querySelectorAll(".outer-row").forEach(row => row.remove());
+
+        if (selected.includes("Hold")) {
+            const tbody = table.querySelector("tbody");
+            addHoldOptions(table, tbody);
+            const holdOptions = ["Freeze", "Infinite"];
+            const targetOptions = ["DSP1", "DSP2", "DSP1 + DSP2"];
+
+            const extraButtons = table.querySelectorAll(".command-extra-row button");
+            if (extraButtons.length >= 2) {
+                extraButtons[0].textContent = holdOptions[holdMode] ?? holdMode;
+                const targetText = targetOptions[holdTarget] ?? "DSP1 + DSP2";
+
+                const targetButton = extraButtons[1];
+                targetButton.innerHTML = targetText;
+                if (targetText === "DSP2") {
+                    targetButton.style.color = blue;
+                } else if (targetText === "DSP1") {
+                    targetButton.style.color = orange;
+                } else if (targetText === "DSP1 + DSP2") {
+                    targetButton.innerHTML = `<span style="color:${orange};">DSP1</span><span style="color:white;"> + </span><span style="color:${blue};">DSP2</span>`;
+                } else {
+                    targetButton.style.color = green;
+                }
+            }
+        }
+
+        const triggersAction = ["Mmtry", "TgAct", "Momentary", "Toggle Action"];
+        if (triggersAction.some(keyword => selected.includes(keyword))) {
+            const tbody = table.querySelector("tbody");
+            addActionOptions(table, tbody);
+
+            const actionOptions = ["OFF", "Fdback", "DlyMix", "DryLvl", "AlterI", "AlterII"];
+            const targetOptions = ["DSP1", "DSP2", "D1+D2"];
+
+            const outerRows = table.querySelectorAll(".outer-row");
+            if (outerRows.length >= 2) {
+                const firstContent = outerRows[0].querySelector("td > table > tr > td:nth-child(2)");
+                const firstButton = firstContent.querySelector(".action-button");
+                const firstSlider = firstContent.querySelector("input[type='range']");
+                const firstValue = firstContent.querySelector("span");
+                const firstDSP = firstContent.querySelector("button:not(.action-button)");
+
+                if (firstButton && firstSlider && firstValue && firstDSP) {
+                    const option = actionOptions[actionParam] ?? "OFF";
+                    firstButton.textContent = option;
+                    firstButton.style.color = (option === "OFF") ? "red" : green;
+                    const paramName = actionOptions[actionParam];
+                    if (paramName === "DlyMix") firstSlider.max = 120;
+                    else firstSlider.max = 100;
+                    firstSlider.value = actionValue;
+                    const pct1 = (actionValue - firstSlider.min) / (firstSlider.max - firstSlider.min) * 100;
+                    firstSlider.style.background = `linear-gradient(to right, var(--blue) ${pct1}%, white ${pct1}%)`;
+                    firstValue.textContent = `${actionValue}%`;
+                    
+                    const targetList = (paramName === "DryLvl") ? ["DryR", "DryL", "DryL+R"] : targetOptions;
+                    const dspTarget = targetList[actionTarget] ?? targetList[0];
+                    firstDSP.style.fontSize = "16px";
+                    firstDSP.innerHTML = dspTarget;
+
+                    if (dspTarget === "DSP2") {
+                        firstDSP.style.color = blue;
+                    } else if (dspTarget === "DSP1") {
+                        firstDSP.style.color = orange;
+                    } else if (dspTarget === "D1+D2") {
+                        firstDSP.style.fontSize = "15px";
+                        firstDSP.innerHTML = `<span style="color:${orange};">D1</span><span style="color:white;">+</span><span style="color:${blue};">D2</span>`;
+                    } else if (dspTarget === "DryR" || dspTarget === "DryL") {
+                        firstDSP.style.color = rgb565ToCss(colorMap["Pink"]);
+                    } else if (dspTarget === "DryL+R") {
+                        firstDSP.style.color = rgb565ToCss(colorMap["Pink"]);
+                        //firstDSP.style.fontSize = "10px";
+                    }
+
+
+                    const isActive = option !== "OFF";
+                    firstSlider.style.display = isActive ? "inline-block" : "none";
+                    firstSlider.disabled = !isActive;
+                    firstValue.style.display = isActive ? "inline-block" : "none";
+                    firstDSP.style.display = isActive ? "inline-block" : "none";
+                    firstDSP.disabled = !isActive;
+                }
+
+                const secondContent = outerRows[1].querySelector("td > table > tr > td:nth-child(2)");
+                const secondButton = secondContent.querySelector(".action-button");
+                const secondSlider = secondContent.querySelector("input[type='range']");
+                const secondValue = secondContent.querySelector("span");
+                const secondDSP = secondContent.querySelector("button:not(.action-button)");
+
+                if (secondButton && secondSlider && secondValue && secondDSP) {
+                    const option2 = actionOptions[actionParam2] ?? "OFF";
+                    secondButton.textContent = option2;
+                    if (option2 !== "OFF") secondButton.style.color = green;
+                    const paramName2 = actionOptions[actionParam2];
+                    if (paramName2 === "DlyMix") secondSlider.max = 120;
+                    else secondSlider.max = 100;
+                    secondSlider.value = actionValue2;
+                    const pct2 = (actionValue2 - secondSlider.min) / (secondSlider.max - secondSlider.min) * 100;
+                    secondSlider.style.background = `linear-gradient(to right, var(--blue) ${pct2}%, white ${pct2}%)`;
+                    secondValue.textContent = `${actionValue2}%`;
+                    
+                    const targetList2 = (paramName2 === "DryLvl") ? ["DryR", "DryL", "DryL+R"] : targetOptions;
+                    const dspTarget2 = targetList2[actionTarget2] ?? targetList2[0];
+                    secondDSP.style.fontSize = "16px";
+                    secondDSP.innerHTML = dspTarget2;
+                    if (dspTarget2 === "DSP2") {
+                        secondDSP.style.color = blue;
+                    } else if (dspTarget2 === "DSP1") {
+                        secondDSP.style.color = orange;
+                    } else if (dspTarget2 === "D1+D2") {
+                        secondDSP.style.fontSize = "15px";
+                        secondDSP.innerHTML = `<span style="color:${orange};">D1</span><span style="color:white;">+</span><span style="color:${blue};">D2</span>`;
+                    } else if (dspTarget2 === "DryR" || dspTarget2 === "DryL") {
+                        secondDSP.style.color = rgb565ToCss(colorMap["Pink"]);
+                    } else if (dspTarget2 === "DryL+R") {
+                        secondDSP.style.color = rgb565ToCss(colorMap["Pink"]);
+                        //secondDSP.style.fontSize = "10px";
+                    }
+
+                    const isActive2 = option2 !== "OFF";
+                    secondSlider.style.display = isActive2 ? "inline-block" : "none";
+                    secondSlider.disabled = !isActive2;
+                    secondValue.style.display = isActive2 ? "inline-block" : "none";
+                    secondDSP.style.display = isActive2 ? "inline-block" : "none";
+                    secondDSP.disabled = !isActive2;
+                }
+            }
+        }
+    }
+
+    const colorButton = table.querySelector('.color-button');
+    if (colorButton && colorOptions[footColorIndex]) {
+        const colorName = colorOptions[footColorIndex];
+        colorButton.textContent = colorName;
+        const rgb = rgb565ToCss(colorMap[colorName]);
+        colorButton.style.color = rgb;
+    }
+}
+
+function extractCommandCenterData(tableElement) {
+    const modeOptions = [
+        "On/Off | Hold", "On/Off | Mmtry", "On/Off | TgAct", "Tap | Scroll", "Tap | On/Off",
+        "Momentary", "Toggle Action", "Scroll Mode", "ScrollUp", "ScrollDown", "Hold"
+    ];
+    const colorOptions = ["Purple", "Pink", "Cyan", "Green", "Orange", "Red", "Yellow", "Blue"];
+    const holdModeOptions = ["Freeze", "Infinite"];
+    const holdTargetOptions = ["DSP1", "DSP2", "DSP1 + DSP2"];
+    const actionParameterOptions = ["OFF", "Fdback", "DlyMix", "DryLvl", "AlterI", "AlterII"];
+    const dspTargetOptions = ["DSP1", "DSP2", "D1+D2"];
+    const dryTargetOptions = ["DryR", "DryL", "DryL+R"];
+
+    function getIndexFromOptions(text, options) {
+        const normalized = text.trim().replace(/\s+/g, " ");
+        return options.indexOf(normalized) !== -1 ? options.indexOf(normalized) : 0;
+    }
+
+    function getAsciiFromInput(input) {
+        const text = input?.value || "";
+        const padded = text.padEnd(4, '\0').slice(0, 4);
+        return Array.from(padded).map(c => c.charCodeAt(0));
+    }
+
+    function getValueFromSlider(slider) {
+        return slider ? parseInt(slider.value) : 0;
+    }
+
+    function extractDSPText(button) {
+        if (!button) return "";
+        const text = button.innerText.trim().replace(/\s+/g, " ");
+        if (text.includes("D1") && text.includes("D2")) return "D1+D2";
+        if (text.includes("DryL") && text.includes("R")) return "DryL+R";
+        return text;
+    }
+
+    const nameInput = tableElement.querySelector('input[type="text"]');
+    const sliders = tableElement.querySelectorAll("input[type='range']");
+
+    const footMode = getIndexFromOptions(
+        tableElement.querySelector(".foot-mode-button")?.textContent || "",
+        modeOptions
+    );
+
+    const [footNameChar0, footNameChar1, footNameChar2, footNameChar3] = getAsciiFromInput(nameInput);
+
+    const footColor = getIndexFromOptions(
+        tableElement.querySelector(".color-button")?.textContent || "",
+        colorOptions
+    );
+
+    const holdButtons = tableElement.querySelectorAll(".command-extra-row button");
+    const footHoldMode = getIndexFromOptions(holdButtons[0]?.textContent || "", holdModeOptions);
+    const footHoldTarget = getIndexFromOptions(holdButtons[1]?.textContent || "", holdTargetOptions);
+
+    const actionButtons = tableElement.querySelectorAll(".outer-row .action-button");
+    const dspButtons = tableElement.querySelectorAll(".outer-row button:not(.action-button)");
+
+    const actionParam1 = getIndexFromOptions(actionButtons[0]?.textContent || "", actionParameterOptions);
+    const actionValue1 = getValueFromSlider(sliders[0]);
+    const target1Raw = extractDSPText(dspButtons[0]);
+    const actionTarget1 = getIndexFromOptions(
+        target1Raw,
+        actionParameterOptions[actionParam1] === "DryLvl" ? dryTargetOptions : dspTargetOptions
+    );
+
+    const actionParam2 = getIndexFromOptions(actionButtons[1]?.textContent || "", actionParameterOptions);
+    const actionValue2 = getValueFromSlider(sliders[1]);
+    const target2Raw = extractDSPText(dspButtons[1]);
+    const actionTarget2 = getIndexFromOptions(
+        target2Raw,
+        actionParameterOptions[actionParam2] === "DryLvl" ? dryTargetOptions : dspTargetOptions
+    );
+
+    const result = [
+        footMode, footNameChar0, footNameChar1, footNameChar2, footNameChar3,
+        footColor, footHoldMode, footHoldTarget,
+        actionParam1, actionValue1, actionTarget1,
+        actionParam2, actionValue2, actionTarget2
+    ];
+
+    //alert(JSON.stringify(result));
+    alert([0xF0,0x3f+parseInt(tableElement.id.split("-").pop(), 10), ...result,0xF7]);
+    //sendMessage([0xF0,0x3f+parseInt(tableElement.id.split("-").pop(), 10), ...result,0xF7]);
+    return result;
+}
+
+function createCommandCenterPage3() {
+    const wrapper = document.createElement("div");
+    wrapper.className = "command-center-wrapper";
+    wrapper.style.marginTop = "30px";
+
+    const tableLeft = document.createElement("table");
+    tableLeft.className = "command-center-table";
+    tableLeft.style.backgroundColor = purpleTransparent;
+
+    const row1Left = document.createElement("tr");
+    const cell1Left = document.createElement("td");
+    cell1Left.textContent = "Expression Control:";
+    const cell2Left = document.createElement("td");
+    const buttonExpr = document.createElement("button");
+    buttonExpr.textContent = "OFF";
+    buttonExpr.style.color = red;
+    buttonExpr.addEventListener("click", (ev) => {
+        const options = ["OFF", "Feedback", "DelayMix", "DryLevel", "AlterI", "AlterII"];
+        createPopup(options, (sel) => {
+            buttonExpr.textContent = sel;
+            buttonExpr.style.color = sel == "OFF" ? red: green;
+        }, ev);
+    });
+    cell2Left.appendChild(buttonExpr);
+    row1Left.appendChild(cell1Left);
+    row1Left.appendChild(cell2Left);
+
+    const row2Left = document.createElement("tr");
+    const cell3Left = document.createElement("td");
+    cell3Left.textContent = "From:";
+    const sliderFrom = document.createElement("input");
+    sliderFrom.type = "range";
+    sliderFrom.min = 0;
+    sliderFrom.max = 100;
+    sliderFrom.value = 0;
+    sliderFrom.style.width = "100px";
+    cell3Left.appendChild(sliderFrom);
+
+    const cell4Left = document.createElement("td");
+    const labelTo = document.createElement("span");
+    labelTo.textContent = "To:";
+    const sliderTo = document.createElement("input");
+    sliderTo.type = "range";
+    sliderTo.min = 0;
+    sliderTo.max = 100;
+    sliderTo.value = 100;
+    sliderTo.style.width = "100px";
+
+    const buttonDSP = document.createElement("button");
+    buttonDSP.textContent = "DSP1";
+    buttonDSP.style.marginLeft = "10px";
+    buttonDSP.addEventListener("click", (ev) => {
+        const options = ["DSP1", "DSP2", "D1+D2"];
+        createPopup(options, (sel) => {
+            buttonDSP.textContent = sel;
+        }, ev);
+    });
+
+    function updateSliderRange() {
+        const isDelayMix = buttonExpr.textContent === "DelayMix";
+        sliderFrom.max = isDelayMix ? 120 : 100;
+        sliderTo.max = isDelayMix ? 120 : 100;
+    }
+    buttonExpr.addEventListener("click", () => {
+        updateSliderRange();
+    });
+
+    cell4Left.appendChild(labelTo);
+    cell4Left.appendChild(sliderTo);
+    cell4Left.appendChild(buttonDSP);
+
+    row2Left.appendChild(cell3Left);
+    row2Left.appendChild(cell4Left);
+
+    tableLeft.appendChild(row1Left);
+    tableLeft.appendChild(row2Left);
+
+    // Tabela da direita
+    const tableRight = document.createElement("table");
+    tableRight.className = "command-center-table";
+    tableRight.classList.add("right-command-table");
+    tableRight.style.backgroundColor = purpleTransparent;
+
+    for (let i = 0; i < 2; i++) {
+        const row = document.createElement("tr");
+
+        const td = document.createElement("td");
+        td.colSpan = 2;
+
+        const container = document.createElement("div");
+        container.style.display = "flex";
+        //container.style.justifyContent = "space-between";
+        container.style.alignItems = "center";
+        container.style.gap = "10px";
+
+        const labelPC = document.createElement("span");
+        labelPC.textContent = "PC Send:";
+        labelPC.style.marginRight = "4px";
+        labelPC.style.width = "70px";
+        //labelPC.style.backgroundColor = blue
+
+        const buttonPC = document.createElement("button");
+        buttonPC.textContent = "OFF";
+        buttonPC.addEventListener("click", (ev) => {
+            const options = ["OFF", ...Array.from({ length: 128 }, (_, i) => i)];
+            createPopup(options, (sel) => {
+                buttonPC.textContent = sel;
+                buttonPC.style.color = sel == "OFF" ? red: green;
+            }, ev);
+        });
+        buttonPC.style.width = "50px";
+        buttonPC.style.textAlign = "center";
+        buttonPC.style.color = red;
+
+        const labelCh = document.createElement("span");
+        labelCh.textContent = "Channel:";
+        labelCh.style.marginLeft = "30px";
+
+        const buttonCh = document.createElement("button");
+        buttonCh.textContent = "1";
+        buttonCh.addEventListener("click", (ev) => {
+            const options = [...Array.from({ length: 16 }, (_, i) => `${i + 1}`), "All"];
+            createPopup(options, (sel) => {
+                buttonCh.textContent = sel;
+                buttonCh.style.color = sel == "All" ? blue: green;
+            }, ev);
+        });
+        buttonCh.style.width = "30px";
+        buttonCh.style.textAlign = "center";
+        //buttonCh.style.color = red;
+
+        container.appendChild(labelPC);
+        container.appendChild(buttonPC);
+        container.appendChild(labelCh);
+        container.appendChild(buttonCh);
+
+        td.appendChild(container);
+        row.appendChild(td);
+        tableRight.appendChild(row);
+    }
+
+    wrapper.appendChild(tableLeft);
+    wrapper.appendChild(tableRight);
+
+    return wrapper;
 }
 
 function createPopup(options, callback, event) {
@@ -2095,7 +2931,7 @@ function createPopup(options, callback, event) {
 
     // Limitado a janela
     const popupHeight = 200;
-    const paddingFromEdge = 20;
+    const paddingFromEdge = -25;
     if ((y + popupHeight + paddingFromEdge) > window.innerHeight) {
         y = window.innerHeight - popupHeight - paddingFromEdge;
     }

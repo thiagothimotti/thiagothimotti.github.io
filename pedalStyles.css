@@ -283,7 +283,7 @@ input[type=number]::-webkit-outer-spin-button {
     display: flex;
     gap: 20px;
     justify-content: center;
-    padding-bottom: 80px;
+    padding-bottom: 0px;
 }
 
 .image-container {
@@ -319,6 +319,76 @@ input[type=number]::-webkit-outer-spin-button {
 
 .image-table td:last-child {
     text-align: center;
+}
+
+.command-center-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* flex-start alinhado, stretch cresce junto */
+    gap: 20px;
+    margin-top: -15px;
+}
+
+.command-center-table {
+    width: 300px;
+    background-color: transparent;
+    color: white;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 10px auto;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.right-command-table td {
+  padding: 5px 14px; /* somente padding horizontal por padrão */
+}
+
+.right-command-table tr:first-child td {
+  padding-top: 10px; /* ou o valor que desejar */
+}
+
+.right-command-table tr:last-child td {
+  padding-bottom: 15px; /* ou o valor que desejar */
+}
+
+.command-center-table tr:nth-child(1) td,
+.command-center-table tr:nth-child(2) td {
+    padding-bottom: 5px;
+    padding-left: 5px;
+}
+
+.command-center-table input[type="text"] {
+    background-color: transparent;
+    border: none;
+    color: var(--blue);
+    border-radius: 4px;
+    padding: 2px 5px;
+    width: 90px;
+    font-size: 16px;
+}
+
+.command-center-table button {
+    background: transparent;
+    width: 120px;
+    text-align: left;
+    border: none;
+    color: lime;
+    cursor: pointer;
+    font-size: 16px;
+}
+.command-extra-row {
+    padding-top: 3px;
+    padding-bottom: 5px;
+    padding-left: 5px;
+    vertical-align: middle;
+}
+
+.command-extra-row td {
+    padding-top: 3px;
+    padding-bottom: 5px;
+    padding-left: 5px;
+    vertical-align: middle;
 }
 
 .popup-container {

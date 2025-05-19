@@ -1235,6 +1235,38 @@ async function setupMidiListener() {
                             const algorithmDisplay = document.getElementById("imageDisplay");
                             updateImageTablesFromArray(sysexData, imageTableLeft, imageTableRight, algorithmDisplay)
                             break;
+                        case 0x3D:
+                            //alert(sysexData.slice(1))
+                            const commandCenter = document.getElementById("command-center-table-1");
+                            if (!commandCenter) {
+                                console.error("Tabela command-center-table não encontrada.");
+                                return;
+                            }
+                            
+                            sysexData[2] = sysexData[2] !== 0 ? sysexData[2] + 64 : sysexData[2]+32;
+                            sysexData[3] = sysexData[3] !== 0 ? sysexData[3] + 64 : sysexData[3]+32;
+                            sysexData[4] = sysexData[4] !== 0 ? sysexData[4] + 64 : sysexData[4]+32;
+                            sysexData[5] = sysexData[5] !== 0 ? sysexData[5] + 64 : sysexData[5]+32;
+                            //alert(`Tipos: ${Array.from(sysexData.slice(1)).map(c => typeof c)}`);
+                            updateCommandCenter(Array.from(sysexData.slice(1)), commandCenter)
+                            //alert(sysexData.slice(1))
+                            break;
+                        case 0x3E:
+                            //alert(sysexData.slice(1))
+                            const commandCenter2 = document.getElementById("command-center-table-2");
+                            if (!commandCenter2) {
+                                console.error("Tabela command-center-table não encontrada.");
+                                return;
+                            }
+                            
+                            sysexData[2] = sysexData[2] !== 0 ? sysexData[2] + 64 : sysexData[2]+32;
+                            sysexData[3] = sysexData[3] !== 0 ? sysexData[3] + 64 : sysexData[3]+32;
+                            sysexData[4] = sysexData[4] !== 0 ? sysexData[4] + 64 : sysexData[4]+32;
+                            sysexData[5] = sysexData[5] !== 0 ? sysexData[5] + 64 : sysexData[5]+32;
+                            //alert(`Tipos: ${Array.from(sysexData.slice(1)).map(c => typeof c)}`);
+                            updateCommandCenter(Array.from(sysexData.slice(1)), commandCenter2)
+                            //alert(sysexData.slice(1))
+                            break;
                     }
                 }
                 console.log('removendo ', lastMessage[0])
