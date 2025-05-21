@@ -3002,6 +3002,7 @@ function createCommandCenterPage3() {
     const cellTargetButton = document.createElement("td");
     const buttonDSP = document.createElement("button");
     buttonDSP.textContent = "DSP1";
+    buttonDSP.style.color = orange;
     buttonDSP.style.marginLeft = "10px";
     buttonDSP.addEventListener("click", (ev) => {
         const options = ["DSP1", "DSP2", "D1+D2"];
@@ -3056,6 +3057,10 @@ function createCommandCenterPage3() {
         const td = document.createElement("td");
         td.colSpan = 2;
 
+        if (i === 1) {
+            td.style.paddingBottom = "60px";
+        }
+
         const container = document.createElement("div");
         container.style.display = "flex";
         container.style.alignItems = "center";
@@ -3105,8 +3110,8 @@ function createCommandCenterPage3() {
 
     tableLeft.style.flex = "1";
     tableRight.style.flex = "1";
-    tableLeft.style.height = "100%";
-    tableRight.style.height = "100%";
+    tableLeft.style.height = "120px";
+    tableRight.style.height = "50px";
 
     wrapper.appendChild(tableLeft);
     wrapper.appendChild(tableRight);
