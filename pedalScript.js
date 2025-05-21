@@ -926,7 +926,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
     // Seta o debounce para o envio da mensagem
     function scheduleDSPAlert() {
         clearTimeout(dspDebounceTimeout);
-        dspDebounceTimeout = setTimeout(triggerDSPAlert, 1000);
+        dspDebounceTimeout = setTimeout(triggerDSPAlert, 100);
     }
 
     //let currentAlgorithmIndex = 0;
