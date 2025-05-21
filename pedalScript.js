@@ -1161,7 +1161,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                             const cleanSel = sel.replace(range.complemento, "").trim();
                             alert([0xF0, 0x47, optionsMT.indexOf(cleanSel), number-1, 0xF7]);
                             sendMessage([0xF0, 0x47, optionsMT.indexOf(cleanSel), number-1, 0xF7]);
-                            alert([0xF0,0x36+number,number-1,0xF7]);
+                            alert([0xF0,0x36+number,0x00,0xF7]);
                             sendMessage([0xF0,0x36+number,0x00,0xF7]);
                         }
 
