@@ -1213,7 +1213,7 @@ async function setupMidiListener() {
                         case 0x37:
                             algorithmDSP[0] = sysexData[1];
                             //alert(sysexData.slice(2))
-                            alert(sysexData)
+                            //alert(sysexData)
                             let aux =  Array.from(sysexData.slice(2));
                             aux[0] = binaryOperation(aux[0], aux[1], 5)
                             aux.splice(1, 1);
@@ -1224,7 +1224,7 @@ async function setupMidiListener() {
                             break;
                         case 0x38:
                             algorithmDSP[1] = sysexData[1];
-                            alert(sysexData.slice(2))
+                            //alert(sysexData.slice(2))
                             let aux2 =  Array.from(sysexData.slice(2));
                             aux2[0] = binaryOperation(aux2[0], aux2[1], 5)
                             aux2.splice(1, 1);

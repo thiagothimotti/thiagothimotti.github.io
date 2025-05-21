@@ -1159,9 +1159,9 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                             updateModTypeExtraRows(tbody, sel, false);
                             const optionsMT = ["OFF", "Vibrato", "Tremolo", "Chorus", "Phaser", "Flanger"];
                             const cleanSel = sel.replace(range.complemento, "").trim();
-                            alert([0xF0, 0x47, optionsMT.indexOf(cleanSel), number-1, 0xF7]);
+                            //alert([0xF0, 0x47, optionsMT.indexOf(cleanSel), number-1, 0xF7]);
                             sendMessage([0xF0, 0x47, optionsMT.indexOf(cleanSel), number-1, 0xF7]);
-                            alert([0xF0,0x36+number,0x00,0xF7]);
+                            //alert([0xF0,0x36+number,0x00,0xF7]);
                             sendMessage([0xF0,0x36+number,0x00,0xF7]);
                         }
 
@@ -1396,12 +1396,11 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                         toggleButton.style.color = isPressed ? "rgb(167, 167, 167)" : green;
                         toggleButton.style.border = isPressed ? "1px solid rgb(167, 167, 167)" : "1px solid lime";
                         renderSliderOrFig();
-                        scheduleDSPAlert(); //aqui
-                        /*alert(toggleButton.dataset.pressed);
-                        if(toggleButton.dataset.pressed) {
-                            alert([0xF0,0x48,1,number-1,0xF7]);
-                        }
-                        else alert([0xF0,0x48,0,number-1,0xF7]);*/
+                        scheduleDSPAlert();
+                        //alert(toggleButton.dataset.pressed);
+                        if(isPressed) sendMessage([0xF0,0x48,0,number-1,0xF7]);
+                        else sendMessage([0xF0,0x48,1,number-1,0xF7]);
+                        sendMessage([0xF0,0x36+number,0x00,0xF7]);
                     });
                 }
 
