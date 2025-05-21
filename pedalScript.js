@@ -381,8 +381,19 @@ async function createTable(index, presetName) {
     const presetTitle = createPresetTitle(presetName);
     mainContent.appendChild(presetTitle);
 
-    const topologyContainer = createTopologySection();
+    const topologyContainer = createTopologySection(updateTopologyImage);
     mainContent.appendChild(topologyContainer);
+
+    // Adiciona imagem logo abaixo da topology
+    const topologyImage = document.createElement("img");
+    topologyImage.id = "topology-image";
+    topologyImage.src = "https://i.imgur.com/q5A2eEN.png"; //single
+    topologyImage.alt = "Topology Image";
+    topologyImage.style.display = "block";
+    topologyImage.style.marginTop = "-10px";
+    topologyImage.style.marginBottom = "20px";
+    topologyImage.style.maxWidth = "40%"; // responsivo
+    mainContent.appendChild(topologyImage);
 
     const mainTable = createFormattedTable();
     const smallTables = await createSmallTables();
@@ -410,6 +421,24 @@ async function createTable(index, presetName) {
 
     sendMessage([0xF0, 0x3D, 0x00, 0xF7]);
     sendMessage([0xF0, 0x3E, 0x00, 0xF7]);
+    sendMessage([0xF0,0x3F,0x00,0xF7])
+}
+
+function updateTopologyImage(topology) {
+    const topologyImage = document.getElementById("topology-image");
+    if (!topologyImage) return;
+
+    if (topology === "Single") {
+        topologyImage.src = "https://i.imgur.com/q5A2eEN.png";
+    } else if (topology === "Dual") {
+        topologyImage.src = "https://i.imgur.com/BGE8Xev.png";
+    } else if (topology === "Series") {
+        topologyImage.src = "https://i.imgur.com/mWSjmyR.png";
+    } else if (topology === "Mixed") {
+        topologyImage.src = "https://i.imgur.com/P1vHKBV.png";
+    } else if (topology === "Cascade") {
+        topologyImage.src = "https://i.imgur.com/s3V9Twp.png";
+    }
 }
 
 // Função para criar o título do preset
@@ -421,9 +450,10 @@ function createPresetTitle(presetName) {
 }
 
 // Função para criar a seção de topologia com setas de navegação
-function createTopologySection() {
-    let currentTypeIndex = 0;
-
+window.currentTypeIndex = 0;
+//alert(window.currentTypeIndex)
+function createTopologySection(onTopologyChange) {
+    
     const topologyContainer = document.createElement("div");
     topologyContainer.className = "topology-container";
 
@@ -434,26 +464,37 @@ function createTopologySection() {
     const typeDisplay = document.createElement("span");
     typeDisplay.className = "type-display";
     typeDisplay.id = "topology-type-display";
-    typeDisplay.textContent = getType(currentTypeIndex);
+    typeDisplay.textContent = getType(window.currentTypeIndex);
     typeDisplay.style.width = '70px';
     typeDisplay.style.cursor = "pointer";
 
     const topologyOptions = ["Single", "Dual", "Series", "Mixed", "Cascade"];
+
+    function handleTopologyChange(selectedOption) {
+        //window.currentTypeIndex = topologyOptions.indexOf(selectedOption);
+        typeDisplay.textContent = selectedOption;
+        sendMessage([0xF0, 0x32, window.currentTypeIndex, 0xF7]);
+
+        const dsp2 = document.getElementById("dsp-table-2");
+        if (dsp2 && dsp2.updateLabels) {
+            dsp2.updateLabels(true);
+        }
+        if (selectedOption === "Mixed") {
+            setPanDisplayVisibility([false, true]);
+        } else {
+            setPanDisplayVisibility([true, true]);
+        }
+
+        if (typeof onTopologyChange === 'function') {
+            onTopologyChange(selectedOption);
+        }
+    }
+
     typeDisplay.addEventListener("click", (event) => {
         createPopup(topologyOptions, (selectedOption) => {
-            currentTypeIndex = topologyOptions.indexOf(selectedOption);
-            typeDisplay.textContent = selectedOption;
-            sendMessage([0xF0, 0x32, currentTypeIndex, 0xF7]);
-
-            const dsp2 = document.getElementById("dsp-table-2");
-            if (dsp2 && dsp2.updateLabels) {
-                dsp2.updateLabels(true);
-            }
-            if (selectedOption == "Mixed") setPanDisplayVisibility([false, true]);
-            else setPanDisplayVisibility([true, true]);
+            handleTopologyChange(selectedOption);
         }, event);
     });
-
 
     const leftArrow = document.createElement("span");
     leftArrow.className = "arrow left-arrow";
@@ -461,24 +502,9 @@ function createTopologySection() {
     leftArrow.style.cursor = "pointer";
     leftArrow.style.margin = "0 10px";
     leftArrow.addEventListener("click", () => {
-        switch (typeDisplay.textContent) {
-            case "Single": currentTypeIndex = 0; break;
-            case "Dual": currentTypeIndex = 1; break;
-            case "Series": currentTypeIndex = 2; break;
-            case "Mixed": currentTypeIndex = 3; break;
-            case "Cascade": currentTypeIndex = 4; break;
-            default: currentTypeIndex = 5; break;
-        }
-        currentTypeIndex = (currentTypeIndex - 1 + 5) % 5;
-        typeDisplay.textContent = getType(currentTypeIndex);
-        sendMessage([0xF0, 0x32, currentTypeIndex, 0xF7])
-
-        const dsp2 = document.getElementById("dsp-table-2");
-        if (dsp2 && dsp2.updateLabels) {
-            dsp2.updateLabels(true);
-        }
-        if (typeDisplay.textContent == "Mixed") setPanDisplayVisibility([false, true]);
-        else setPanDisplayVisibility([true, true]);
+        window.currentTypeIndex = (window.currentTypeIndex - 1 + 5) % 5;
+        const selectedOption = getType(window.currentTypeIndex);
+        handleTopologyChange(selectedOption);
     });
 
     const rightArrow = document.createElement("span");
@@ -488,24 +514,9 @@ function createTopologySection() {
     rightArrow.style.cursor = "pointer";
     rightArrow.style.margin = "0 10px";
     rightArrow.addEventListener("click", () => {
-        switch (typeDisplay.textContent) {
-            case "Single": currentTypeIndex = 0; break;
-            case "Dual": currentTypeIndex = 1; break;
-            case "Series": currentTypeIndex = 2; break;
-            case "Mixed": currentTypeIndex = 3; break;
-            case "Cascade": currentTypeIndex = 4; break;
-            default: currentTypeIndex = 5; break;
-        }
-        currentTypeIndex = (currentTypeIndex + 1) % 5;
-        typeDisplay.textContent = getType(currentTypeIndex);
-        sendMessage([0xF0, 0x32, currentTypeIndex, 0xF7])
-
-        const dsp2 = document.getElementById("dsp-table-2");
-        if (dsp2 && dsp2.updateLabels) {
-            dsp2.updateLabels(true);
-        }
-        if (typeDisplay.textContent == "Mixed") setPanDisplayVisibility([false, true]);
-        else setPanDisplayVisibility([true, true]);
+        window.currentTypeIndex = (window.currentTypeIndex + 1) % 5;
+        const selectedOption = getType(window.currentTypeIndex);
+        handleTopologyChange(selectedOption);
     });
 
     topologyContainer.appendChild(topologyTitle);
@@ -514,7 +525,6 @@ function createTopologySection() {
     topologyContainer.appendChild(rightArrow);
 
     sendMessage([0xF0, 0x31, 0x00, 0xF7]);
-    //sendMessage([0xF0,0x33,0x00,0xF7]);
 
     return topologyContainer;
 }
@@ -2233,7 +2243,7 @@ function createCommandCenterTables() {
                     addActionOptions(table, tbody);
                 }
                 adjustBackgroundHeights(wrapper);
-
+                extractCommandCenterData(table);
             }, event);
         });
         
@@ -2271,6 +2281,7 @@ function createCommandCenterTables() {
                 //const rgb = rgb565ToCss(colorMap[selected]);
                 const rgb = colorMap[selected];
                 colorButton.style.color = rgb;
+                extractCommandCenterData(table);
             }, event);
         });
 
@@ -2369,6 +2380,7 @@ function addHoldOptions(table, tbody) {
     holdButton.addEventListener("click", (event) => {
         createPopup(holdOptions, (selected) => {
             holdButton.textContent = selected;
+            extractCommandCenterData(table);
         }, event);
     });
 
@@ -2405,6 +2417,7 @@ function addHoldOptions(table, tbody) {
             } else {
                 targetButton.style.color = green;
             }
+            extractCommandCenterData(table);
         }, event);
     });
 
@@ -2482,7 +2495,18 @@ function addActionOptions(table, tbody) {
             valueDisplay.textContent = `${slider.value}%`;
         };
 
-        slider.addEventListener("input", updateSliderBackground);
+        let debounceTimeout;
+        function debouncedExtract() {
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => {
+                extractCommandCenterData(table);
+            }, 100);
+        }
+
+        slider.addEventListener("input", () => {
+            updateSliderBackground();
+            debouncedExtract();
+        });
 
         slider.addEventListener("wheel", (event) => {
             event.preventDefault();
@@ -2492,6 +2516,7 @@ function addActionOptions(table, tbody) {
             const newValue = Math.min(parseInt(slider.max), Math.max(parseInt(slider.min), current + direction * step));
             slider.value = newValue;
             updateSliderBackground();
+            debouncedExtract();
         });
 
         const dspButton = document.createElement("button");
@@ -2534,6 +2559,7 @@ function addActionOptions(table, tbody) {
                     dspButton.style.fontSize = "16px";
                 }
                 updateSliderBackground();
+                extractCommandCenterData(table);
             }, event);
         });
 
@@ -2869,7 +2895,7 @@ function extractCommandCenterData(tableElement) {
 
 function createCommandCenterPage3() {
     const wrapper = document.createElement("div");
-    wrapper.className = "command-center-wrapper";
+    wrapper.className = "command-center-wrapper page3";
     wrapper.style.display = "flex";
     wrapper.style.gap = "20px";
     wrapper.style.marginTop = "30px";
@@ -2898,6 +2924,7 @@ function createCommandCenterPage3() {
     cell1Left.style.paddingTop = "10px"
 
     const buttonExpr = document.createElement("button");
+    buttonExpr.classList.add("expression-control-button");
     buttonExpr.textContent = "OFF";
     buttonExpr.style.color = red;
     cell1Left.appendChild(buttonExpr);
@@ -2934,6 +2961,8 @@ function createCommandCenterPage3() {
     fromValue.style.color = green;
     fromValue.textContent = `${sliderFrom.value}%`;
     fromValue.style.marginLeft = "8px";
+    fromValue.style.textAlign = "right";
+    fromValue.style.marginRight = "20px";
 
     sliderFrom.addEventListener("input", () => {
         fromValue.textContent = `${sliderFrom.value}%`;
@@ -2973,6 +3002,8 @@ function createCommandCenterPage3() {
     toValue.style.color = green;
     toValue.textContent = `${sliderTo.value}%`;
     toValue.style.marginLeft = "8px";
+    toValue.style.textAlign = "right";
+    toValue.style.marginRight = "20px";
 
     sliderTo.addEventListener("input", () => {
         toValue.textContent = `${sliderTo.value}%`;
@@ -3118,6 +3149,101 @@ function createCommandCenterPage3() {
     return wrapper;
 }
 
+function updateCommandCenterPage3(array) {
+    const exprOptions = ["OFF", "Feedback", "DelayMix", "DryLevel", "AlterI", "AlterII"];
+    let targetOptions = ["DSP1", "DSP2", "D1+D2"];
+
+    const [
+        exprIndex, expFrom, expTo, expTargetIndex,
+        pc1lsb, pc1msb, channel1,
+        pc2lsb, pc2msb, channel2
+    ] = array;
+
+    if(exprIndex == 3) targetOptions = ["DryL+R", "DryL", "DryR"];
+
+    const wrapper = document.querySelector(".page3");
+    if (!wrapper) return;
+
+    const [tableLeft, tableRight] = wrapper.children;
+    if (!tableLeft || !tableRight) return;
+
+    // Tabela da esquerda
+    const buttonExpr = tableLeft.querySelector(".expression-control-button");
+    if (buttonExpr) {
+        const selectedExpr = exprOptions[exprIndex] ?? "OFF";
+        buttonExpr.textContent = selectedExpr;
+        buttonExpr.style.color = selectedExpr === "OFF" ? red : green;
+    }
+
+    const sliders = tableLeft.querySelectorAll("input[type=range]");
+    const fromSlider = sliders[0];
+    const toSlider = sliders[1];
+
+    if (fromSlider) {
+        fromSlider.max = (buttonExpr?.textContent === "DelayMix") ? 120 : 100;
+        fromSlider.value = expFrom;
+        const fromDisplay = fromSlider.parentElement.querySelector(".value-display");
+        if (fromDisplay) fromDisplay.textContent = `${expFrom}%`;
+        const per1 = ((expFrom - fromSlider.min) / (fromSlider.max - fromSlider.min)) * 100;
+        fromSlider.style.background = `linear-gradient(to right, ${blue} ${per1}%, white ${per1}%)`;
+    }
+
+    if (toSlider) {
+        toSlider.max = (buttonExpr?.textContent === "DelayMix") ? 120 : 100;
+        toSlider.value = expTo;
+        const toDisplay = toSlider.parentElement.querySelector(".value-display");
+        if (toDisplay) toDisplay.textContent = `${expTo}%`;
+        const per2 = ((expTo - toSlider.min) / (toSlider.max - toSlider.min)) * 100;
+        toSlider.style.background = `linear-gradient(to right, ${blue} ${per2}%, white ${per2}%)`;
+    }
+
+    const targetButton = tableLeft.querySelector("tr:last-child button");
+    if (targetButton) {
+        const selectedTarget = targetOptions[expTargetIndex] ?? "DSP1";
+        if (selectedTarget === "D1+D2") {
+            targetButton.innerHTML = `<span style="color:${orange};">D1</span><span style="color:white;">+</span><span style="color:${blue};">D2</span>`;
+        } else {
+            targetButton.textContent = selectedTarget;
+            targetButton.style.color = selectedTarget === "DSP1" ? orange : blue;
+        }
+        if(exprIndex == 3) targetButton.style.color = colorMap["Pink"];
+    }
+
+    // Tabela da direita
+    const binaryOperation = (lsb, msb, offset) => (msb << offset) + lsb;
+
+    const rows = tableRight.querySelectorAll("tr");
+    if (rows.length < 2) return;
+
+    const rightData = [
+        { lsb: pc1lsb, msb: pc1msb, channel: channel1 },
+        { lsb: pc2lsb, msb: pc2msb, channel: channel2 }
+    ];
+
+    rightData.forEach((data, i) => {
+        const row = rows[i];
+        if (!row) return;
+
+        const container = row.querySelector("td > div");
+        if (!container) return;
+
+        const buttons = container.querySelectorAll("button");
+        const btnPC = buttons[0];
+        const btnCh = buttons[1];
+
+        if (btnPC) {
+            const pcValue = binaryOperation(data.lsb, data.msb, 4);
+            btnPC.textContent = pcValue == 0? "OFF": pcValue-1;
+            btnPC.style.color = pcValue === 0 ? red : green;
+        }
+
+        if (btnCh) {
+            const chValue = data.channel === 16 ? "All" : `${data.channel + 1}`;
+            btnCh.textContent = chValue;
+            btnCh.style.color = data.channel === 16 ? blue : green;
+        }
+    });
+}
 
 function createSystemButtons() {
 

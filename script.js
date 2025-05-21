@@ -1186,16 +1186,18 @@ async function setupMidiListener() {
                             extractPresets(sysexData.slice(1))
                             break;
                         case 0x31:
-                            //alert(sysexData.slice(-1))
                             const topologyTypes = ["Single", "Dual", "Series", "Mixed", "Cascade"];
-
                             const topologyDisplay = document.querySelector(".type-display");
-                            
+                            window.currentTypeIndex = Number(sysexData.slice(-1));
+                            const selectedTopology = topologyTypes[window.currentTypeIndex];
+
                             if (topologyDisplay) {
-                                topologyDisplay.textContent = topologyTypes[sysexData.slice(-1)];
+                                topologyDisplay.textContent = selectedTopology;
                             } else {
                                 console.warn("Elemento .type-display não encontrado.");
                             }
+
+                            updateTopologyImage(selectedTopology);
                             break;
                         case 0x33:
                             //alert(sysexData);
@@ -1271,6 +1273,10 @@ async function setupMidiListener() {
                             //alert(`Tipos: ${Array.from(sysexData.slice(1)).map(c => typeof c)}`);
                             updateCommandCenter(Array.from(sysexData.slice(1)), commandCenter2)
                             //alert(sysexData.slice(1))
+                            break;
+                        case 0x3F:
+                            //alert(sysexData.slice(1));
+                            updateCommandCenterPage3(sysexData.slice(1));
                             break;
                     }
                 }
