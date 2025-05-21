@@ -784,13 +784,16 @@ async function createSmallTables() {
 
     //alert([...algorithmDSP])
     const table1 = createIndividualTable(1, algorithmDSP[0]);
-    table1.style.width = "300px"; // era 240
+    table1.container.style.width = "300px"; // era 240
 
     const table2 = createIndividualTable(2, algorithmDSP[1]);
-    table2.style.width = "300px"; // era 240
+    table2.container.style.width = "300px"; // era 240
 
-    smallTablesContainer.appendChild(table1);
-    smallTablesContainer.appendChild(table2);
+    smallTablesContainer.appendChild(table1.container);
+    smallTablesContainer.appendChild(table2.container);
+
+    window.dsp1 = table1;
+    window.dsp2 = table2;
 
     //alert(document.querySelector(".type-display").textContent)
     /*if (document.querySelector(".type-display").textContent != "Single") {
@@ -1154,6 +1157,12 @@ function createIndividualTable(number, currentAlgorithmIndex) {
 
                         if (label === "Mod Type" && algorithmDisplay.textContent === "Glassy Delay") {
                             updateModTypeExtraRows(tbody, sel, false);
+                            const optionsMT = ["OFF", "Vibrato", "Tremolo", "Chorus", "Phaser", "Flanger"];
+                            const cleanSel = sel.replace(range.complemento, "").trim();
+                            alert([0xF0, 0x47, optionsMT.indexOf(cleanSel), number-1, 0xF7]);
+                            sendMessage([0xF0, 0x47, optionsMT.indexOf(cleanSel), number-1, 0xF7]);
+                            alert([0xF0,0x36+number,0x00,0xF7]);
+                            sendMessage([0xF0,0x36+number,0x00,0xF7]);
                         }
 
                         scheduleDSPAlert();
@@ -1387,7 +1396,12 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                         toggleButton.style.color = isPressed ? "rgb(167, 167, 167)" : green;
                         toggleButton.style.border = isPressed ? "1px solid rgb(167, 167, 167)" : "1px solid lime";
                         renderSliderOrFig();
-                        scheduleDSPAlert();
+                        scheduleDSPAlert(); //aqui
+                        /*alert(toggleButton.dataset.pressed);
+                        if(toggleButton.dataset.pressed) {
+                            alert([0xF0,0x48,1,number-1,0xF7]);
+                        }
+                        else alert([0xF0,0x48,0,number-1,0xF7]);*/
                     });
                 }
 
@@ -1470,7 +1484,8 @@ function createIndividualTable(number, currentAlgorithmIndex) {
         createPopup(algorithmValues, (selectedValue) => {
             currentAlgorithmIndex = algorithmValues.indexOf(selectedValue);;
             updateAlgorithmDisplay(false);
-            scheduleDSPAlert();
+            sendMessage([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7]);
+            //scheduleDSPAlert();
         }, event);
 
     });
@@ -1483,7 +1498,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
         /**///alert(currentAlgorithmIndex)
         sendMessage([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7]);
         //alert([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7])
-        alert([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7])
+        //alert([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7])
         sendMessage([0xF0,0x36 + number,0x00,0xF7]);//aqui
         //alert([0xF0,0x36 + number,0x00,0xF7])
     });
@@ -1494,7 +1509,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
         updateAlgorithmDisplay(false);
         //scheduleDSPAlert();
         /**/sendMessage([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7]);
-        alert([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7])
+        //alert([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7])
         sendMessage([0xF0,0x36 + number,0x00,0xF7]);
     });
 
@@ -1525,7 +1540,10 @@ function createIndividualTable(number, currentAlgorithmIndex) {
     wrapper.appendChild(table);
     wrapper.appendChild(dspLabel);
 
-    return wrapper;
+    return {
+        container: wrapper,
+        updateModTypeExtraRows: updateModTypeExtraRows
+    };
 }
 
 function updateDSPButtons(tableNum, buttonTexts) {
