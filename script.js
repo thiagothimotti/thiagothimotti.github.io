@@ -1229,6 +1229,8 @@ async function setupMidiListener() {
                             aux2[0] = binaryOperation(aux2[0], aux2[1], 5)
                             aux2.splice(1, 1);
                             algorithmDSP2 = aux2;
+                            const tableDSP2 = document.getElementById("dsp-table-2");
+                            if (tableDSP2) tableDSP2.updateLabels(true);
                             //alert([...algorithmDSP2])
                             break;
                         case 0x3B:
