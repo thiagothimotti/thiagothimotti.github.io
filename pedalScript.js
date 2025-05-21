@@ -1483,6 +1483,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
         /**///alert(currentAlgorithmIndex)
         sendMessage([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7]);
         //alert([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7])
+        alert([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7])
         sendMessage([0xF0,0x36 + number,0x00,0xF7]);//aqui
         //alert([0xF0,0x36 + number,0x00,0xF7])
     });
@@ -1493,6 +1494,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
         updateAlgorithmDisplay(false);
         //scheduleDSPAlert();
         /**/sendMessage([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7]);
+        alert([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7])
         sendMessage([0xF0,0x36 + number,0x00,0xF7]);
     });
 
@@ -2843,7 +2845,7 @@ function extractCommandCenterData(tableElement) {
     ];
 
     //alert(JSON.stringify(result));
-    alert([0xF0,0x3f+parseInt(tableElement.id.split("-").pop(), 10), ...result,0xF7]);
+    //alert([0xF0,0x3f+parseInt(tableElement.id.split("-").pop(), 10), ...result,0xF7]);
     sendMessage([0xF0,0x3f+parseInt(tableElement.id.split("-").pop(), 10), ...result,0xF7]);
     return result;
 }
@@ -3096,12 +3098,18 @@ function createCommandCenterPage3() {
 
 
 function createSystemButtons() {
+
+    if (document.getElementById("system-button-container")) {
+        return document.getElementById("system-button-container");
+    }
+
     const buttonContainer = document.createElement("div");
+    buttonContainer.id = "system-button-container";
     buttonContainer.style.display = "flex";
     buttonContainer.style.justifyContent = "center";
     buttonContainer.style.gap = "20px";
     buttonContainer.style.marginTop = "300px";
-    buttonContainer.style.marginLeft = "0px";
+    buttonContainer.style.marginLeft = "10px";
 
     // Botão Save
     const saveButton = document.createElement("button");
