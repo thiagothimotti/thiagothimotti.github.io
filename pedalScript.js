@@ -173,14 +173,15 @@ const colorMap = {
 };*/
 
 const colorMap = {
-    Purple: "#7300ff",
-    Pink:   "#ff0073",
+    Purple: "#5200ff",
+    Pink:   "#ff0084",
     Cyan:   "#00ffff",
     Green:  "#00ff00",
     Orange: "#ff8200",
     Red:    "#ff0000",
-    Yellow: "#ffff00",
-    Blue:   "#0000ff"
+    Yellow: "#ffff84",
+    //Blue:   "#0000ff"
+    Blue:   "#0082ff"
 }
 
 function rgb565ToCss(rgb565) {
@@ -203,11 +204,11 @@ let purple = rgb565ToCss(colorMap["Purple"]);
 
 green = "rgb(0, 255, 0)";
 red = "rgb(255, 0, 0)";
-orange = "rgb(255, 194, 0)";
+orange = "rgb(255, 130, 0)";
 purple ="rgb(115, 0, 255)";
 let blue = "rgb(0, 255, 255)";
 
-let saveBlue = "rgb(16, 130, 255)";
+let saveBlue = "rgb(0, 130, 255)";
 
 //alert("Script dos pedais carregado");
 
@@ -998,18 +999,12 @@ function createIndividualTable(number, currentAlgorithmIndex) {
         let startValues = algorithmStart[algorithmDisplay.textContent];
 
         if (document.querySelector(".type-display").textContent == "Single" && number == 2) {
-            tbody.innerHTML = "";
-            const inactiveRow = document.createElement("tr");
-            const inactiveCell = document.createElement("td");
-            inactiveCell.colSpan = 2;
-            inactiveCell.textContent = "Inactive";
-            inactiveCell.style.textAlign = "center";
-            inactiveCell.style.color = "gray";
-            inactiveCell.style.padding = "10px 0";
-            inactiveRow.appendChild(inactiveCell);
-            tbody.appendChild(inactiveRow);
-
-            return;
+            algorithmDisplay.textContent = "Inactive";
+            labels = [];
+        } else {
+            algorithmDisplay.textContent = algorithmValues[currentAlgorithmIndex];
+            labels = ["Time", "Feedback", "DelayMix", ...algorithmData[algorithmDisplay.textContent] || []];
+            startValues = algorithmStart[algorithmDisplay.textContent];
         }
 
         tbody.innerHTML = "";
@@ -1541,7 +1536,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
     dspLabel.style.bottom = "5px";
     dspLabel.style.right = "15px";
     dspLabel.style.fontWeight = "bold";
-    dspLabel.style.color = number === 1 ? orange : blue;
+    dspLabel.style.color = number === 1 ? orange : saveBlue;
     dspLabel.style.textAlign = "right";
     dspLabel.style.fontSize = "16px";
 
@@ -2921,7 +2916,7 @@ function createCommandCenterPage3() {
     const cell1Left = document.createElement("td");
     cell1Left.colSpan = 2; // ocupa as duas colunas da tabela
     cell1Left.textContent = "Expression Control:";
-    cell1Left.style.paddingTop = "10px"
+    cell1Left.style.paddingTop = "10px";
 
     const buttonExpr = document.createElement("button");
     buttonExpr.classList.add("expression-control-button");
@@ -2933,28 +2928,19 @@ function createCommandCenterPage3() {
 
     const exprOptions = ["OFF", "Feedback", "DelayMix", "DryLevel", "AlterI", "AlterII"];
 
-    buttonExpr.addEventListener("click", (ev) => {
-        createPopup(exprOptions, (sel) => {
-            buttonExpr.textContent = sel;
-            buttonExpr.style.color = sel === "OFF" ? red : green;
-            updateSliderRange();
-        }, ev);
-    });
-
     // Linha From
     const rowFrom = document.createElement("tr");
     const cellFromLabel = document.createElement("td");
     cellFromLabel.textContent = "From:";
 
     const cellFromSlider = document.createElement("td");
-
     const sliderFrom = document.createElement("input");
-    sliderFrom.className = "slider"
+    sliderFrom.className = "slider";
     sliderFrom.type = "range";
     sliderFrom.min = 0;
     sliderFrom.max = 100;
     sliderFrom.value = 0;
-    sliderFrom.style.width = "170px"; // largura do slider
+    sliderFrom.style.width = "170px";
 
     const fromValue = document.createElement("span");
     fromValue.className = "value-display";
@@ -2963,14 +2949,6 @@ function createCommandCenterPage3() {
     fromValue.style.marginLeft = "8px";
     fromValue.style.textAlign = "right";
     fromValue.style.marginRight = "20px";
-
-    sliderFrom.addEventListener("input", () => {
-        fromValue.textContent = `${sliderFrom.value}%`;
-        const percentage = ((sliderFrom.value - sliderFrom.min) / (sliderFrom.max - sliderFrom.min)) * 100;
-        sliderFrom.style.background = `linear-gradient(to right, ${blue} ${percentage}%, white ${percentage}%)`;
-    });
-    const per1 = ((sliderFrom.value - sliderFrom.min) / (sliderFrom.max - sliderFrom.min)) * 100;
-    sliderFrom.style.background = `linear-gradient(to right, ${blue} ${per1}%, white ${per1}%)`;
 
     const fromContainer = document.createElement("div");
     fromContainer.style.display = "flex";
@@ -2990,7 +2968,7 @@ function createCommandCenterPage3() {
 
     const cellToSlider = document.createElement("td");
     const sliderTo = document.createElement("input");
-    sliderTo.className = "slider"
+    sliderTo.className = "slider";
     sliderTo.type = "range";
     sliderTo.min = 0;
     sliderTo.max = 100;
@@ -3004,14 +2982,6 @@ function createCommandCenterPage3() {
     toValue.style.marginLeft = "8px";
     toValue.style.textAlign = "right";
     toValue.style.marginRight = "20px";
-
-    sliderTo.addEventListener("input", () => {
-        toValue.textContent = `${sliderTo.value}%`;
-        const percentage = ((sliderTo.value - sliderTo.min) / (sliderTo.max - sliderTo.min)) * 100;
-        sliderTo.style.background = `linear-gradient(to right, ${blue} ${percentage}%, white ${percentage}%)`;
-    });
-    const per2 = ((sliderTo.value - sliderTo.min) / (sliderTo.max - sliderTo.min)) * 100;
-    sliderTo.style.background = `linear-gradient(to right, ${blue} ${per2}%, white ${per2}%)`;
 
     const toContainer = document.createElement("div");
     toContainer.style.display = "flex";
@@ -3034,27 +3004,60 @@ function createCommandCenterPage3() {
     buttonDSP.textContent = "DSP1";
     buttonDSP.style.color = orange;
     buttonDSP.style.marginLeft = "10px";
+    cellTargetButton.appendChild(buttonDSP);
+    rowTarget.appendChild(cellTargetLabel);
+    rowTarget.appendChild(cellTargetButton);
+
     buttonDSP.addEventListener("click", (ev) => {
-        const options = ["DSP1", "DSP2", "D1+D2"];
+        const options = buttonExpr.textContent == "DryLevel"? ["DryL+R", "DryL", "DryR"]: ["DSP1", "DSP2", "D1+D2"];
         createPopup(options, (sel) => {
             buttonDSP.textContent = sel;
-    
-            // Define a cor com base na seleção
             if (sel === "DSP1") {
                 buttonDSP.style.color = orange;
             } else if (sel === "DSP2") {
                 buttonDSP.style.color = blue;
             } else if (sel === "D1+D2") {
                 buttonDSP.innerHTML = `<span style="color:${orange};">D1</span><span style="color:white;">+</span><span style="color:${blue};">D2</span>`;
-            }
-    
+            } else buttonDSP.style.color = colorMap["Pink"];;
+            extractCommandCenterDataPage3()
         }, ev);
     });
-    
 
-    cellTargetButton.appendChild(buttonDSP);
-    rowTarget.appendChild(cellTargetLabel);
-    rowTarget.appendChild(cellTargetButton);
+    let debounceTimeout;
+    function debouncedExtract() {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+            extractCommandCenterDataPage3();
+        }, 100);
+    }
+
+    function addSliderEvents(slider, valueDisplay) {
+        slider.addEventListener("input", () => {
+            valueDisplay.textContent = `${slider.value}%`;
+            const percentage = ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
+            slider.style.background = `linear-gradient(to right, ${blue} ${percentage}%, white ${percentage}%)`;
+            debouncedExtract();
+        });
+
+        slider.addEventListener("wheel", (event) => {
+            event.preventDefault();
+            const step = 1;
+            const current = parseInt(slider.value);
+            const direction = event.deltaY < 0 ? 1 : -1;
+            const newValue = Math.min(parseInt(slider.max), Math.max(parseInt(slider.min), current + direction * step));
+            slider.value = newValue;
+            valueDisplay.textContent = `${slider.value}%`;
+            const percentage = ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
+            slider.style.background = `linear-gradient(to right, ${blue} ${percentage}%, white ${percentage}%)`;
+            debouncedExtract();
+        });
+
+        const initialPercentage = ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
+        slider.style.background = `linear-gradient(to right, ${blue} ${initialPercentage}%, white ${initialPercentage}%)`;
+    }
+
+    addSliderEvents(sliderFrom, fromValue);
+    addSliderEvents(sliderTo, toValue);
 
     function updateSliderRange() {
         const isDelayMix = buttonExpr.textContent === "DelayMix";
@@ -3071,6 +3074,31 @@ function createCommandCenterPage3() {
         const perT = ((sliderTo.value - sliderTo.min) / (sliderTo.max - sliderTo.min)) * 100;
         sliderTo.style.background = `linear-gradient(to right, ${blue} ${perT}%, white ${perT}%)`;
     }
+
+    let previousExpr = buttonExpr.textContent;
+
+    buttonExpr.addEventListener("click", (ev) => {
+        previousExpr = buttonExpr.textContent;
+        createPopup(exprOptions, (sel) => {
+            buttonExpr.textContent = sel;
+            buttonExpr.style.color = sel === "OFF" ? red : green;
+            updateSliderRange();
+
+            const wasDry = previousExpr === "DryLevel";
+            const isDry = sel === "DryLevel";
+
+            if (wasDry !== isDry) {
+                const dspOptions = isDry ? ["DryL+R", "DryL", "DryR"] : ["DSP1", "DSP2", "D1+D2"];
+                //alert (dspOptions);
+                buttonDSP.textContent = dspOptions[0];
+                buttonDSP.style.color = isDry ? colorMap["Pink"] : orange;
+            }
+
+            previousExpr = sel;
+
+            extractCommandCenterDataPage3();
+        }, ev);
+    });
 
     tableLeft.appendChild(row1Left);
     tableLeft.appendChild(rowFrom);
@@ -3110,6 +3138,7 @@ function createCommandCenterPage3() {
             createPopup(options, (sel) => {
                 buttonPC.textContent = sel;
                 buttonPC.style.color = sel === "OFF" ? red : green;
+                extractCommandCenterDataPage3();
             }, ev);
         });
 
@@ -3126,6 +3155,7 @@ function createCommandCenterPage3() {
             createPopup(options, (sel) => {
                 buttonCh.textContent = sel;
                 buttonCh.style.color = sel === "All" ? blue : green;
+                extractCommandCenterDataPage3();
             }, ev);
         });
 
@@ -3243,6 +3273,77 @@ function updateCommandCenterPage3(array) {
             btnCh.style.color = data.channel === 16 ? blue : green;
         }
     });
+}
+
+function extractCommandCenterDataPage3() {
+    const exprOptions = ["OFF", "Feedback", "DelayMix", "DryLevel", "AlterI", "AlterII"];
+    //const targetOptions = ["DSP1", "DSP2", "D1+D2"];
+
+    const wrapper = document.querySelector(".command-center-wrapper.page3");
+    if (!wrapper) {
+        //alert("Wrapper não encontrado!");
+        return;
+    }
+
+    const tableLeft = wrapper.querySelector(".command-center-table-3");
+    const tableRight = wrapper.querySelector(".right-command-table");
+
+    const buttonExpr = tableLeft.querySelector(".expression-control-button");
+    const exprText = buttonExpr.textContent;
+    const exprIndex = exprOptions.indexOf(exprText);
+
+    const targetOptions = buttonExpr.textContent == "DryLevel"? ["DryL+R", "DryL", "DryR"]: ["DSP1", "DSP2", "D1+D2"];
+
+    const sliders = tableLeft.querySelectorAll("input[type=range]");
+    const sliderFrom = sliders[0];
+    const sliderTo = sliders[1];
+
+    const expFrom = parseInt(sliderFrom.value);
+    const expTo = parseInt(sliderTo.value);
+
+    const buttonTarget = tableLeft.querySelector("tr:last-child button");
+    let expTargetIndex = targetOptions.indexOf(buttonTarget.textContent); //aqui
+
+    function BinaryOperationSend(result, deslocamento) {
+        const lsb = result & ((1 << deslocamento) - 1); 
+        const msb = result >> deslocamento;            
+        return [lsb, msb];
+    }
+
+    const binaryOffset = 4;
+
+    const rowsRight = tableRight.querySelectorAll("tr");
+
+    const dataRight = Array.from(rowsRight).map(row => {
+        const container = row.querySelector("td > div");
+        const buttons = container.querySelectorAll("button");
+        const buttonPC = buttons[0];
+        const buttonCh = buttons[1];
+
+        const pcValue = buttonPC.textContent === "OFF" ? 0 : parseInt(buttonPC.textContent)+1;
+        const [lsb, msb] = BinaryOperationSend(pcValue, binaryOffset);
+
+        const chText = buttonCh.textContent;
+        const channel = chText === "All" ? 16 : parseInt(chText)-1;
+
+        return { lsb, msb, channel };
+    });
+
+    const resultArray = [
+        exprIndex, 
+        expFrom, 
+        expTo, 
+        expTargetIndex, 
+        dataRight[0].lsb, 
+        dataRight[0].msb, 
+        dataRight[0].channel, 
+        dataRight[1].lsb, 
+        dataRight[1].msb, 
+        dataRight[1].channel
+    ];
+
+    //alert([0xF0,0x42,resultArray,0xF7]);
+    sendMessage([0xF0,0x42,...resultArray,0xF7]);
 }
 
 function createSystemButtons() {
