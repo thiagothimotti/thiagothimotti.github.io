@@ -212,6 +212,8 @@ let saveBlue = "rgb(0, 130, 255)";
 
 //alert("Script dos pedais carregado");
 
+let patchChanged = false;
+let imageInicialized = 2;
 function createPresets() {
 
     const sidebar = document.getElementById("sidebar");
@@ -273,10 +275,7 @@ function createPresets() {
         }
 
         preset.addEventListener("click", function (event) {
-
             if (preset.classList.contains("selected")) {
-
-                // Ignora cliques no input
                 if (event.target.tagName === "INPUT") return;
 
                 preset.classList.remove("selected");
@@ -284,53 +283,76 @@ function createPresets() {
                 arrow.style.transform = "rotate(-90deg) scale(1.8)";
                 preset.querySelector(".preset-icon-container").style.display = "none";
 
-                // Remove a tabela de configuração se existir
                 const existingConfig = document.getElementById("preset-config-table");
                 if (existingConfig) {
                     existingConfig.remove();
                 }
 
                 mainContent.innerHTML = '';
-
                 activePreset = null;
                 return;
             }
 
-            // Limpa seleção anterior
-            document.querySelectorAll(".preset").forEach(p => {
-                p.classList.remove("selected");
-                p.style.backgroundColor = "";
-                p.querySelector(".preset-arrow").style.transform = "rotate(-90deg) scale(1.8)";
-            });
-
-            // Remove qualquer config existente antes de abrir outro preset
-            const existingConfig = document.getElementById("preset-config-table");
-            if (existingConfig) {
-                existingConfig.remove();
-            }
-
-            sendMessage([0xF0, 0x43, i, 0xF7]);
-
-            attachPresetConfig(preset);
-            preset.classList.add("selected");
-            arrow.style.transform = "rotate(90deg) scale(1.8)";
-
-            if (i % 2 === 0) {
-                preset.style.backgroundColor = blueTransparent;
+            // ✅ Verificação de patchChanged
+            if (patchChanged) {
+                Swal.fire({
+                    title: "Are you sure?",
+                    text: `All settings of Patch ${activePreset ? activePreset.querySelector(".preset-number").textContent : ''} will be lost!`,
+                    icon: "warning",
+                    color: "white",
+                    width: "600px",
+                    background: "#2a2a40",
+                    showCancelButton: true,
+                    confirmButtonText: "Yes, change!",
+                    cancelButtonText: "Cancel",
+                    confirmButtonColor: "red",
+                    cancelButtonColor: "#53bfeb"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        patchChanged = false;  // ✅ Reseta o flag
+                        proceedToSelectPatch();
+                    }
+                });
             } else {
-                preset.style.backgroundColor = purpleTransparent;
+                proceedToSelectPatch();
             }
 
-            if (activePreset && activePreset !== preset) {
-                activePreset.querySelector(".preset-icon-container").style.display = "none";
+            // ✅ Função extra para isolar o código de seleção
+            function proceedToSelectPatch() {
+                document.querySelectorAll(".preset").forEach(p => {
+                    p.classList.remove("selected");
+                    p.style.backgroundColor = "";
+                    p.querySelector(".preset-arrow").style.transform = "rotate(-90deg) scale(1.8)";
+                });
+
+                const existingConfig = document.getElementById("preset-config-table");
+                if (existingConfig) {
+                    existingConfig.remove();
+                }
+
+                sendMessage([0xF0, 0x43, i, 0xF7]);
+                attachPresetConfig(preset);
+                preset.classList.add("selected");
+                arrow.style.transform = "rotate(90deg) scale(1.8)";
+
+                if (i % 2 === 0) {
+                    preset.style.backgroundColor = blueTransparent;
+                } else {
+                    preset.style.backgroundColor = purpleTransparent;
+                }
+
+                if (activePreset && activePreset !== preset) {
+                    activePreset.querySelector(".preset-icon-container").style.display = "none";
+                }
+
+                const currentIconContainer = preset.querySelector(".preset-icon-container");
+                currentIconContainer.style.display = "inline-flex";
+
+                createTable(i, presetInput.value ? `${presetNumber.textContent} | ${presetInput.value}` : `${presetInput.placeholder}`);
+
+                activePreset = preset;
+                imageInicialized = 2;
             }
-
-            const currentIconContainer = preset.querySelector(".preset-icon-container");
-            currentIconContainer.style.display = "inline-flex";
-
-            createTable(i, presetInput.value ? `${presetNumber.textContent} | ${presetInput.value}` : `${presetInput.placeholder}`);
-
-            activePreset = preset;
         });
 
         presetInput.addEventListener("input", function () {
@@ -475,6 +497,7 @@ function createTopologySection(onTopologyChange) {
         //window.currentTypeIndex = topologyOptions.indexOf(selectedOption);
         typeDisplay.textContent = selectedOption;
         sendMessage([0xF0, 0x32, window.currentTypeIndex, 0xF7]);
+        patchChanged = true;
 
         const dsp2 = document.getElementById("dsp-table-2");
         if (dsp2 && dsp2.updateLabels) {
@@ -599,6 +622,7 @@ function createFormattedTable() {
             updateTableRow(row2, "Dry Pan", -100, 100);
             sendMessage([0xf0, 0x34, 0x00, 100, 4, 6, 0xf7]);
         }
+        patchChanged = true;
     }
 
     function toggleMode() {
@@ -717,6 +741,7 @@ function createTableRow(name) {
 
         const sendDryMessage = () => {
             sendMessage([0xf0, 0x34, type, sliderValues[0], lsb, msb, 0xf7]);
+            patchChanged = true;
         };
 
         // Inicia envio contínuo
@@ -777,6 +802,7 @@ function createTableRow(name) {
 
         const [lsb, msb] = BinaryOperationSend(sliderValues[1], 4);
         sendMessage([0xf0, 0x34, type, sliderValues[0], lsb, msb, 0xf7]);
+        patchChanged = true;
     });
 
     row.appendChild(nameCell);
@@ -932,6 +958,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
         //alert(indexAlg)
         //alert([0xf0, 0x38 + number, indexAlg, ...displayValues, ...paramAlternativo, 0xf7])
         sendMessage([0xf0, 0x38 + number, indexAlg, ...displayValues, ...paramAlternativo, 0xf7])
+        patchChanged = true;
         
         //alert(algorithmDSP2)
         algorithmDSP2 = [time, ...displayValues.slice(2), ...paramAlternativo];
@@ -1146,6 +1173,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                     if (isPressed) sendMessage([0xF0,0x46,0,number-1,0xF7]);
                     else sendMessage([0xF0,0x46,1,number-1,0xF7]);
                     sendMessage([0xF0,0x36 + number,0x00,0xF7]);
+                    patchChanged = true;
                 });
 
                 renderTimeCell();
@@ -1168,6 +1196,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                             sendMessage([0xF0, 0x47, optionsMT.indexOf(cleanSel), number-1, 0xF7]);
                             //alert([0xF0,0x36+number,0x00,0xF7]);
                             sendMessage([0xF0,0x36+number,0x00,0xF7]);
+                            patchChanged = true;
                         }
 
                         scheduleDSPAlert();
@@ -1406,6 +1435,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                         if(isPressed) sendMessage([0xF0,0x48,0,number-1,0xF7]);
                         else sendMessage([0xF0,0x48,1,number-1,0xF7]);
                         sendMessage([0xF0,0x36+number,0x00,0xF7]);
+                        patchChanged = true;
                     });
                 }
 
@@ -1457,8 +1487,8 @@ function createIndividualTable(number, currentAlgorithmIndex) {
 
             // Cores
             if ((modTypeIndex + 1) % 3 === 0) {
-                if ((modTypeIndex + 1) < modTypeData[modType].length+5) {
-                    extraNameCell.style.borderBottom = "1px solid rgba(216, 216, 216, 0.3)";
+                if ((modTypeIndex) < modTypeData[modType].length+6) {
+                    extraNameCell.style.borderBottom = "1px solid rgba(211, 169, 169, 0.3)";
                     extraNameCell.style.paddingBottom = "5px";
                     extraValueCell.style.borderBottom = "1px solid rgba(216, 216, 216, 0.3)";
                     extraValueCell.style.paddingBottom = "5px";
@@ -1489,6 +1519,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
             currentAlgorithmIndex = algorithmValues.indexOf(selectedValue);;
             updateAlgorithmDisplay(false);
             sendMessage([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7]);
+            patchChanged = true;
             //scheduleDSPAlert();
         }, event);
 
@@ -1730,6 +1761,7 @@ function sendPresetConfigValues() {
     const [lsb, msb] = BinaryOperationSend(values[3], 4);
     values.splice(3, 1, lsb, msb);
     sendMessage([0xF0, 0x36, ...values, 0xF7])
+    patchChanged = true;
     //alert([0xF0,0x36,...values,0xF7])
 }
 
@@ -1833,6 +1865,7 @@ function createImageTable() {
         }
         //collectAndAlertImageValues()
         sendMessage([0xF0,0x45,currentImageIndex,0xF7]);
+        patchChanged = true;
         sendMessage([0xF0,0x3B,0x00,0xF7]);
     }
     
@@ -2011,6 +2044,10 @@ function createImageTable() {
 
         slider.addEventListener("input", () => {
             updateDisplay(parseInt(slider.value));
+            if (imageInicialized > 0) {
+                imageInicialized--;
+                return;
+            }
             scheduleImageAlert();
         });
 
@@ -2082,6 +2119,7 @@ function createImageTable() {
 
         //alert([0xF0,0x3C,result,0xF7]);
         sendMessage([0xF0,0x3C,...result,0xF7]);
+        patchChanged = true;
     }
 
     rightTable.appendChild(tbody);
@@ -2885,6 +2923,7 @@ function extractCommandCenterData(tableElement) {
     //alert(JSON.stringify(result));
     //alert([0xF0,0x3f+parseInt(tableElement.id.split("-").pop(), 10), ...result,0xF7]);
     sendMessage([0xF0,0x3f+parseInt(tableElement.id.split("-").pop(), 10), ...result,0xF7]);
+    patchChanged = true;
     return result;
 }
 
@@ -3344,6 +3383,7 @@ function extractCommandCenterDataPage3() {
 
     //alert([0xF0,0x42,resultArray,0xF7]);
     sendMessage([0xF0,0x42,...resultArray,0xF7]);
+    patchChanged = true;
 }
 
 function createSystemButtons() {
@@ -3364,13 +3404,13 @@ function createSystemButtons() {
     const saveButton = document.createElement("button");
     saveButton.className = "system-button";
     saveButton.textContent = "Save";
-    saveButton.addEventListener("click", () => alert("Saved"));
+    saveButton.addEventListener("click", () => notify ("Preset saved", 'success'));
 
     // Botão Cancel
     const cancelButton = document.createElement("button");
     cancelButton.className = "system-button";
     cancelButton.textContent = "Cancel";
-    cancelButton.addEventListener("click", () => alert("Canceled"));
+    cancelButton.addEventListener("click", () => notify ("Your changes have been canceled"));
 
     buttonContainer.appendChild(saveButton);
     buttonContainer.appendChild(cancelButton);
