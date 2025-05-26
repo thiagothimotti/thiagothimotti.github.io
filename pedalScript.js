@@ -297,7 +297,7 @@ function createPresets() {
             if (patchChanged) {
                 Swal.fire({
                     title: "Are you sure?",
-                    text: `All settings of Patch ${activePreset ? activePreset.querySelector(".preset-number").textContent : ''} will be lost!`,
+                    text: `All changes on Patch ${activePreset ? activePreset.querySelector(".preset-number").textContent : ''} will be lost!`,
                     icon: "warning",
                     color: "white",
                     width: "600px",
@@ -309,7 +309,7 @@ function createPresets() {
                     cancelButtonColor: "#53bfeb"
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        patchChanged = false;  // ✅ Reseta o flag
+                        patchChanged = false;  // Reseta o flag
                         proceedToSelectPatch();
                     }
                 });
@@ -317,7 +317,6 @@ function createPresets() {
                 proceedToSelectPatch();
             }
 
-            // ✅ Função extra para isolar o código de seleção
             function proceedToSelectPatch() {
                 document.querySelectorAll(".preset").forEach(p => {
                     p.classList.remove("selected");
@@ -3404,13 +3403,20 @@ function createSystemButtons() {
     const saveButton = document.createElement("button");
     saveButton.className = "system-button";
     saveButton.textContent = "Save";
-    saveButton.addEventListener("click", () => notify ("Preset saved", 'success'));
+    saveButton.addEventListener("click", () => {
+        notify("Preset saved", 'success');
+        patchChanged = false;
+    });
+
 
     // Botão Cancel
     const cancelButton = document.createElement("button");
     cancelButton.className = "system-button";
     cancelButton.textContent = "Cancel";
-    cancelButton.addEventListener("click", () => notify ("Your changes have been canceled"));
+    cancelButton.addEventListener("click", () => {
+        notify ("Your changes have been canceled");
+        patchChanged = false;
+    });
 
     buttonContainer.appendChild(saveButton);
     buttonContainer.appendChild(cancelButton);
