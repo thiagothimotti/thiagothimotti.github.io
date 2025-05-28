@@ -253,7 +253,43 @@ function createPresets() {
             const preset = event.target.closest(".preset");
             copiedPresetIndex = [...document.querySelectorAll(".preset")].indexOf(preset);
 
-            notify(`Patch ${copiedPresetIndex.toString().padStart(3, '0')} copied!`);
+            notify(`Patch ${copiedPresetIndex.toString().padStart(3, '0')} copied!`, "success");
+
+            document.querySelectorAll(".preset").forEach((p, i) => {
+                if (i === copiedPresetIndex) {
+                    const existingPaste = p.querySelector(".paste-button");
+                    if (existingPaste) existingPaste.remove();
+                    return;
+                }
+
+                const nameContainer = p.querySelector(".name-container");
+                if (!nameContainer) return;
+
+                // Evita duplicar o botão paste
+                if (!nameContainer.querySelector(".paste-button")) {
+                    const pasteButton = document.createElement("span");
+                    pasteButton.className = "fa-regular fa-paste paste-button";
+                    pasteButton.title = "Paste preset";
+                    pasteButton.style.fontSize = "15px";
+                    pasteButton.style.cursor = "pointer";
+                    pasteButton.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        if (copiedPresetIndex === null || copiedPresetIndex === i) return;
+                        notify(`Preset ${i.toString().padStart(3, '0')} has been replaced with Preset ${copiedPresetIndex.toString().padStart(3, '0')}'s data.`, "success");                        
+                        //alert([0xF0,0x15,i,0xF7]);
+                        sendMessage([0xF0,0x15,i,0xF7]);
+                        
+                        // Seleciona o preset de destino como o ativo
+                        const presetList = document.querySelectorAll(".preset");
+                        const targetPreset = presetList[i];
+                        if (targetPreset) {
+                            targetPreset.click();
+                        }
+                    });
+
+                    nameContainer.appendChild(pasteButton);
+                }
+            });
         });
 
         const swapButton = document.createElement("span");
@@ -261,19 +297,102 @@ function createPresets() {
         swapButton.title = "Swap preset";
         swapButton.style.fontSize = '15px'
         swapButton.style.marginTop = '3px';
+        swapButton.addEventListener("click", (event) => {
+            event.stopPropagation();
+
+            const preset = event.target.closest(".preset");
+            const sourceIndex = [...document.querySelectorAll(".preset")].indexOf(preset);
+
+            notify(`Preset ${sourceIndex.toString().padStart(3, '0')} selected for swap`, "info");
+
+            document.querySelectorAll(".preset").forEach((p, i) => {
+                if (i === sourceIndex) return; 
+
+                const nameContainer = p.querySelector(".name-container");
+                if (!nameContainer) return;
+
+                // Impede duplicação
+                const existingSwapTo = nameContainer.querySelector(".fa-solid.fa-rotate.swap-to");
+                if (existingSwapTo) existingSwapTo.remove();
+
+                const swapToButton = document.createElement("span");
+                swapToButton.className = 'fa-solid fa-rotate swap-to';
+                swapToButton.title = "Swap to";
+                swapToButton.style.fontSize = '15px';
+                swapToButton.style.cursor = "pointer";
+
+                swapToButton.addEventListener("click", (e) => {
+                    e.stopPropagation();
+
+                    const targetPreset = e.target.closest(".preset");
+                    const targetIndex = [...document.querySelectorAll(".preset")].indexOf(targetPreset);
+
+                    // Troca os nomes dos presets como exemplo de swap
+                    const sourcePresetInput = preset.querySelector(".preset-name");
+                    const targetPresetInput = targetPreset.querySelector(".preset-name");
+
+                    const tempName = sourcePresetInput.value;
+                    sourcePresetInput.value = targetPresetInput.value;
+                    targetPresetInput.value = tempName;
+
+                    sendMessage([0xF0,0x16,targetIndex,0xF7]);
+                    notify(`Presets ${sourceIndex.toString().padStart(3, '0')} and ${targetIndex.toString().padStart(3, '0')} swapped!`, "success");
+                
+                    // Seleciona o preset de destino como o ativo
+                    if (targetPreset) {
+                        targetPreset.click();
+                    }
+                });
+
+                nameContainer.appendChild(swapToButton);
+            });
+        });
 
         const clearButton = document.createElement("span");
         clearButton.className = 'fa-solid fa-xmark';
         clearButton.title = "Clear preset";
         clearButton.style.fontSize = '20px'
         clearButton.style.marginLeft = '10px'
+        clearButton.addEventListener("click", (event) => {
+            event.stopPropagation();
+
+            const preset = event.target.closest(".preset");
+            const presetIndex = [...document.querySelectorAll(".preset")].indexOf(preset);
+
+            Swal.fire({
+                title: "Are you sure?",
+                text: `This will clear all settings from Patch ${presetIndex.toString().padStart(3, '0')}.`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Yes, clear it!",
+                cancelButtonText: "Cancel",
+                confirmButtonColor: "red",
+                cancelButtonColor: "#53bfeb",
+                background: "#2a2a40",
+                color: "white",
+                width: "500px"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    sendMessage([0xF0,0x14,0x00,0xF7]);
+                    notify(`Patch ${presetIndex.toString().padStart(3, '0')} has been cleared.`, "success");
+                }
+            });
+        });
 
         const arrow = document.createElement("span");
         arrow.textContent = "\u276E";
         arrow.className = "preset-arrow";
 
         preset.appendChild(presetNumber);
-        preset.appendChild(presetInput);
+
+        const nameContainer = document.createElement("div");
+        nameContainer.className = "name-container";
+        nameContainer.style.display = "flex";
+        nameContainer.style.alignItems = "center";
+        nameContainer.style.gap = "6px";
+        nameContainer.appendChild(presetInput);
+        preset.appendChild(nameContainer);
+
         iconContainer.appendChild(copyButton);
         iconContainer.appendChild(swapButton);
         iconContainer.appendChild(clearButton);
@@ -303,7 +422,6 @@ function createPresets() {
                 return;
             }
 
-            // ✅ Verificação de patchChanged
             if (patchChanged) {
                 Swal.fire({
                     title: "Are you sure?",
@@ -338,6 +456,10 @@ function createPresets() {
                 if (existingConfig) {
                     existingConfig.remove();
                 }
+
+                // Remove todos os botões paste e swapTo
+                document.querySelectorAll(".paste-button").forEach(el => el.remove());
+                document.querySelectorAll(".swap-to").forEach(btn => btn.remove());
 
                 sendMessage([0xF0, 0x43, i, 0xF7]);
                 attachPresetConfig(preset);
@@ -1720,7 +1842,7 @@ function createPresetConfigSection() {
 
     const settings = [
         "Bypass Load State",
-        "Trail",
+        "Trails",
         "Spill Over",
         "Preset BPM",
         "Midi Clock",
@@ -1761,7 +1883,7 @@ function createPresetConfigSection() {
                 }, event);
             });
 
-        } else if (["Trail", "Midi Clock", "Auto Save"].includes(setting)) {
+        } else if (["Trails", "Midi Clock", "Auto Save", "Spill Over"].includes(setting)) {
             button.style.color = 'red';
             button.addEventListener("click", () => {
                 button.textContent = button.textContent === "Off" ? "On" : "Off";
@@ -1770,12 +1892,12 @@ function createPresetConfigSection() {
                 sendPresetConfigValues();
             });
 
-        } else if (setting === "Spill Over") {
+        } /*else if (setting === "Spill Over") {
             button.textContent = "Inactive";
             row.style.paddingBottom = "3px";
-            row.style.borderBottom = 'solid rgba(216, 216, 216, 0.2) 1px'; /* Separador do preset config, tirar? */
+            row.style.borderBottom = 'solid rgba(216, 216, 216, 0.2) 1px'; // Separador do preset config, tirar? 
 
-        } else if (setting === "Preset BPM") {
+        }*/ else if (setting === "Preset BPM") {
             button.textContent = "Off";
             button.style.color = 'red';
             button.addEventListener("click", () => {
@@ -1843,9 +1965,9 @@ function updateButtonTexts(buttonTexts) {
                 if (buttonTexts[index] != 0) button.textContent = (buttonTexts[index] + 39);
                 else button.textContent = 'Off';
                 break;
-            case 'Spill Over':
+            /*case 'Spill Over':
                 button.textContent = 'Inactive';
-                break;
+                break;*/
             default:
                 if (buttonTexts[index] == 1) button.textContent = 'On';
                 else button.textContent = 'Off';
@@ -3478,7 +3600,7 @@ function createSystemButtons() {
     saveButton.textContent = "Save";
     saveButton.addEventListener("click", () => {
         sendMessage([0xF0,0x12,0x00,0xF7]);
-        notify("Preset saved", 'success');
+        //notify("Preset saved", 'success');
         patchChanged = false;
     });
 
@@ -3486,10 +3608,14 @@ function createSystemButtons() {
     // Botão Cancel
     const cancelButton = document.createElement("button");
     cancelButton.className = "system-button";
+    cancelButton.id = "cancel-button";
     cancelButton.textContent = "Cancel";
     cancelButton.addEventListener("click", () => {
         sendMessage([0xF0,0x13,0x00,0xF7]);
-        notify ("Your changes have been canceled");
+        const isSimulated = cancelButton.getAttribute("data-simulated-click") === "true";
+        if (!isSimulated) {
+            notify("Your changes have been canceled");
+        }
         reloadActivePreset();
         patchChanged = false;
     });

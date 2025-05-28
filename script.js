@@ -1100,24 +1100,37 @@ async function setupMidiListener() {
                             break;
 
                         case 0x13:
-                            notify("Changes canceled")
-                            const selectedPatch = document.querySelector(`.bank-details li[data-patch-id="${activePatch}"]`);
-                            if (selectedPatch) {
-                                activePatch = null;
-                                selectedPatch.click();
-                            } else {
-                                console.warn("Nenhum patch selecionado para simular o clique.");
+                            if(nomeControladora == "supernova" || nomeControladora == "titan"){
+                                notify("Changes canceled")
+                                const selectedPatch = document.querySelector(`.bank-details li[data-patch-id="${activePatch}"]`);
+                                if (selectedPatch) {
+                                    activePatch = null;
+                                    selectedPatch.click();
+                                } else {
+                                    console.warn("Nenhum patch selecionado para simular o clique.");
+                                }
                             }
                             break;
                         
                         case 0x14:
-                            notify("Patch cleared", 'success')
-                            const actualPatch = document.querySelector(`.bank-details li[data-patch-id="${activePatch}"]`);
-                            if (actualPatch) {
-                                activePatch = null;
-                                actualPatch.click();
-                            } else {
-                                console.warn("Nenhum patch selecionado para simular o clique.");
+                            if(nomeControladora == "timespace" || nomeControladora == "spacewalk"){
+                                const cancelButton = document.getElementById("cancel-button");
+                                if (cancelButton) {
+                                    cancelButton.setAttribute("data-simulated-click", "true");
+                                    cancelButton.click();
+                                    cancelButton.removeAttribute("data-simulated-click");
+                                } else {
+                                    console.warn("Cancel button not found!");
+                                }
+                            } else if(nomeControladora == "supernova" || nomeControladora == "titan"){
+                                notify("Patch cleared", 'success')
+                                const actualPatch = document.querySelector(`.bank-details li[data-patch-id="${activePatch}"]`);
+                                if (actualPatch) {
+                                    activePatch = null;
+                                    actualPatch.click();
+                                } else {
+                                    console.warn("Nenhum patch selecionado para simular o clique.");
+                                }
                             }
                             break;
 
