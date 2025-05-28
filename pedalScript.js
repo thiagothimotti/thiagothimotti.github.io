@@ -120,8 +120,8 @@ const modTypeValues = {
     "Speed": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Depth": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Shape": { tipo: "lista", valores: ["Sine", "Triangle", "Square"], complemento: "" },
-    "Voices": { tipo: "nenhum", valor_inicial: 2, valor_final: 5, complemento: "" },
-    "Stages": { tipo: "nenhum", valor_inicial: 2, valor_final: 4, complemento: "" },
+    "Voices": { tipo: "lista", valores: [2, 3, 4, 5], complemento: "" },
+    "Stages": { tipo: "lista", valores: [2, 3, 4], complemento: "" },
     "Mode  ": { tipo: "lista", valores: ["Vintage", "Modern"], complemento: "" },
     "Regen": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Manual": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" }
@@ -214,6 +214,8 @@ let saveBlue = "rgb(0, 130, 255)";
 
 let patchChanged = false;
 let imageInicialized = 2;
+let copiedPresetIndex = null;
+
 function createPresets() {
 
     const sidebar = document.getElementById("sidebar");
@@ -245,6 +247,14 @@ function createPresets() {
         copyButton.title = "Copy preset";
         copyButton.style.fontSize = '15px'
         copyButton.style.marginTop = '3px';
+        copyButton.addEventListener("click", (event) => {
+            event.stopPropagation();
+
+            const preset = event.target.closest(".preset");
+            copiedPresetIndex = [...document.querySelectorAll(".preset")].indexOf(preset);
+
+            notify(`Patch ${copiedPresetIndex.toString().padStart(3, '0')} copied!`);
+        });
 
         const swapButton = document.createElement("span");
         swapButton.className = 'fa-solid fa-rotate';
@@ -369,6 +379,19 @@ function createPresets() {
     sendMessage([0xF0, 0x30, 0x00, 0xF7]);
 }
 
+function reloadActivePreset() {
+    if (!activePreset) return;
+
+    const presetIndex = [...document.querySelectorAll(".preset")].indexOf(activePreset);
+    const presetName = activePreset.querySelector(".preset-name").value || activePreset.querySelector(".preset-name").placeholder;
+
+    patchChanged = false; // reseta flag de mudanças
+    attachPresetConfig(activePreset);
+    createTable(presetIndex, presetName);
+    sendMessage([0xF0, 0x33, 0x00, 0xF7]);
+    sendMessage([0xF0, 0x3B, 0x00, 0xF7]);
+}
+
 function extractPresets(data) {
     if (data.length !== 33) {
         console.error("O array não possui 33 elementos");
@@ -409,7 +432,7 @@ async function createTable(index, presetName) {
     // Adiciona imagem logo abaixo da topology
     const topologyImage = document.createElement("img");
     topologyImage.id = "topology-image";
-    topologyImage.src = "https://i.imgur.com/q5A2eEN.png"; //single
+    topologyImage.src = "https://i.imgur.com/LJrd5WZ.png"; //single
     topologyImage.alt = "Topology Image";
     topologyImage.style.display = "block";
     topologyImage.style.marginTop = "-10px";
@@ -419,8 +442,22 @@ async function createTable(index, presetName) {
 
     const mainTable = createFormattedTable();
     const smallTables = await createSmallTables();
+
     const imageTable = createImageTable();
     updateImageRowsFunct = imageTable.updateImageRows;
+    const topology = document.querySelector(".type-display")?.textContent || "Single";
+    const selectedImage = document.getElementById("image-type-display")?.textContent || "";
+
+    let panVisibility = [true, true];
+
+    if (selectedImage === "Ping-Pong" || selectedImage === "Transverse") {
+        panVisibility = [false, false];
+    } else if (topology === "Mixed") {
+        panVisibility = [false, true];
+    } else if (topology === "Single") {
+        panVisibility = [true, false];
+    }
+    setPanDisplayVisibility(panVisibility); //aqui
 
     mainContent.appendChild(mainTable);
     mainContent.appendChild(smallTables);
@@ -451,15 +488,15 @@ function updateTopologyImage(topology) {
     if (!topologyImage) return;
 
     if (topology === "Single") {
-        topologyImage.src = "https://i.imgur.com/q5A2eEN.png";
+        topologyImage.src = "https://i.imgur.com/LJrd5WZ.png";
     } else if (topology === "Dual") {
-        topologyImage.src = "https://i.imgur.com/BGE8Xev.png";
+        topologyImage.src = "https://i.imgur.com/kvozLWK.png";
     } else if (topology === "Series") {
         topologyImage.src = "https://i.imgur.com/mWSjmyR.png";
     } else if (topology === "Mixed") {
-        topologyImage.src = "https://i.imgur.com/P1vHKBV.png";
+        topologyImage.src = "https://i.imgur.com/hFKPrQI.png";
     } else if (topology === "Cascade") {
-        topologyImage.src = "https://i.imgur.com/s3V9Twp.png";
+        topologyImage.src = "https://i.imgur.com/YwYZtto.png";
     }
 }
 
@@ -504,9 +541,13 @@ function createTopologySection(onTopologyChange) {
         }
         if (selectedOption === "Mixed") {
             setPanDisplayVisibility([false, true]);
+        } else if (selectedOption === "Single") {
+            setPanDisplayVisibility([true, false]);
         } else {
             setPanDisplayVisibility([true, true]);
         }
+
+        if (selectedOption != "Single") sendMessage([0xF0,0x38,0x00,0xF7])
 
         if (typeof onTopologyChange === 'function') {
             onTopologyChange(selectedOption);
@@ -945,7 +986,11 @@ function createIndividualTable(number, currentAlgorithmIndex) {
         }).filter(val => val !== null && val !== "");
 
         const time = displayValues[0];
+        const currentAlgorithm = algorithmDisplay.textContent;
+        const minTime = timeAlg[currentAlgorithm]?.min || 0;
+        displayValues[0] = displayValues[0] - minTime;
         const [lsb, msb] = BinaryOperationSend(displayValues[0], 5);
+
         displayValues.splice(0, 1, lsb, msb);
 
         while (displayValues.length < 13) {
@@ -1154,11 +1199,23 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                         suffix.style.color = blue;
                         container.appendChild(input);
                         container.appendChild(suffix);
-                        input.addEventListener("input", () => {
+
+                        input.addEventListener("keydown", (event) => {
+                            if (event.key === "Enter") {
+                                input.blur();
+                            }
+                        });
+                        input.addEventListener("blur", () => {
+                            const value = parseInt(input.value);
+                            const min = parseInt(input.min);
+                            const max = parseInt(input.max);
+
+                            if (isNaN(value) || value < min) input.value = min;
+                            else if (value > max) input.value = max;
+
                             scheduleDSPAlert();
                         });
                     }
-
                     valueCell.appendChild(container);
                 }
 
@@ -1477,7 +1534,12 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                 input.style.borderRadius = "4px";
                 input.style.padding = "2px";
 
-                input.addEventListener("input", () => {
+                input.addEventListener("keydown", (event) => {
+                    if (event.key === "Enter") {
+                        input.blur();
+                    }
+                });
+                input.addEventListener("blur", () => {
                     scheduleDSPAlert();
                 });
 
@@ -1533,8 +1595,9 @@ function createIndividualTable(number, currentAlgorithmIndex) {
         sendMessage([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7]);
         //alert([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7])
         //alert([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7])
-        sendMessage([0xF0,0x36 + number,0x00,0xF7]);//aqui
+        sendMessage([0xF0,0x36 + number,0x00,0xF7]);
         //alert([0xF0,0x36 + number,0x00,0xF7])
+        patchChanged = true;
     });
 
     rightArrow.addEventListener("click", function () {
@@ -1545,6 +1608,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
         /**/sendMessage([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7]);
         //alert([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7])
         sendMessage([0xF0,0x36 + number,0x00,0xF7]);
+        patchChanged = true;
     });
 
     updateLabels(true);
@@ -1860,8 +1924,13 @@ function createImageTable() {
         if (selected === "Transverse" || selected === "Ping-Pong") {
             setPanDisplayVisibility([false, false]);
         } else {
-            setPanDisplayVisibility([true, true]);
-        }
+            const topology = document.querySelector(".type-display")?.textContent || "";
+            if (topology == "Single")
+                setPanDisplayVisibility([true, false]);
+            else if (topology == "Mixed")
+                setPanDisplayVisibility([false, true]);
+            else setPanDisplayVisibility([true, true]);
+        } //aqui
         //collectAndAlertImageValues()
         sendMessage([0xF0,0x45,currentImageIndex,0xF7]);
         patchChanged = true;
@@ -2173,24 +2242,29 @@ async function updateImageTablesFromArray(values, imageTableLeft, imageTableRigh
     }
 
     // Atualiza a tabela DSP Pan
-    const rightRows = document.querySelectorAll("#DSPPanTable tr");
+    const rightRows = imageTableRight.querySelectorAll("tr"); // <-- DECLARAÇÃO FALTANDO
 
-    if (rightRows[0]) {
-        const slider = rightRows[0].querySelector("input[type='range']");
-        if (slider) {
-            const newValue = binaryOperation(values[5], values[6], 4) - 100;
-            //alert(`${values[5]}, ${values[6]}, ${newValue}`)
-            slider.value = newValue;
-            slider.dispatchEvent(new Event('input')); // Dispara o evento de input para atualizar os sliders
+    const selectedImage = imageOptions[values[1]];
+    const isPanInactive = selectedImage === "Ping-Pong" || selectedImage === "Transverse";
+    const topology = document.querySelector(".type-display")?.textContent || "";
+
+    if (!isPanInactive) {
+        if (rightRows[0]) {
+            const slider = rightRows[0].querySelector("input[type='range']");
+            if (slider) {
+                const newValue = binaryOperation(values[5], values[6], 4) - 100;
+                slider.value = newValue;
+                slider.dispatchEvent(new Event('input'));
+            }
         }
-    }
 
-    if (rightRows[1]) {
-        const slider = rightRows[1].querySelector("input[type='range']");
-        if (slider) {
-            const newValue = binaryOperation(values[7], values[8], 4) - 100;
-            slider.value = newValue;
-            slider.dispatchEvent(new Event('input')); // Dispara o evento de input para atualizar os sliders
+        if (topology !== "Single" && topology !== "Mixed" && rightRows[1]) {
+            const slider = rightRows[1].querySelector("input[type='range']");
+            if (slider) {
+                const newValue = binaryOperation(values[7], values[8], 4) - 100;
+                slider.value = newValue;
+                slider.dispatchEvent(new Event('input'));
+            }
         }
     }
 }
@@ -2308,9 +2382,8 @@ function createCommandCenterTables() {
 
         const colorOptions = ["Purple", "Pink", "Cyan", "Green", "Orange", "Red", "Yellow", "Blue"];
         colorButton.addEventListener("click", (event) => {
-            createPopup(colorOptions, (selected) => {
+            createColorPopup(colorOptions, (selected) => {
                 colorButton.textContent = selected;
-                //const rgb = rgb565ToCss(colorMap[selected]);
                 const rgb = colorMap[selected];
                 colorButton.style.color = rgb;
                 extractCommandCenterData(table);
@@ -3340,7 +3413,7 @@ function extractCommandCenterDataPage3() {
     const expTo = parseInt(sliderTo.value);
 
     const buttonTarget = tableLeft.querySelector("tr:last-child button");
-    let expTargetIndex = targetOptions.indexOf(buttonTarget.textContent); //aqui
+    let expTargetIndex = targetOptions.indexOf(buttonTarget.textContent);
 
     function BinaryOperationSend(result, deslocamento) {
         const lsb = result & ((1 << deslocamento) - 1); 
@@ -3404,6 +3477,7 @@ function createSystemButtons() {
     saveButton.className = "system-button";
     saveButton.textContent = "Save";
     saveButton.addEventListener("click", () => {
+        sendMessage([0xF0,0x12,0x00,0xF7]);
         notify("Preset saved", 'success');
         patchChanged = false;
     });
@@ -3414,7 +3488,9 @@ function createSystemButtons() {
     cancelButton.className = "system-button";
     cancelButton.textContent = "Cancel";
     cancelButton.addEventListener("click", () => {
+        sendMessage([0xF0,0x13,0x00,0xF7]);
         notify ("Your changes have been canceled");
+        reloadActivePreset();
         patchChanged = false;
     });
 
@@ -3474,6 +3550,67 @@ function createPopup(options, callback, event) {
     }
 
     // Adiciona um evento de clique ao documento
+    setTimeout(() => document.addEventListener("click", outsideClickListener), 0);
+}
+
+function createColorPopup(options, callback, event) {
+    const popup = document.createElement("div");
+    popup.className = "popup-container";
+
+    // Posicionar o popup no cursor
+    const x = event.clientX;
+    let y = event.clientY;
+
+    // Limitar à janela
+    const popupHeight = 200;
+    const paddingFromEdge = -25;
+    if ((y + popupHeight + paddingFromEdge) > window.innerHeight) {
+        y = window.innerHeight - popupHeight - paddingFromEdge;
+    }
+
+    popup.style.left = `${x}px`;
+    popup.style.top = `${y}px`;
+
+    const optionList = document.createElement("div");
+    optionList.className = "popup-option-list";
+
+    options.forEach(option => {
+        const button = document.createElement("button");
+        button.textContent = option;
+        button.className = "popup-option-button";
+
+        // Aplica a cor do texto conforme o colorMap
+        if (colorMap[option]) {
+            button.style.color = colorMap[option];
+        }
+
+        // Ao clicar retorna o valor e fecha o popup
+        button.addEventListener("click", () => {
+            callback(option);
+            closePopup();
+        });
+
+        optionList.appendChild(button);
+    });
+
+    popup.appendChild(optionList);
+    document.body.appendChild(popup);
+
+    // Função para remover o popup ao clicar fora
+    function closePopup() {
+        if (document.body.contains(popup)) {
+            document.body.removeChild(popup);
+        }
+        document.removeEventListener("click", outsideClickListener);
+    }
+
+    function outsideClickListener(e) {
+        if (!popup.contains(e.target)) {
+            closePopup();
+        }
+    }
+
+    // Adiciona um evento de clique ao documento depois da criação
     setTimeout(() => document.addEventListener("click", outsideClickListener), 0);
 }
 
