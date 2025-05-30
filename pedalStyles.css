@@ -325,6 +325,16 @@ input[type=number]::-webkit-outer-spin-button {
     text-align: center;
 }
 
+input[type="range"][data-inactive="true"]::-webkit-slider-thumb {
+    opacity: 0;
+    pointer-events: none;
+}
+
+input[type="range"][data-inactive="true"]::-moz-range-thumb {
+    opacity: 0;
+    pointer-events: none;
+}
+
 .command-center-wrapper {
     display: flex;
     justify-content: center;

@@ -233,6 +233,7 @@ function createPresets() {
         const presetInput = document.createElement("input");
         presetInput.type = "text";
         presetInput.className = "preset-name";
+        presetInput.maxLength = 8;
         if (i < 10) presetInput.placeholder = `Preset 0${i}`;
         else presetInput.placeholder = `Preset ${i}`;
 
@@ -495,6 +496,23 @@ function createPresets() {
             }
         });
 
+        presetInput.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") this.blur();
+        });
+        
+        presetInput.addEventListener("blur", function () {
+            const asciiArray = [];
+            for (let i = 0; i < 8; i++) {
+                if (i < this.value.length) {
+                    asciiArray.push(this.value.charCodeAt(i));
+                } else {
+                    asciiArray.push(32);
+                }
+            }
+            sendMessage([0xF0, 0x07, ...asciiArray, 0xF7]);
+            patchChanged = true;
+        });
+
         sidebar.appendChild(preset);
     }
 
@@ -569,6 +587,10 @@ async function createTable(index, presetName) {
     updateImageRowsFunct = imageTable.updateImageRows;
     const topology = document.querySelector(".type-display")?.textContent || "Single";
     const selectedImage = document.getElementById("image-type-display")?.textContent || "";
+    
+    mainContent.appendChild(mainTable);
+    mainContent.appendChild(smallTables);
+    mainContent.appendChild(imageTable.container);
 
     let panVisibility = [true, true];
 
@@ -580,10 +602,6 @@ async function createTable(index, presetName) {
         panVisibility = [true, false];
     }
     setPanDisplayVisibility(panVisibility); //aqui
-
-    mainContent.appendChild(mainTable);
-    mainContent.appendChild(smallTables);
-    mainContent.appendChild(imageTable.container);
 
     sendMessage([0xF0, 0x33, 0x00, 0xF7]);
     sendMessage([0xF0, 0x3B, 0x00, 0xF7]);
@@ -609,13 +627,16 @@ function updateTopologyImage(topology) {
     const topologyImage = document.getElementById("topology-image");
     if (!topologyImage) return;
 
+    //setPanDisplayVisibility([true, true]);
     if (topology === "Single") {
+        //setPanDisplayVisibility([false, true]);
         topologyImage.src = "https://i.imgur.com/LJrd5WZ.png";
     } else if (topology === "Dual") {
         topologyImage.src = "https://i.imgur.com/kvozLWK.png";
     } else if (topology === "Series") {
         topologyImage.src = "https://i.imgur.com/mWSjmyR.png";
     } else if (topology === "Mixed") {
+        //setPanDisplayVisibility([false, true]);
         topologyImage.src = "https://i.imgur.com/hFKPrQI.png";
     } else if (topology === "Cascade") {
         topologyImage.src = "https://i.imgur.com/YwYZtto.png";
@@ -2251,7 +2272,7 @@ function createImageTable() {
             scheduleImageAlert();
         });
 
-        displayValue.style.cursor = "pointer";
+        displayValue.style.cursor = "default";
         // Centraliza ao clicar no numero
         /*displayValue.addEventListener("click", () => {
             slider.value = 0;
@@ -2327,7 +2348,7 @@ function createImageTable() {
 async function updateImageTablesFromArray(values, imageTableLeft, imageTableRight, algorithmDisplay) {
     if (values.length !== 9) {
         console.error("Array inválido: esperado 9 valores, recebido", values.length);
-        //return;
+        return;
     }
 
     // Atualiza o algoritimo
@@ -2340,16 +2361,16 @@ async function updateImageTablesFromArray(values, imageTableLeft, imageTableRigh
         console.warn("Algoritmo não encontrado para o índice:", currentImageIndex);
     }
 
-    await delay(100)
-    // Atualiza a tabela image
+    await delay(100);
+
     const leftRows = imageTableLeft.querySelectorAll("tr");
     for (let i = 1; i < Math.min(3, leftRows.length); i++) {
-
-        // Em vez de procurar por 'td.button', pegue o input de range e o span
         const slider = leftRows[i].querySelector("input[type=range]");
         const span = leftRows[i].querySelector("span");
 
         if (slider && span) {
+            const wasInactive = span.textContent === "Inactive";
+
             slider.value = values[1 + i];
 
             const min = parseFloat(slider.min);
@@ -2357,35 +2378,55 @@ async function updateImageTablesFromArray(values, imageTableLeft, imageTableRigh
             const percentage = ((slider.value - min) / (max - min)) * 100;
             slider.style.background = `linear-gradient(to right, ${blue} ${percentage}%, white ${percentage}%)`;
 
-            // Atualizar o texto do span (mantendo o complemento, como % ou ms)
             const complemento = span.textContent.replace(/[0-9\-]+/, "").trim();
             span.textContent = `${slider.value}${complemento}`;
+
+            if (wasInactive) {
+                span.textContent = "Inactive";
+                span.style.color = "gray";
+            }
         }
     }
 
-    // Atualiza a tabela DSP Pan
-    const rightRows = imageTableRight.querySelectorAll("tr"); // <-- DECLARAÇÃO FALTANDO
+    const rightRows = imageTableRight.querySelectorAll("tr");
 
     const selectedImage = imageOptions[values[1]];
     const isPanInactive = selectedImage === "Ping-Pong" || selectedImage === "Transverse";
-    const topology = document.querySelector(".type-display")?.textContent || "";
 
     if (!isPanInactive) {
         if (rightRows[0]) {
             const slider = rightRows[0].querySelector("input[type='range']");
-            if (slider) {
+            const span = rightRows[0].querySelector("span:last-child");
+
+            if (slider && span) {
+                const wasInactive = span.textContent === "Inactive";
+
                 const newValue = binaryOperation(values[5], values[6], 4) - 100;
                 slider.value = newValue;
                 slider.dispatchEvent(new Event('input'));
+
+                if (wasInactive) {
+                    span.textContent = "Inactive";
+                    span.style.color = "gray";
+                }
             }
         }
 
-        if (topology !== "Single" && topology !== "Mixed" && rightRows[1]) {
+        if (rightRows[1]) {
             const slider = rightRows[1].querySelector("input[type='range']");
-            if (slider) {
+            const span = rightRows[1].querySelector("span:last-child");
+
+            if (slider && span) {
+                const wasInactive = span.textContent === "Inactive";
+
                 const newValue = binaryOperation(values[7], values[8], 4) - 100;
                 slider.value = newValue;
                 slider.dispatchEvent(new Event('input'));
+
+                if (wasInactive) {
+                    span.textContent = "Inactive";
+                    span.style.color = "gray";
+                }
             }
         }
     }
@@ -2407,11 +2448,13 @@ function setPanDisplayVisibility([pan1Visible, pan2Visible]) {
         if (!slider || !displaySpan) return;
 
         if (!isVisible) {
+            slider.setAttribute('data-inactive', 'true');
             slider.style.filter = "grayscale(100%)"; // aplica o filtro cinza
             slider.style.pointerEvents = "none"; // impede interação com o slider
             displaySpan.textContent = "Inactive";
             displaySpan.style.color = "gray";
         } else {
+            slider.removeAttribute('data-inactive');
             slider.style.filter = "none"; // remove o filtro cinza
             slider.style.pointerEvents = "auto"; // permite interação
             const value = parseInt(slider.value);
