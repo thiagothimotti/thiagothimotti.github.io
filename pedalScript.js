@@ -15,6 +15,19 @@ const algorithmData = {
     "WhammyDelay": ["Heel", "Toe", "Tone", "Mode ", "Speed"]
 };
 
+const algorithmDataSpacewalk = {
+    "SpaceRoom": ["EarlyR. Level", "EarlyR. Tone", "Diffusion"],
+    "HALL 9000": ["EarlyR. Level", "EarlyR. Tone", "Diffusion"],
+    "Star Plate": ["Plate Size", "Modulation"],
+    "GravitySprings": ["Shape", "Speed", "Depth"],
+    "SunlightWings": ["Speed", "Depth", "Diffusion"],
+    "Dark Galaxy": ["Fundamental", "Harmonics", "Regeneration", "Tone"],
+    "Sci-fy Shimmer": ["Fundamental", "Harmonics", "Regeneration", "Tone"],
+    "Frosted Verb": ["Mode   ", "Velocity", "Modulation", "Harmonics"],
+    "Spatial Vowels": ["Home Vowel", "Target Vowel", "Resonance", "Sensitivity", "Responce"],
+    "Stellar Swell": ["Sensitivity", "Response"]
+};
+
 const algorithmStart = {
     "Glassy Delay": ["400ms", "80%", "80%", "OFF", "OFF", "0%", "OFF"],
     "Bucket Brigade": ["400ms", "80%", "80%", "50%", "75%", "60%", "20%", "10%", "OFF"],
@@ -24,7 +37,17 @@ const algorithmStart = {
     "RetroVerse": ["800ms", "80%", "80%", "70%", "50%"],
     "Memory Man": ["200ms", "80%", "80%", "60%", "75%", "0%", "Vibrato", "10%", "10%"],
     "Nebula Swel": ["0ms", "0%", "80%", "50%", "50%"],
-    "WhammyDelay": ["600ms", "80%", "80%", "-12", "7", "50%", "Auto", "0%"]
+    "WhammyDelay": ["600ms", "80%", "80%", "-12", "7", "50%", "Auto", "0%"],
+    "SpaceRoom": ["30%", "0ms", "80%", "60%", "80%", "80%", "80%", "75%", "75%"],
+    "HALL 9000": ["30%", "0ms", "80%", "40%", "70%", "60%", "60%", "100%", "10%"],
+    "Star Plate": ["30%", "0ms", "80%", "50%", "60%", "20%", "40%", "0%"],
+    "GravitySprings": ["70%", "0ms", "80%", "15%", "60%", "40%", "Sine", "60%", "0%"],
+    "SunlightWings": ["70%", "0ms", "80%", "20%", "15%", "15%", "40%", "40%", "60%"],
+    "Dark Galaxy": ["70%", "0ms", "80%", "40%", "10%", "10%", "80%", "20%", "0%", "60%"],
+    "Sci-fy Shimmer": ["70%", "0ms", "80%", "40%", "10%", "10%", "80%", "20%", "0%", "40%"],
+    "Frosted Verb": ["70%", "0ms", "80%", "20%", "30%", "30%", "Soft", "Slow", "60%", "80%"],
+    "Spatial Vowels": ["70%", "0ms", "80%", "50%", "40%", "10%", "U", "A", "80%", "80%", "20%"],
+    "Stellar Swell": ["70%", "0ms", "80%", "20%", "20%", "20%", "80%", "80%"]
 };
 
 const parameterRanges = {
@@ -82,8 +105,28 @@ const parameterRanges = {
         tipo: "lista", valores: [-12, -11, -10, -9, -8, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6,
             7, 8, 9, 10, 11, 12], complemento: ""
     },
-    "Shape": { tipo: "lista", valores: ["Sine", "Triangle", "Square"], complemento: "" },
-    "Speed": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" }
+    "Shape": { tipo: "lista", valores: ["Triangle", "Square", "Sine"], complemento: "" },
+    "Speed": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    //Spacewalk extras
+    "Decay": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Pre-Delay": { tipo: "nenhum", valor_inicial: 0, valor_final: 125, complemento: "ms" },
+    "ReverbMix": { tipo: "porcentagem", valor_inicial: 0, valor_final: 120, complemento: "%" },
+    "Dampening": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Low Damp": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "High Damp": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "EarlyR. Level": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "EarlyR. Tone": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Diffusion": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Plate Size": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Depth": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Fundamental": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Harmonics": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Regeneration": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Mode   ": { tipo: "lista", valores: ["Soft", "Deep"], complemento: "" },
+    "Velocity": { tipo: "lista", valores: ["Slow", "Fast"], complemento: "" },
+    "Home Vowel": { tipo: "lista", valores: ["A", "E", "I", "O", "U"], complemento: "" },
+    "Target Vowel": { tipo: "lista", valores: ["A", "E", "I", "O", "U"], complemento: "" },
+    "Resonance": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" }
 };
 
 const timeAlg = {
@@ -95,7 +138,18 @@ const timeAlg = {
     "RetroVerse": { min: 0, max: 830, start: 400 },
     "Memory Man": { min: 0, max: 940, start: 400 },
     "Nebula Swel": { min: 0, max: 948, start: 400 },
-    "WhammyDelay": { min: 63, max: 823, start: 400 }
+    //"WhammyDelay": { min: 63, max: 823, start: 400 }
+    "WhammyDelay": { min: 63, max: 823, start: 400 },
+    "SpaceRoom": { min: 0, max: 900, start: 400 },
+    "HALL 9000": { min: 0, max: 944, start: 400 },
+    "Star Plate": { min: 2, max: 937, start: 400 },
+    "GravitySprings": { min: 63, max: 823, start: 400 },
+    "SunlightWings": { min: 0, max: 948, start: 400 },
+    "Dark Galaxy": { min: 0, max: 830, start: 400 },
+    "Sci-fy Shimmer": { min: 0, max: 940, start: 400 },
+    "Frosted Verb": { min: 0, max: 948, start: 400 },
+    "Spatial Vowels": { min: 63, max: 823, start: 400 },
+    "Stellar Swell": { min: 63, max: 823, start: 400 }
 }
 
 const modTypeData = {
@@ -1061,13 +1115,15 @@ function updateSliders(value1, value2) {
 
 // Função para criar as tabelas DSP
 function createIndividualTable(number, currentAlgorithmIndex) {
-    const algorithmValues = [
+    const algorithmValues = nomeControladora == "timespace" ? [
         "OFF", "Glassy Delay", "Bucket Brigade", "TransistorTape", "Quantum Pitch", "Holo Filter", "RetroVerse", "Memory Man", "Nebula Swel", "WhammyDelay"
+    ] : [
+        "OFF", "SpaceRoom", "HALL 9000", "Star Plate", "GravitySprings", "SunlightWings", "Dark Galaxy", "Sci-fy Shimmer", "Frosted Verb", "Spatial Vowels", "Stellar Swell"
     ];
 
     // Lida com o envio das mensagens DSP
     let dspDebounceTimeout;
-    function triggerDSPAlert() {
+    function triggerDSPAlert() { //preciso fazer a verificação do disp
         if (!table || !table.querySelectorAll) return;
 
         const algAux = table.querySelector(".topology-container span:nth-child(3)").textContent.trim();
@@ -1128,28 +1184,36 @@ function createIndividualTable(number, currentAlgorithmIndex) {
             return rawText;
         }).filter(val => val !== null && val !== "");
 
-        const time = displayValues[0];
-        const currentAlgorithm = algorithmDisplay.textContent;
-        const minTime = timeAlg[currentAlgorithm]?.min || 0;
-        displayValues[0] = displayValues[0] - minTime;
-        const [lsb, msb] = BinaryOperationSend(displayValues[0], 5);
+        if (nomeControladora === "timespace") {
+            const time = displayValues[0];
+            const currentAlgorithm = algorithmDisplay.textContent;
+            const minTime = timeAlg[currentAlgorithm]?.min || 0;
+            displayValues[0] = displayValues[0] - minTime;
+            const [lsb, msb] = BinaryOperationSend(displayValues[0], 5);
 
-        displayValues.splice(0, 1, lsb, msb);
+            displayValues.splice(0, 1, lsb, msb);
 
-        while (displayValues.length < 13) {
-            displayValues.push(0);
+            while (displayValues.length < 13) {
+                displayValues.push(0);
+            }
+
+            //alert(`Valores da tabela DSP${number}:\n\n` + displayValues.join("\n"));
+            //alert([...paramAlternativo])
+            //alert(indexAlg)
+            //alert([0xf0, 0x38 + number, indexAlg, ...displayValues, ...paramAlternativo, 0xf7])
+            sendMessage([0xf0, 0x38 + number, indexAlg, ...displayValues, ...paramAlternativo, 0xf7])
+            patchChanged = true;
+            
+            //alert(algorithmDSP2)
+            algorithmDSP2 = [time, ...displayValues.slice(2), ...paramAlternativo];
+            //alert (algorithmDSP2);
+        } else {
+            while (displayValues.length < 12) {
+                displayValues.push(0);
+            }
+            //alert([0xf0, 0x38 + number, indexAlg, ...displayValues, 0xf7])
+            sendMessage([0xf0, 0x38 + number, indexAlg, ...displayValues, 0xf7])
         }
-
-        //alert(`Valores da tabela DSP${number}:\n\n` + displayValues.join("\n"));
-        //alert([...paramAlternativo])
-        //alert(indexAlg)
-        //alert([0xf0, 0x38 + number, indexAlg, ...displayValues, ...paramAlternativo, 0xf7])
-        sendMessage([0xf0, 0x38 + number, indexAlg, ...displayValues, ...paramAlternativo, 0xf7])
-        patchChanged = true;
-        
-        //alert(algorithmDSP2)
-        algorithmDSP2 = [time, ...displayValues.slice(2), ...paramAlternativo];
-        //alert (algorithmDSP2);
     }
     // Seta o debounce para o envio da mensagem
     function scheduleDSPAlert() {
@@ -1209,7 +1273,21 @@ function createIndividualTable(number, currentAlgorithmIndex) {
     const tbody = document.createElement("tbody");
 
     function updateLabels(readingValues) {
-        let labels = ["Time", "Feedback", "DelayMix", ...algorithmData[algorithmDisplay.textContent] || []];
+        //alert(algorithmDataSpacewalk[algorithmDisplay.textContent])
+        //alert(algorithmDisplay.textContent)
+        //let labels = ["Time", "Feedback", "DelayMix", ...algorithmData[algorithmDisplay.textContent] || []];
+
+        const parameters = algorithmDataSpacewalk[algorithmDisplay.textContent] || [];
+        let labels;
+        if (nomeControladora === "timespace") {
+            labels = ["Time", "Feedback", "DelayMix", ...algorithmData[algorithmDisplay.textContent] || []];
+        } else if (nomeControladora === "spacewalk") {
+            labels = ["Decay", "Pre-Delay", "ReverbMix", "Dampening", "Low Damp", "High Damp", ...parameters || []];
+            //alert([...labels]);
+        } else {
+            labels = [];
+        }
+
         let startValues = algorithmStart[algorithmDisplay.textContent];
 
         if (document.querySelector(".type-display").textContent == "Single" && number == 2) {
@@ -1217,7 +1295,14 @@ function createIndividualTable(number, currentAlgorithmIndex) {
             labels = [];
         } else {
             algorithmDisplay.textContent = algorithmValues[currentAlgorithmIndex];
-            labels = ["Time", "Feedback", "DelayMix", ...algorithmData[algorithmDisplay.textContent] || []];
+            if (nomeControladora === "timespace") {
+                labels = ["Time", "Feedback", "DelayMix", ...algorithmData[algorithmDisplay.textContent] || []];
+            } else if (nomeControladora === "spacewalk") {
+                labels = ["Decay", "Pre-Delay", "ReverbMix", "Dampening", "Low Damp", "High Damp", ...parameters || []];
+                //alert([...labels]);
+            } else {
+                labels = [];
+            }
             startValues = algorithmStart[algorithmDisplay.textContent];
         }
 
@@ -1376,6 +1461,55 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                 });
 
                 renderTimeCell();
+            } else if (label === "Pre-Delay") {
+                const mm = parameterRanges[label];
+
+                const container = document.createElement("div");
+                container.style.display = "flex";
+                container.style.alignItems = "center";
+                container.style.justifyContent = "flex-end";
+                container.style.gap = "0px";
+
+                const input = document.createElement("input");
+                input.type = "number";
+                input.min = mm.valor_inicial;
+                input.max = mm.valor_final;
+                input.value = mm.valor_inicial + (extraValue ?? 0);
+                input.style.width = "30px";
+                input.style.fontSize = "16px";
+                input.style.textAlign = "right";
+                input.style.background = "transparent";
+                input.style.border = "none";
+                input.style.color = blue;
+                input.style.borderRadius = "4px";
+                input.style.padding = "2px";
+                input.style.cursor = "pointer";
+
+                const suffix = document.createElement("span");
+                suffix.textContent = mm.complemento;
+                suffix.style.fontSize = "14px";
+                suffix.style.color = blue;
+                container.appendChild(input);
+                container.appendChild(suffix);
+
+                input.addEventListener("keydown", (event) => {
+                    if (event.key === "Enter") {
+                        input.blur();
+                    }
+                });
+
+                input.addEventListener("blur", () => {
+                    const value = parseInt(input.value);
+                    const min = parseInt(input.min);
+                    const max = parseInt(input.max);
+
+                    if (isNaN(value) || value < min) input.value = min;
+                    else if (value > max) input.value = max;
+
+                    scheduleDSPAlert();
+                });
+
+                valueCell.appendChild(container);
             } else if (range?.tipo === "lista") {
                 const current = readingValues
                     ? (range.valores[extraValue] ?? "OFF")
@@ -2700,7 +2834,8 @@ function addHoldOptions(table, tbody) {
 }
 
 function addActionOptions(table, tbody) {
-    const actionOptions = ["OFF", "Fdback", "DlyMix", "DryLvl", "AlterI", "AlterII"];
+    let actionOptions = ["OFF", "Fdback", "DlyMix", "DryLvl", "AlterI", "AlterII"];
+    if (nomeControladora == "spacewalk") actionOptions = ["OFF", "Decay", "RvbMix", "DryLvl", "Dmpng"];
 
     for (let i = 0; i < 2; i++) {
         const outerRow = document.createElement("tr");
@@ -2803,7 +2938,7 @@ function addActionOptions(table, tbody) {
 
                 const isActive = selected !== "OFF";
 
-                if (selected === "DlyMix") {
+                if (selected === "DlyMix" || selected === "RvbMix") {
                     slider.max = 120;
                 } else {
                     slider.max = 100;
@@ -2942,7 +3077,8 @@ function updateCommandCenter(dataArray, table) {
             const tbody = table.querySelector("tbody");
             addActionOptions(table, tbody);
 
-            const actionOptions = ["OFF", "Fdback", "DlyMix", "DryLvl", "AlterI", "AlterII"];
+            let actionOptions = ["OFF", "Fdback", "DlyMix", "DryLvl", "AlterI", "AlterII"];
+            if (nomeControladora == "spacewalk") actionOptions = ["OFF", "Decay", "RvbMix", "DryLvl", "Dmpng"];
             const targetOptions = ["DSP1", "DSP2", "D1+D2"];
 
             const outerRows = table.querySelectorAll(".outer-row");
@@ -2958,7 +3094,7 @@ function updateCommandCenter(dataArray, table) {
                     firstButton.textContent = option;
                     firstButton.style.color = (option === "OFF") ? "red" : green;
                     const paramName = actionOptions[actionParam];
-                    if (paramName === "DlyMix") firstSlider.max = 120;
+                    if (paramName === "DlyMix" || paramName === "RvbMix") firstSlider.max = 120;
                     else firstSlider.max = 100;
                     firstSlider.value = actionValue;
                     const pct1 = (actionValue - firstSlider.min) / (firstSlider.max - firstSlider.min) * 100;
@@ -3006,7 +3142,7 @@ function updateCommandCenter(dataArray, table) {
                     secondButton.textContent = option2;
                     if (option2 !== "OFF") secondButton.style.color = green;
                     const paramName2 = actionOptions[actionParam2];
-                    if (paramName2 === "DlyMix") secondSlider.max = 120;
+                    if (paramName2 === "DlyMix" || paramName2 === "RvbMix") secondSlider.max = 120;
                     else secondSlider.max = 100;
                     secondSlider.value = actionValue2;
                     const pct2 = (actionValue2 - secondSlider.min) / (secondSlider.max - secondSlider.min) * 100;
@@ -3085,7 +3221,8 @@ function extractCommandCenterData(tableElement) {
     const colorOptions = ["Purple", "Pink", "Cyan", "Green", "Orange", "Red", "Yellow", "Blue"];
     const holdModeOptions = ["Freeze", "Infinite"];
     const holdTargetOptions = ["DSP1", "DSP2", "DSP1 + DSP2"];
-    const actionParameterOptions = ["OFF", "Fdback", "DlyMix", "DryLvl", "AlterI", "AlterII"];
+    let actionParameterOptions = ["OFF", "Fdback", "DlyMix", "DryLvl", "AlterI", "AlterII"];
+    if (nomeControladora == "spacewalk") actionParameterOptions = ["OFF", "Decay", "RvbMix", "DryLvl", "Dmpng"];
     const dspTargetOptions = ["DSP1", "DSP2", "D1+D2"];
     const dryTargetOptions = ["DryL+R", "DryL", "DryR"];
 
@@ -3097,7 +3234,7 @@ function extractCommandCenterData(tableElement) {
     function getAsciiFromInput(input) {
         const text = input?.value || "";
         const padded = text.padEnd(4, '\0').slice(0, 4);
-        return Array.from(padded).map(c => c.charCodeAt(0));
+        return Array.from(padded).map(c => c.charCodeAt(0)-64);
     }
 
     function getValueFromSlider(slider) {
@@ -3202,7 +3339,8 @@ function createCommandCenterPage3() {
 
     row1Left.appendChild(cell1Left);
 
-    const exprOptions = ["OFF", "Feedback", "DelayMix", "DryLevel", "AlterI", "AlterII"];
+    let exprOptions = ["OFF", "Feedback", "DelayMix", "DryLevel", "AlterI", "AlterII"];
+    if (nomeControladora == "spacewalk") exprOptions = ["OFF", "Decay", "ReverbMix", "DryLevel", "Dampening"];
 
     // Linha From
     const rowFrom = document.createElement("tr");
@@ -3336,7 +3474,7 @@ function createCommandCenterPage3() {
     addSliderEvents(sliderTo, toValue);
 
     function updateSliderRange() {
-        const isDelayMix = buttonExpr.textContent === "DelayMix";
+        const isDelayMix = (buttonExpr.textContent === "DelayMix" || buttonExpr.textContent === "ReverbMix");
         const maxVal = isDelayMix ? 120 : 100;
         sliderFrom.max = maxVal;
         sliderTo.max = maxVal;
@@ -3456,7 +3594,8 @@ function createCommandCenterPage3() {
 }
 
 function updateCommandCenterPage3(array) {
-    const exprOptions = ["OFF", "Feedback", "DelayMix", "DryLevel", "AlterI", "AlterII"];
+    let exprOptions = ["OFF", "Feedback", "DelayMix", "DryLevel", "AlterI", "AlterII"];
+    if (nomeControladora == "spacewalk") exprOptions = ["OFF", "Decay", "ReverbMix", "DryLevel", "Dampening"];
     let targetOptions = ["DSP1", "DSP2", "D1+D2"];
 
     const [
@@ -3486,7 +3625,7 @@ function updateCommandCenterPage3(array) {
     const toSlider = sliders[1];
 
     if (fromSlider) {
-        fromSlider.max = (buttonExpr?.textContent === "DelayMix") ? 120 : 100;
+        fromSlider.max = (buttonExpr?.textContent === "DelayMix" || buttonExpr?.textContent === "ReverbMix") ? 120 : 100;
         fromSlider.value = expFrom;
         const fromDisplay = fromSlider.parentElement.querySelector(".value-display");
         if (fromDisplay) fromDisplay.textContent = `${expFrom}%`;
@@ -3495,7 +3634,7 @@ function updateCommandCenterPage3(array) {
     }
 
     if (toSlider) {
-        toSlider.max = (buttonExpr?.textContent === "DelayMix") ? 120 : 100;
+        toSlider.max = (buttonExpr?.textContent === "DelayMix" || buttonExpr?.textContent === "ReverbMix") ? 120 : 100;
         toSlider.value = expTo;
         const toDisplay = toSlider.parentElement.querySelector(".value-display");
         if (toDisplay) toDisplay.textContent = `${expTo}%`;
@@ -3552,7 +3691,8 @@ function updateCommandCenterPage3(array) {
 }
 
 function extractCommandCenterDataPage3() {
-    const exprOptions = ["OFF", "Feedback", "DelayMix", "DryLevel", "AlterI", "AlterII"];
+    let exprOptions = ["OFF", "Feedback", "DelayMix", "DryLevel", "AlterI", "AlterII"];
+    if (nomeControladora == "spacewalk") exprOptions = ["OFF", "Decay", "ReverbMix", "DryLevel", "Dampening"];
     //const targetOptions = ["DSP1", "DSP2", "D1+D2"];
 
     const wrapper = document.querySelector(".command-center-wrapper.page3");

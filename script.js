@@ -1230,8 +1230,10 @@ async function setupMidiListener() {
                             //alert(sysexData.slice(2))
                             //alert(sysexData)
                             let aux =  Array.from(sysexData.slice(2));
-                            aux[0] = binaryOperation(aux[0], aux[1], 5)
-                            aux.splice(1, 1);
+                            if (nomeControladora == "timespace") {
+                                aux[0] = binaryOperation(aux[0], aux[1], 5);
+                                aux.splice(1, 1);
+                            }
                             algorithmDSP1 = aux;
                             const tableDSP1 = document.getElementById("dsp-table-1");
                             if (tableDSP1) tableDSP1.updateLabels(true);
@@ -1241,8 +1243,10 @@ async function setupMidiListener() {
                             algorithmDSP[1] = sysexData[1];
                             //alert(sysexData.slice(2))
                             let aux2 =  Array.from(sysexData.slice(2));
-                            aux2[0] = binaryOperation(aux2[0], aux2[1], 5)
-                            aux2.splice(1, 1);
+                            if (nomeControladora == "timespace") {
+                                aux2[0] = binaryOperation(aux2[0], aux2[1], 5);
+                                aux2.splice(1, 1);
+                            }
                             algorithmDSP2 = aux2;
                             const tableDSP2 = document.getElementById("dsp-table-2");
                             if (tableDSP2) tableDSP2.updateLabels(true);
