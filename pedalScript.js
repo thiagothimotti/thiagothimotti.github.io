@@ -473,11 +473,11 @@ function createPresets() {
                 }
 
                 mainContent.innerHTML = '';
-                activePreset = null;
+                //activePreset = null;
                 return;
             }
-
-            if (patchChanged) {
+            
+            if (patchChanged && activePreset !== preset) {
                 Swal.fire({
                     title: "Are you sure?",
                     text: `All changes on Patch ${activePreset ? activePreset.querySelector(".preset-number").textContent : ''} will be lost!`,
@@ -670,7 +670,8 @@ async function createTable(index, presetName) {
     mainContent.appendChild(createCommandCenterPage3());
 
     const sidebar2 = document.getElementById("sidebar2");
-    sidebar2.appendChild(createSystemButtons())
+    //sidebar2.appendChild(createSystemButtons())
+    mainContent.appendChild(createSystemButtons())
 
     sendMessage([0xF0, 0x3D, 0x00, 0xF7]);
     sendMessage([0xF0, 0x3E, 0x00, 0xF7]);
@@ -3774,14 +3775,15 @@ function createSystemButtons() {
     buttonContainer.id = "system-button-container";
     buttonContainer.style.display = "flex";
     buttonContainer.style.justifyContent = "center";
-    buttonContainer.style.gap = "20px";
-    buttonContainer.style.marginTop = "300px";
-    buttonContainer.style.marginLeft = "10px";
+    buttonContainer.style.gap = "25px";
+    buttonContainer.style.marginTop = "0px";
+    buttonContainer.style.marginLeft = "0px";
 
     // Botão Save
     const saveButton = document.createElement("button");
     saveButton.className = "system-button";
     saveButton.textContent = "Save";
+    saveButton.style.width = "100px";
     saveButton.addEventListener("click", () => {
         sendMessage([0xF0,0x12,0x00,0xF7]);
         //notify("Preset saved", 'success');
@@ -3794,6 +3796,7 @@ function createSystemButtons() {
     cancelButton.className = "system-button";
     cancelButton.id = "cancel-button";
     cancelButton.textContent = "Cancel";
+    cancelButton.style.width = "100px";
     cancelButton.addEventListener("click", () => {
         sendMessage([0xF0,0x13,0x00,0xF7]);
         const isSimulated = cancelButton.getAttribute("data-simulated-click") === "true";
