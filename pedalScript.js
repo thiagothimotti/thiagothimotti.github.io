@@ -22,7 +22,7 @@ const algorithmDataSpacewalk = {
     "GravitySprings": ["Shape", "Speed", "Depth"],
     "SunlightWings": ["Speed", "Depth", "Diffusion"],
     "Dark Galaxy": ["Fundamental", "Harmonics", "Regeneration", "Tone"],
-    "Sci-fy Shimmer": ["Fundamental", "Harmonics", "Regeneration", "Tone"],
+    "Sci-fi Shimmer": ["Fundamental", "Harmonics", "Regeneration", "Tone"],
     "Frosted Verb": ["Mode   ", "Velocity", "Modulation", "Harmonics"],
     "Spatial Vowels": ["Home Vowel", "Target Vowel", "Resonance", "Sensitivity", "Responce"],
     "Stellar Swell": ["Sensitivity", "Response"]
@@ -44,7 +44,7 @@ const algorithmStart = {
     "GravitySprings": ["70%", "0ms", "80%", "15%", "60%", "40%", "Sine", "60%", "0%"],
     "SunlightWings": ["70%", "0ms", "80%", "20%", "15%", "15%", "40%", "40%", "60%"],
     "Dark Galaxy": ["70%", "0ms", "80%", "40%", "10%", "10%", "80%", "20%", "0%", "60%"],
-    "Sci-fy Shimmer": ["70%", "0ms", "80%", "40%", "10%", "10%", "80%", "20%", "0%", "40%"],
+    "Sci-fi Shimmer": ["70%", "0ms", "80%", "40%", "10%", "10%", "80%", "20%", "0%", "40%"],
     "Frosted Verb": ["70%", "0ms", "80%", "20%", "30%", "30%", "Soft", "Slow", "60%", "80%"],
     "Spatial Vowels": ["70%", "0ms", "80%", "50%", "40%", "10%", "U", "A", "80%", "80%", "20%"],
     "Stellar Swell": ["70%", "0ms", "80%", "20%", "20%", "20%", "80%", "80%"]
@@ -146,7 +146,7 @@ const timeAlg = {
     "GravitySprings": { min: 63, max: 823, start: 400 },
     "SunlightWings": { min: 0, max: 948, start: 400 },
     "Dark Galaxy": { min: 0, max: 830, start: 400 },
-    "Sci-fy Shimmer": { min: 0, max: 940, start: 400 },
+    "Sci-fi Shimmer": { min: 0, max: 940, start: 400 },
     "Frosted Verb": { min: 0, max: 948, start: 400 },
     "Spatial Vowels": { min: 63, max: 823, start: 400 },
     "Stellar Swell": { min: 63, max: 823, start: 400 }
@@ -1118,7 +1118,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
     const algorithmValues = nomeControladora == "timespace" ? [
         "OFF", "Glassy Delay", "Bucket Brigade", "TransistorTape", "Quantum Pitch", "Holo Filter", "RetroVerse", "Memory Man", "Nebula Swel", "WhammyDelay"
     ] : [
-        "OFF", "SpaceRoom", "HALL 9000", "Star Plate", "GravitySprings", "SunlightWings", "Dark Galaxy", "Sci-fy Shimmer", "Frosted Verb", "Spatial Vowels", "Stellar Swell"
+        "OFF", "SpaceRoom", "HALL 9000", "Star Plate", "GravitySprings", "SunlightWings", "Dark Galaxy", "Sci-fi Shimmer", "Frosted Verb", "Spatial Vowels", "Stellar Swell"
     ];
 
     // Lida com o envio das mensagens DSP
@@ -1857,6 +1857,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
             currentAlgorithmIndex = algorithmValues.indexOf(selectedValue);;
             updateAlgorithmDisplay(false);
             sendMessage([0xF0,0x44,currentAlgorithmIndex,number-1,0xF7]);
+            sendMessage([0xF0,0x36 + number,0x00,0xF7]);
             patchChanged = true;
             //scheduleDSPAlert();
         }, event);
@@ -2716,7 +2717,7 @@ function createCommandCenterTables() {
         fswLabel.style.position = "absolute";
         fswLabel.style.bottom = "5px";
         fswLabel.style.right = "15px";
-        fswLabel.style.color = page == 1? orange: blue;
+        fswLabel.style.color = page == 1? orange: saveBlue;
         fswLabel.style.fontWeight = "bold";
         fswLabel.style.fontSize = "16px";
         fswLabel.style.pointerEvents = "none";
