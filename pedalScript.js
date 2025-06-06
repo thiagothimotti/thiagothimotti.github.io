@@ -626,7 +626,7 @@ async function createTable(index, presetName) {
     // Adiciona imagem logo abaixo da topology
     const topologyImage = document.createElement("img");
     topologyImage.id = "topology-image";
-    topologyImage.src = "https://i.imgur.com/LJrd5WZ.png"; //single
+    topologyImage.src = "assets/Single.png"; //single
     topologyImage.alt = "Topology Image";
     topologyImage.style.display = "block";
     topologyImage.style.marginTop = "-10px";
@@ -684,16 +684,16 @@ function updateTopologyImage(topology) {
     //setPanDisplayVisibility([true, true]);
     if (topology === "Single") {
         //setPanDisplayVisibility([false, true]);
-        topologyImage.src = "https://i.imgur.com/LJrd5WZ.png";
+        topologyImage.src = "assets/Single.png";
     } else if (topology === "Dual") {
-        topologyImage.src = "https://i.imgur.com/kvozLWK.png";
+        topologyImage.src = "assets/Dual.png";
     } else if (topology === "Series") {
-        topologyImage.src = "https://i.imgur.com/mWSjmyR.png";
+        topologyImage.src = "assets/Series.png";
     } else if (topology === "Mixed") {
         //setPanDisplayVisibility([false, true]);
-        topologyImage.src = "https://i.imgur.com/hFKPrQI.png";
+        topologyImage.src = "assets/Mixed.png";
     } else if (topology === "Cascade") {
-        topologyImage.src = "https://i.imgur.com/YwYZtto.png";
+        topologyImage.src = "assets/Cascade.png";
     }
 }
 
