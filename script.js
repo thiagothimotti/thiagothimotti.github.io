@@ -55,7 +55,7 @@ async function initializeSite() {
     nomeControladora = null;
 
     setupMidiListener();
-    
+
     let lim = 0;
     while (nomeControladora === null) {
         console.log('Aguardando nomeControladora...');
@@ -94,6 +94,7 @@ async function initializeSite() {
         sidebar.appendChild(bank);
         sidebar.appendChild(bankDetails);
     }
+
 }
 
 // Cria um banco
@@ -381,27 +382,30 @@ function bankSelect(bank, bankDetails, index) {
 function createBnkCfg(letter) {
     const bnkCfg = document.createElement('div');
     bnkCfg.id = 'bnkCfg';
-    bnkCfg.style.position = 'absolute';
-    bnkCfg.style.right = '20px';
-    bnkCfg.style.top = '50%';
-    bnkCfg.style.transform = 'translateY(-50%)';
-    bnkCfg.style.backgroundColor = 'rgba(159, 24, 253, 0.5)';
-    bnkCfg.style.borderRadius = '8px';
+    //bnkCfg.style.position = 'absolute';
+    //bnkCfg.style.right = '20px';
+    //bnkCfg.style.top = '50%';
+    //bnkCfg.style.transform = 'translateY(-50%)';
+    //bnkCfg.style.backgroundColor = 'rgba(159, 24, 253, 0.5)';
+    bnkCfg.style.backgroundColor = '#3a3a57';
+    bnkCfg.style.borderRadius = '0px 0px 8px 8px';
     bnkCfg.style.padding = '20px';
     bnkCfg.style.color = '#fff';
-    bnkCfg.style.width = '250px';
-    bnkCfg.style.height = '143px';
+    bnkCfg.style.width = '257px';
+    bnkCfg.style.height = '110px';
     bnkCfg.style.textAlign = 'center';
     bnkCfg.style.zIndex = '0';
+    bnkCfg.style.marginTop = '-10px';
 
     // Criar título
     const titleRow = document.createElement('div');
 
     titleRow.innerHTML = `<span style="color: #53bfeb;">Bank ${letter}</span> <span style="color: white;">Configuration</span>`;
     
-    titleRow.style.fontSize = '18px';
+    titleRow.style.fontSize = '14px';
     titleRow.style.fontWeight = '600';
     titleRow.style.marginBottom = '10px';
+    titleRow.style.marginTop = '-6px';
     bnkCfg.appendChild(titleRow);
 
     // Criar botões
@@ -411,21 +415,22 @@ function createBnkCfg(letter) {
         row.style.display = 'flex';
         row.style.justifyContent = 'space-between';
         row.style.alignItems = 'center';
-        row.style.marginBottom = '10px';
+        //row.style.marginBottom = '10px';
 
         const rowLabel = document.createElement('span');
         rowLabel.textContent = label;
+        rowLabel.style.fontSize = '14px';
         row.appendChild(rowLabel);
 
         const rowButton = document.createElement('button');
         rowButton.textContent = 'OFF';
         rowButton.style.backgroundColor = 'transparent';
         rowButton.style.color = 'red';
-        rowButton.style.fontSize = '16px';
-        rowButton.style.fontWeight = '600';
+        rowButton.style.fontSize = '14px';
         rowButton.style.border = 'none';
         rowButton.style.cursor = 'pointer';
-        rowButton.style.fontWeight = 'bold';
+        rowButton.style.padding = '5px 10px';
+        //rowButton.style.fontWeight = 'bold';
 
         rowButton.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -459,7 +464,15 @@ function createBnkCfg(letter) {
         bnkCfg.appendChild(row);
     });
 
-    document.body.appendChild(bnkCfg);
+    const details = document.querySelector(`.bank[data-letter="${letter}"] + .bank-details`);
+    // Insere depois dos detais
+    if (details && details.parentNode) {
+        details.parentNode.insertBefore(bnkCfg, details.nextSibling);
+    }
+    // Insere antes dos detais
+    /*if (details && details.parentNode) {
+        details.parentNode.insertBefore(bnkCfg, details);
+    }*/
 }
 
 function createConfigPopup(detailButton, rangeStart, rangeEnd, onSelectCallback, customOptions = null) {
@@ -2252,6 +2265,8 @@ async function toggleConnection(button) {
             midiAccess = null;
         }
 
+        //sendMessage([0xf0,comando,0x00,0xf7])
+
         location.reload();/* pensar bem */
 
         // Remover elementos visuais
@@ -2321,6 +2336,139 @@ async function heartBeat() {
     }
 }
 
+function setupDragAndDrop() {
+    const dropzone = document.getElementById('dropzone');
+    const fileList = document.getElementById('file-list');
+    const fileInput = document.getElementById('file-input');
+    const fileSelectButton = document.getElementById('file-select-button');
+    const dropzoneText = document.getElementById('dropzone-text');
+
+    function toggleDropzoneText() {
+        dropzoneText.style.display = fileList.children.length > 0 ? 'none' : 'block';
+    }
+
+    function isValidFileType(fileName) {
+        const ext = fileName.split('.').pop().toLowerCase();
+        return ext === 'json' || ext === 'stnpreset';
+    }
+
+    function addFileToList(name, content) {
+        const li = document.createElement('li');
+        li.style.display = 'flex';
+        li.style.justifyContent = 'space-between';
+        li.style.alignItems = 'center';
+        li.style.gap = '10px';
+
+        const link = document.createElement('a');
+        link.title = name;
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = name;
+        link.textContent = name.replace(/\.(json|stnpreset)$/i, '');
+        link.draggable = true;
+
+        link.addEventListener('dragstart', (e) => {
+            const content = localStorage.getItem(`cachedFile_${name}`);
+            e.dataTransfer.setData('application/json', content);
+            e.dataTransfer.setData('text/plain', name);
+        });
+
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = '❌';
+        removeBtn.style.background = 'transparent';
+        removeBtn.style.border = 'none';
+        removeBtn.style.color = 'red';
+        removeBtn.style.cursor = 'pointer';
+        removeBtn.title = 'Remove File';
+        removeBtn.style.marginBottom = '10px';
+
+        removeBtn.onclick = () => {
+            localStorage.removeItem(`cachedFile_${name}`);
+            li.classList.add('fade-out');
+            setTimeout(() => {
+                li.remove();
+                URL.revokeObjectURL(url);
+                toggleDropzoneText();
+            }, 200);
+        };
+
+        li.appendChild(link);
+        li.appendChild(removeBtn);
+        fileList.appendChild(li);
+        toggleDropzoneText();
+    }
+    window.addFileToList = addFileToList;
+
+    fileSelectButton.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        const files = e.target.files;
+        Array.from(files).forEach((file) => {
+            if (!isValidFileType(file.name)) {
+                alert(`Arquivo inválido: ${file.name}`);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const key = `cachedFile_${file.name}`;
+                localStorage.setItem(key, event.target.result);
+                addFileToList(file.name, event.target.result);
+            };
+            reader.readAsText(file);
+        });
+        fileInput.value = '';
+    });
+
+    // Restaura arquivos do cache
+    fileList.innerHTML = '';
+    Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('cachedFile_')) {
+            const fileName = key.replace('cachedFile_', '');
+            const content = localStorage.getItem(key);
+            addFileToList(fileName, content);
+        }
+    });
+
+    // Drag and drop
+    window.addEventListener('dragover', e => e.preventDefault());
+    window.addEventListener('drop', e => e.preventDefault());
+
+    dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('dragover');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+
+        const files = e.dataTransfer.files;
+        Array.from(files).forEach((file) => {
+            if (!isValidFileType(file.name)) {
+                notify(`Invalid file. Please make sure you are uploading a Saturno Pedais backup file.`, "warning");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const key = `cachedFile_${file.name}`;
+                localStorage.setItem(key, event.target.result);
+                addFileToList(file.name, event.target.result);
+            };
+            reader.readAsText(file);
+        });
+    });
+}
+
+
 function saveChanges(button) {
     //alert("Changes saved!");
     sendMessage([0xF0,0x12,0x00,0xF7])
@@ -2329,6 +2477,54 @@ function saveChanges(button) {
 function cancelChanges(button) {
     //alert("Changes canceled!");
     sendMessage([0xF0,0x13,0x00,0xF7])
+}
+
+function savePreset() {
+    let allData;
+    let jsonData;
+
+    // Define nome base
+    let fileName = "preset.json";
+
+    // Verifica se a controladora exige nome personalizado
+    if (nomeControladora === "timespace" || nomeControladora === "spacewalk") {
+        const presetElement = document.querySelector(".preset.selected");
+        if (presetElement) {
+            allData = collectAllTableValues();
+            jsonData = JSON.stringify(allData, null, 2); // json formatado
+            const presetNumber = presetElement.querySelector(".preset-number")?.textContent || "000";
+            let presetName = presetElement.querySelector(".preset-name")?.value || "";
+            if (presetName !== "") presetName = `${presetName}_`;
+            fileName = `${presetName}Preset${presetNumber}.json`;
+        } else {
+            notify(`Please select a preset before generating a backup`, "warning");
+            return;
+        }
+    } else if (nomeControladora === "titan" || nomeControladora === "supernova") {
+
+    } else {
+        notify(`No device connected`, "warning");
+        return;
+    }
+
+    // Salva no manager
+    localStorage.setItem(`cachedFile_${fileName}`, jsonData);
+    addFileToList(fileName, jsonData);
+
+    // Baixar o arquivo
+    const blob = new Blob([jsonData], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function updateDevice() {
+    notify("Em breve", "warning")
 }
 
 function notify(mensagem, icon) {
@@ -2364,7 +2560,7 @@ function createMidiTable(patchId, index, tableId) {
     midiTableFull.style.margin = 'auto';
     midiTableFull.style.flexDirection = 'column';
     midiTableFull.style.alignItems = 'center';
-    midiTableFull.style.marginTop = '5vh';
+    midiTableFull.style.marginTop = '20px';
     midiTableFull.style.borderRadius = '10px';
     midiTableFull.style.width = '230px';
     midiTableFull.style.height = '165px';

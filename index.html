@@ -14,6 +14,7 @@
         }
         window.onload = () => {
             window.scrollTo(0, 0); // Garante que a página seja rolada para o topo
+            setupDragAndDrop();
         };
     </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -24,13 +25,13 @@
     <header class="header">
         <nav class="nav-bar">
             <a href="https://saturnopedais.com.br/" target="_blank" rel="noopener noreferrer">
-                <img src="https://i.imgur.com/4igc5oJ.png" alt="Logo Saturno" class="logo">
+                <img src="assets/Logo.png" alt="Logo Saturno" class="logo">
             </a>
             <p id="editor-title">Saturno Web Editor</p>
         </nav>
     </header>
 
-    <img src="https://i.imgur.com/uAqpXh3.png" alt="Fundo Saturno" class="fundo">
+    <img src="assets/Fundo.png" alt="Fundo Saturno" class="fundo">
 
     <div class="container">
 
@@ -77,13 +78,12 @@
                     <p class="table-title">MIDI Over Air</p>
                     <div class="table" id="midi-table-3"></div>
                 </section>
-            
-                <section class="table-section" id="table-6">
-                    <div class="buttons-container">
-                        <button class="system-button" id="saveButton" onclick="saveChanges(this)">Save</button>
-                        <button class="system-button" id="cancelButton" onclick="cancelChanges(this)">Cancel</button>
-                    </div>
-                </section>
+            </div>
+            <div class="table-section" id="table-6">
+                <div class="buttons-container">
+                    <button class="system-button" id="saveButton" onclick="saveChanges(this)">Save</button>
+                    <button class="system-button" id="cancelButton" onclick="cancelChanges(this)">Cancel</button>
+                </div>
             </div>
             
             <div class="extraScroll" id="extraScroll">
@@ -93,9 +93,22 @@
         </main>
 
         <aside class="sidebar2" id="sidebar2">
+            <button class="system-button" id="connectButton" onclick="toggleConnection(this)">Connect</button>
+            <div id="manager">
+                <div id="dropzone">
+                    <p id="dropzone-text">Arraste e solte um arquivo aqui</p>
+                    <ul id="file-list"></ul>
+                    <button id="file-select-button" class="system-button">Select File</button>
+                    <label for="file-input" class="sr-only">Select File</label>
+                    <input type="file" id="file-input" accept=".json,.stnpreset" multiple>
+                </div>
+                <div class="buttons-container" id="managerButtons">
+                    <button class="system-button" id="savePresetButton" onclick="savePreset()">Generate Preset File</button>
+                    <button class="system-button" id="backupButton" onclick="updateDevice()">Generate Backup File</button>
+                </div>
+                <button class="system-button" id="updateButton" onclick="updateDevice()">Check for updates</button>
+            </div>
         </aside>
-
-        <button class="system-button" id="connectButton" onclick="toggleConnection(this)">Connect</button>
     </div>
 
     <script src="script.js"></script>

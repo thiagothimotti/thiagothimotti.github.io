@@ -107,7 +107,16 @@ const parameterRanges = {
     },
     "Shape": { tipo: "lista", valores: ["Triangle", "Square", "Sine"], complemento: "" },
     "Speed": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
-    //Spacewalk extras
+    // Glassy Delay
+    "Speed": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Depth": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Shape": { tipo: "lista", valores: ["Sine", "Triangle", "Square"], complemento: "" },
+    "Voices": { tipo: "lista", valores: [2, 3, 4, 5], complemento: "" },
+    "Stages": { tipo: "lista", valores: [2, 3, 4], complemento: "" },
+    "Mode    ": { tipo: "lista", valores: ["Vintage", "Modern"], complemento: "" },
+    "Regen": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Manual": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    // Spacewalk extras
     "Decay": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Pre-Delay": { tipo: "nenhum", valor_inicial: 0, valor_final: 125, complemento: "ms" },
     "ReverbMix": { tipo: "porcentagem", valor_inicial: 0, valor_final: 120, complemento: "%" },
@@ -176,7 +185,7 @@ const modTypeValues = {
     "Shape": { tipo: "lista", valores: ["Sine", "Triangle", "Square"], complemento: "" },
     "Voices": { tipo: "lista", valores: [2, 3, 4, 5], complemento: "" },
     "Stages": { tipo: "lista", valores: [2, 3, 4], complemento: "" },
-    "Mode  ": { tipo: "lista", valores: ["Vintage", "Modern"], complemento: "" },
+    "Mode    ": { tipo: "lista", valores: ["Vintage", "Modern"], complemento: "" },
     "Regen": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Manual": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" }
 };
@@ -269,6 +278,7 @@ let saveBlue = "rgb(0, 130, 255)";
 let patchChanged = false;
 let imageInicialized = 2;
 let copiedPresetIndex = null;
+let originalPresetName = "";
 
 function createPresets() {
 
@@ -334,9 +344,18 @@ function createPresets() {
                         //alert([0xF0,0x15,i,0xF7]);
                         sendMessage([0xF0,0x15,i,0xF7]);
                         
-                        // Seleciona o preset de destino como o ativo
                         const presetList = document.querySelectorAll(".preset");
+                        const sourcePreset = presetList[copiedPresetIndex];
                         const targetPreset = presetList[i];
+                        const sourceNameInput = sourcePreset.querySelector(".preset-name");
+                        const targetNameInput = targetPreset.querySelector(".preset-name");
+
+                        if (sourceNameInput && targetNameInput) {
+                            targetNameInput.value = sourceNameInput.value;
+                            targetNameInput.dispatchEvent(new Event("input")); // Atualiza o nome
+                        }
+
+                        // Seleciona o preset colado como ativo
                         if (targetPreset) {
                             targetPreset.click();
                         }
@@ -430,6 +449,11 @@ function createPresets() {
                 if (result.isConfirmed) {
                     sendMessage([0xF0,0x14,0x00,0xF7]);
                     notify(`Patch ${presetIndex.toString().padStart(3, '0')} has been cleared.`, "success");
+
+                    const nameInput = preset.querySelector(".preset-name");
+                    nameInput.value = "";
+                    originalPresetName = "";
+                    nameInput.dispatchEvent(new Event("input")); // Apaga o nome na lista
                 }
             });
         });
@@ -493,6 +517,9 @@ function createPresets() {
                 }).then((result) => {
                     if (result.isConfirmed) {
                         patchChanged = false;  // Reseta o flag
+                        const previousInput = activePreset.querySelector(".preset-name");
+                        previousInput.value = originalPresetName;
+                        previousInput.dispatchEvent(new Event("input"));
                         proceedToSelectPatch();
                     }
                 });
@@ -506,6 +533,9 @@ function createPresets() {
                     p.style.backgroundColor = "";
                     p.querySelector(".preset-arrow").style.transform = "rotate(-90deg) scale(1.8)";
                 });
+
+                const presetNameInput = preset.querySelector(".preset-name");
+                originalPresetName = presetNameInput.value;
 
                 const existingConfig = document.getElementById("preset-config-table");
                 if (existingConfig) {
@@ -566,6 +596,91 @@ function createPresets() {
             sendMessage([0xF0, 0x07, ...asciiArray, 0xF7]);
             patchChanged = true;
         });
+
+        // Lida com o import de presets
+        preset.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            preset.classList.add("drag-over");
+        });
+
+        preset.addEventListener("dragleave", () => {
+            preset.classList.remove("drag-over");
+        });
+        /*
+        preset.addEventListener("drop", (e) => {
+            e.preventDefault();
+            preset.classList.remove("drag-over");
+
+            const jsonText = e.dataTransfer.getData("application/json");
+            if (!jsonText) return;
+
+            try {
+                const data = JSON.parse(jsonText);
+                const presetIndex = i;
+
+                // Salva o JSON para facilitar o uso
+                const product = data.product ?? '';
+                window.currentTypeIndex = data.topology ?? null;
+                const drySettings = data.drySettings || [];
+                const presetConfig = data.presetConfig || [];
+                const dsp1 = data.dsp1 || [];
+                const dsp2 = data.dsp2 || [];
+                const stereoImage = data.stereoImage || [];
+                const commandCenterPage1 = data.commandCenterPage1 || [];
+                const commandCenterPage2 = data.commandCenterPage2 || [];
+                const commandCenterPage3 = data.commandCenterPage3 || [];
+
+                if (product == nomeControladora) {
+                    sendMessage([0xF0,0x43,presetIndex,0xF7]);
+
+                    sendMessage([0xF0, 0x32, window.currentTypeIndex, 0xF7]);
+                    sendMessage([0xF0,0x31,0x00,0xF7]);
+
+                    sendMessage([0xF0,0x34,...drySettings,0xF7]);
+                    sendMessage([0xF0,0x33,0x00,0xF7]);
+
+                    sendMessage([0xF0,0x36,...presetConfig,0xF7]);
+                    sendMessage([0xF0,0x35,0x00,0xF7]);
+
+                    sendMessage([0xF0,0x44,dsp1[0],0x00,0xF7]);
+                    sendMessage([0xF0,0x39,...dsp1.slice(1),0xF7]);
+                    sendMessage([0xF0,0x37,0x00,0xF7]);
+                    sendMessage([0xF0,0x44,dsp2[0],0x01,0xF7]);
+                    sendMessage([0xF0,0x3A,...dsp2.slice(1),0xF7]);
+                    sendMessage([0xF0,0x38,0x00,0xF7]);
+
+                    sendMessage([0xF0,0x3C,...stereoImage,0xF7]);
+                    sendMessage([0xF0,0x3B,0x00,0xF7]);
+
+                    sendMessage([0xF0,0x40,...commandCenterPage1,0xF7]);
+                    sendMessage([0xF0,0x3D,0x00,0xF7]);
+                    sendMessage([0xF0,0x41,...commandCenterPage2,0xF7]);
+                    sendMessage([0xF0,0x3E,0x00,0xF7]);
+                    sendMessage([0xF0,0x42,...commandCenterPage3,0xF7]);
+                    sendMessage([0xF0,0x3F,0x00,0xF7]);
+                } else {
+                    alert("Arquivo invalido")
+                }
+
+                /*alert(
+                    `Preset ${presetIndex} importado!\n\n` +
+                    `commandCenterPage1: ${commandCenterPage1.join(', ')}\n` +
+                    `commandCenterPage2: ${commandCenterPage2.join(', ')}\n` +
+                    `commandCenterPage3: ${commandCenterPage3.join(', ')}\n` +
+                    `drySettings: ${drySettings.join(', ')}\n` +
+                    `dsp1: ${dsp1.join(', ')}\n` +
+                    `dsp2: ${dsp2.join(', ')}\n` +
+                    `presetConfig: ${presetConfig.join(', ')}\n` +
+                    `stereoImage: ${stereoImage.join(', ')}\n` +
+                    `topology: ${topology}\n` +
+                    `product: ${product}`
+                );*a/
+
+            } catch (err) {
+                console.error("Erro ao interpretar o JSON arrastado:", err);
+                alert("Erro ao interpretar o arquivo JSON.");
+            }
+        });*/
 
         sidebar.appendChild(preset);
     }
@@ -631,33 +746,32 @@ async function createTable(index, presetName) {
     topologyImage.style.display = "block";
     topologyImage.style.marginTop = "-10px";
     topologyImage.style.marginBottom = "20px";
-    topologyImage.style.maxWidth = "40%"; // responsivo
+    topologyImage.style.maxWidth = "370px"; // responsivo
     mainContent.appendChild(topologyImage);
 
     const mainTable = createFormattedTable();
     const smallTables = await createSmallTables();
-
-    const imageTable = createImageTable();
-    updateImageRowsFunct = imageTable.updateImageRows;
-    const topology = document.querySelector(".type-display")?.textContent || "Single";
-    const selectedImage = document.getElementById("image-type-display")?.textContent || "";
-    
     mainContent.appendChild(mainTable);
     mainContent.appendChild(smallTables);
+
+    const imageTable = createImageTable();
     mainContent.appendChild(imageTable.container);
-
-    let panVisibility = [true, true];
-
-    if (selectedImage === "Ping-Pong" || selectedImage === "Transverse") {
-        panVisibility = [false, false];
-    } else if (topology === "Mixed") {
-        panVisibility = [false, true];
-    } else if (topology === "Single") {
-        panVisibility = [true, false];
-    }
-    setPanDisplayVisibility(panVisibility); //aqui
-
     sendMessage([0xF0, 0x33, 0x00, 0xF7]);
+    
+    updateImageRowsFunct = imageTable.updateImageRows;
+    const topology = document.querySelector(".type-display")?.textContent || "Single";
+    const imageDisplay = document.getElementById("imageDisplay");
+
+    if (imageDisplay) {
+        const observer = new MutationObserver(() => {
+            const selectedImage = imageDisplay.textContent.trim();
+            updatePanVisibility(selectedImage, topology);
+            observer.disconnect(); // evita multiplas chamadas
+        });
+
+        observer.observe(imageDisplay, { childList: true, subtree: true });
+    }
+
     sendMessage([0xF0, 0x3B, 0x00, 0xF7]);
 
     const commandCenterTitle = document.createElement("h2");
@@ -675,7 +789,21 @@ async function createTable(index, presetName) {
 
     sendMessage([0xF0, 0x3D, 0x00, 0xF7]);
     sendMessage([0xF0, 0x3E, 0x00, 0xF7]);
-    sendMessage([0xF0,0x3F,0x00,0xF7])
+    sendMessage([0xF0,0x3F,0x00,0xF7]);
+}
+
+function updatePanVisibility(selectedImage, topology) {
+    let panVisibility = [true, true];
+
+    if (selectedImage === "Ping-Pong" || selectedImage === "Transverse") {
+        panVisibility = [false, false];
+    } else if (topology === "Mixed") {
+        panVisibility = [false, true];
+    } else if (topology === "Single") {
+        panVisibility = [true, false];
+    }
+
+    setPanDisplayVisibility(panVisibility);
 }
 
 function updateTopologyImage(topology) {
@@ -1293,8 +1421,20 @@ function createIndividualTable(number, currentAlgorithmIndex) {
 
         if (document.querySelector(".type-display").textContent == "Single" && number == 2) {
             algorithmDisplay.textContent = "Inactive";
+            algorithmDisplay.style.color = "gray";
+            algorithmDisplay.style.cursor = "default";
+            leftArrow.style.cursor = "default";
+            leftArrow.style.color = "gray";
+            rightArrow.style.cursor = "default";
+            rightArrow.style.color = "gray";
             labels = [];
         } else {
+            algorithmDisplay.style.color = "white";
+            algorithmDisplay.style.cursor = "pointer";
+            leftArrow.style.cursor = "pointer";
+            leftArrow.style.color = "white";
+            rightArrow.style.cursor = "pointer";
+            rightArrow.style.color = "white";
             algorithmDisplay.textContent = algorithmValues[currentAlgorithmIndex];
             if (nomeControladora === "timespace") {
                 labels = ["Time", "Feedback", "DelayMix", ...algorithmData[algorithmDisplay.textContent] || []];
@@ -1340,11 +1480,13 @@ function createIndividualTable(number, currentAlgorithmIndex) {
 
             if (readingValues) {
                 extraValue = number === 1 ? (algorithmDSP1[index] ?? 0) : (algorithmDSP2[index] ?? 0);
+                //alert(extraValue)
             } else {
                 if (range?.tipo === "porcentagem") {
                     extraValue = parseInt(displayValue);
                 } else if (label === "Time") {
                     extraValue = parseInt(displayValue) - timeAlg[algorithmDisplay.textContent].min;
+                    //alert(extraValue)
                 }
                 else if (range?.tipo === "lista") {
 
@@ -1411,7 +1553,8 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                         input.type = "number";
                         input.min = mm.min;
                         input.max = mm.max;
-                        input.value = mm.min + extraValue;
+                        //input.value = mm.min + extraValue;
+                        input.value = extraValue;
                         input.style.width = "30px";
                         input.style.fontSize = "16px";
                         input.style.textAlign = "right";
@@ -2670,6 +2813,20 @@ function createCommandCenterTables() {
         nameInput.type = "text";
         nameInput.maxLength = 4;
 
+        nameInput.addEventListener("focus", function () {
+            this.select();
+        });
+
+        nameInput.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                this.blur();
+            }
+        });
+
+        nameInput.addEventListener("blur", function () {
+            extractCommandCenterData(table);
+        });
+
         const colorLabel = document.createElement("span");
         colorLabel.textContent = " Color: ";
 
@@ -3236,7 +3393,10 @@ function extractCommandCenterData(tableElement) {
     function getAsciiFromInput(input) {
         const text = input?.value || "";
         const padded = text.padEnd(4, '\0').slice(0, 4);
-        return Array.from(padded).map(c => c.charCodeAt(0)-64);
+        return Array.from(padded).map(c => {
+            if (!c || c === ' ' || c === '\0') return 0;
+            return c.charCodeAt(0) - 64;
+        });
     }
 
     function getValueFromSlider(slider) {
@@ -3776,7 +3936,7 @@ function createSystemButtons() {
     buttonContainer.style.display = "flex";
     buttonContainer.style.justifyContent = "center";
     buttonContainer.style.gap = "25px";
-    buttonContainer.style.marginTop = "0px";
+    buttonContainer.style.marginTop = "25px";
     buttonContainer.style.marginLeft = "0px";
 
     // Botão Save
@@ -3786,6 +3946,8 @@ function createSystemButtons() {
     saveButton.style.width = "100px";
     saveButton.addEventListener("click", () => {
         sendMessage([0xF0,0x12,0x00,0xF7]);
+        const presetNameInput = activePreset.querySelector(".preset-name");
+        originalPresetName = presetNameInput.value;
         //notify("Preset saved", 'success');
         patchChanged = false;
     });
@@ -3803,6 +3965,15 @@ function createSystemButtons() {
         if (!isSimulated) {
             notify("Your changes have been canceled");
         }
+
+        // Atualiza o nome do preset caso cancele as mudanças
+        if (activePreset && originalPresetName !== undefined) {
+            const input = activePreset.querySelector(".preset-name");
+            //alert(originalPresetName);
+            input.value = originalPresetName;
+            input.dispatchEvent(new Event("input"));
+        }
+
         reloadActivePreset();
         patchChanged = false;
     });
@@ -3938,6 +4109,413 @@ function attachPresetConfig(preset) {
 
     // Posiciona a tabela no local correto
     preset.parentNode.insertBefore(presetConfigSection, preset.nextSibling);
+}
+
+let allTableValues = {
+    product: nomeControladora,
+    topology: 0,
+    drySettings: [],
+    dsp1: [],
+    dsp2: [],
+    stereoImage: [],
+    commandCenterPage1: [],
+    commandCenterPage2: [],
+    commandCenterPage3: [],
+    presetConfig: []
+};
+
+function collectAllTableValues() {
+    allTableValues.topology = window.currentTypeIndex;
+    allTableValues.drySettings = collectDryValues();
+    allTableValues.dsp1 = collectDSPValues(1);
+    allTableValues.dsp2 = collectDSPValues(2);
+    allTableValues.stereoImage = collectStereoImageValues();
+    [allTableValues.commandCenterPage1, allTableValues.commandCenterPage2] = collectCommandCenterValues();
+    allTableValues.commandCenterPage3 = collectCommandCenterPage3Values();
+    allTableValues.presetConfig = collectPresetConfigValues();
+
+    console.log("Todos os valores coletados:", allTableValues);
+    return allTableValues;
+}
+
+function collectDryValues() {
+    const styleLabel = document.querySelector(".table-title span:nth-child(3)");
+    const style = styleLabel ? styleLabel.textContent.trim() : "Unknown";
+
+    const sliders = document.querySelectorAll(".slider");
+    if (sliders.length < 2) {
+        console.warn("Sliders da tabela Dry não encontrados.");
+        return;
+    }
+
+    const value1 = parseInt(sliders[0].value);
+    const rawValue2 = style === "Pan Control" ? parseInt(sliders[1].value)+100 : parseInt(sliders[1].value);
+    const [value2l, value2m] = BinaryOperationSend(rawValue2, 4);
+
+    const type = style === "Pan Control" ? 0 : 1;
+
+    const label1 = sliders[0].closest("tr").querySelector("td:first-child")?.textContent.trim() || "Slider 1";
+    const label2 = sliders[1].closest("tr").querySelector("td:first-child")?.textContent.trim() || "Slider 2";
+
+    //alert(`Style atual: ${style} (tipo ${type})\n\n${label1}: ${value1}\n${label2}: ${value2l} ${value2m}`);
+
+    return [type, value1, value2l, value2m];
+}
+
+function collectDSPValues(number) {
+    const table = document.getElementById(`dsp-table-${number}`);
+    if (!table) {
+        console.warn(`Tabela DSP${number} não encontrada.`);
+        return;
+    }
+
+    const algAux = table.querySelector(".topology-container span:nth-child(3)").textContent.trim();
+    const algorithmValues = nomeControladora === "timespace" ? [
+        "OFF", "Glassy Delay", "Bucket Brigade", "TransistorTape", "Quantum Pitch", "Holo Filter", "RetroVerse", "Memory Man", "Nebula Swel", "WhammyDelay"
+    ] : [
+        "OFF", "SpaceRoom", "HALL 9000", "Star Plate", "GravitySprings", "SunlightWings", "Dark Galaxy", "Sci-fi Shimmer", "Frosted Verb", "Spatial Vowels", "Stellar Swell"
+    ];
+
+    const indexAlg = algorithmValues.indexOf(algAux);
+    if (indexAlg === -1) {
+        if (algAux == "Inactive") {
+            if (nomeControladora == "timespace") return [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+            else return [0,0,0,0,0,0,0,0,0,0,0,0,0];
+        }
+        console.warn("Algoritmo não reconhecido.");
+        return;
+    }
+
+    const paramAlternativo = [0, 0]; // Fig. Rit.
+    const figValues = ["1/1", "1/2 Dot", "1/2", "1/2 Trip", "1/4 Dot", "1/4", "1/4 Trip", "1/8 Dot", "1/8", "1/8 Trip", "1/16 Dot", "1/16", "1/16 Trip"];
+
+    const displayValues = Array.from(table.querySelectorAll("tr")).map(row => {
+        const labelEl = row.querySelector("td:first-child");
+        const td = row.querySelector("td.button");
+        if (!labelEl || !td) return null;
+
+        const label = labelEl.textContent;
+        const input = td.querySelector("input");
+        const span = td.querySelector("span");
+
+        if (label === "TimeFig. Rit." || label === "SpeedFig. Rit.") {
+            const figButton = row.querySelector(".time-toggle-button");
+            if (figButton?.dataset.pressed === "true" && span) {
+                if (label === "TimeFig. Rit.") paramAlternativo[0] = 1;
+                else paramAlternativo[1] = 1;
+
+                const figText = span.textContent.trim();
+                return figValues.indexOf(figText);
+            }
+        }
+
+        if (input) return Number(input.value);
+
+        let rawText = span?.textContent.trim() || td.textContent.trim();
+        const paramInfo = parameterRanges[label];
+        const paramInfo2 = modTypeValues[label];
+        if (paramInfo?.tipo === "lista") {
+            let cleanValue = rawText;
+            if (paramInfo.complemento && rawText.endsWith(paramInfo.complemento)) {
+                cleanValue = rawText.replace(paramInfo.complemento, "").trim();
+            }
+            const testValue = isNaN(cleanValue) ? cleanValue : Number(cleanValue);
+            return paramInfo.valores.indexOf(testValue);
+        } else if (paramInfo2?.tipo === "lista") {
+            let cleanValue = rawText;
+            if (paramInfo2.complemento && rawText.endsWith(paramInfo2.complemento)) {
+                cleanValue = rawText.replace(paramInfo2.complemento, "").trim();
+            }
+            const testValue = isNaN(cleanValue) ? cleanValue : Number(cleanValue);
+            return paramInfo2.valores.indexOf(testValue);
+        }
+        return Number(rawText);
+    }).filter(val => val !== null && val !== "");
+
+    let message;
+
+    if (nomeControladora === "timespace") {
+        const time = displayValues[0];
+        const currentAlgorithm = algAux;
+        const minTime = timeAlg[currentAlgorithm]?.min || 0;
+        displayValues[0] = time - minTime;
+
+        const [lsb, msb] = BinaryOperationSend(displayValues[0], 5);
+        displayValues.splice(0, 1, lsb, msb);
+
+        while (displayValues.length < 13) displayValues.push(0);
+
+        message = [indexAlg, ...displayValues, ...paramAlternativo];
+
+        //alert(`DSP${number}:\nAlgoritmo: ${currentAlgorithm}\nIndex: ${indexAlg}\nValores: ${message.join(", ")}`);
+        return message;
+
+    } else {
+        while (displayValues.length < 12) displayValues.push(0);
+
+        message = [indexAlg, ...displayValues];
+
+        //alert(`DSP${number}:\nAlgoritmo: ${algAux}\nIndex: ${indexAlg}\nValores: ${message.join(", ")}`);
+        return message;
+    }
+}
+
+function collectStereoImageValues() {
+    const imageName = document.getElementById("imageDisplay").textContent || "";
+    //alert(imageName)
+    //const imageOptions = Object.keys(imageStereo); // usa as chaves do objeto imageStereo
+    let imageIndex = imageOptions.indexOf(imageName);
+    //alert(imageIndex)
+
+    if (imageIndex === -1) {
+        imageIndex = 0;
+        //return [];
+    }
+
+    // Localiza os containers pelas classes
+    const leftTable = document.getElementById("imageTable");
+    const rightTable = document.getElementById("DSPPanTable");
+
+    if (!leftTable || !rightTable) {
+        console.warn("Tabelas da imagem estéreo não encontradas.");
+        return [];
+    }
+
+    // Esquerda
+    const leftRows = leftTable.querySelectorAll("tr");
+    const leftValues = [];
+
+    leftRows.forEach(row => {
+        const input = row.querySelector("input");
+        if (input) leftValues.push(Number(input.value));
+    });
+
+    while (leftValues.length < 3) leftValues.push(0);
+
+    // Direita
+    const rightSliders = rightTable.querySelectorAll("input[type='range']");
+    const rightValues = [];
+
+    rightSliders.forEach(slider => {
+        const val = Number(slider.value) + 100;
+        const [lsb, msb] = BinaryOperationSend(val, 4);
+        rightValues.push(lsb, msb);
+    });
+
+    const result = [imageIndex, ...leftValues.slice(0, 3), ...rightValues];
+    return result;
+}
+
+function collectCommandCenterValues() {
+    const tables = [
+        document.getElementById("command-center-table-1"),
+        document.getElementById("command-center-table-2")
+    ];
+
+    const results = [];
+
+    tables.forEach((tableElement, index) => {
+        if (!tableElement) {
+            console.warn(`Tabela command-center-table-${index + 1} não encontrada.`);
+            results.push([]);
+            return;
+        }
+
+        const modeOptions = [
+            "On/Off | Hold", "On/Off | Mmtry", "On/Off | TgAct", "Tap | Scroll", "Tap | On/Off",
+            "Momentary", "Toggle Action", "Scroll Mode", "ScrollUp", "ScrollDown", "Hold"
+        ];
+        const colorOptions = ["Purple", "Pink", "Cyan", "Green", "Orange", "Red", "Yellow", "Blue"];
+        const holdModeOptions = ["Freeze", "Infinite"];
+        const holdTargetOptions = ["DSP1", "DSP2", "DSP1 + DSP2"];
+        let actionParameterOptions = ["OFF", "Fdback", "DlyMix", "DryLvl", "AlterI", "AlterII"];
+        if (nomeControladora === "spacewalk") {
+            actionParameterOptions = ["OFF", "Decay", "RvbMix", "DryLvl", "Dmpng"];
+        }
+        const dspTargetOptions = ["DSP1", "DSP2", "D1+D2"];
+        const dryTargetOptions = ["DryL+R", "DryL", "DryR"];
+
+        function getIndexFromOptions(text, options) {
+            const normalized = String(text || "").trim().replace(/\s+/g, " ");
+            return options.indexOf(normalized) !== -1 ? options.indexOf(normalized) : 0;
+        }
+
+        function getAsciiFromInput(input) {
+            const text = input?.value || "";
+            const padded = text.padEnd(4, '\0').slice(0, 4);
+            return Array.from(padded).map(c => {
+                if (!c || c === ' ' || c === '\0') return 0;
+                return c.charCodeAt(0) - 64;
+            });
+        }
+
+        function getValueFromSlider(slider) {
+            return slider ? parseInt(slider.value) : 0;
+        }
+
+        function extractDSPText(button) {
+            if (!button) return "";
+            const text = button.innerText.trim().replace(/\s+/g, " ");
+            if (text.includes("D1") && text.includes("D2")) return "D1+D2";
+            if (text.includes("DryL") && text.includes("R")) return "DryL+R";
+            return text;
+        }
+
+        const nameInput = tableElement.querySelector('input[type="text"]');
+        const sliders = tableElement.querySelectorAll("input[type='range']");
+
+        const footMode = getIndexFromOptions(
+            tableElement.querySelector(".foot-mode-button")?.textContent || "",
+            modeOptions
+        );
+
+        const [footNameChar0, footNameChar1, footNameChar2, footNameChar3] = getAsciiFromInput(nameInput);
+
+        const footColor = getIndexFromOptions(
+            tableElement.querySelector(".color-button")?.textContent || "",
+            colorOptions
+        );
+
+        const holdButtons = tableElement.querySelectorAll(".command-extra-row button");
+        const footHoldMode = getIndexFromOptions(holdButtons[0]?.textContent || "", holdModeOptions);
+        const footHoldTarget = getIndexFromOptions(holdButtons[1]?.textContent || "", holdTargetOptions);
+
+        const actionButtons = tableElement.querySelectorAll(".outer-row .action-button");
+        const dspButtons = tableElement.querySelectorAll(".outer-row button:not(.action-button)");
+
+        const actionParam1 = getIndexFromOptions(actionButtons[0]?.textContent || "", actionParameterOptions);
+        const actionValue1 = getValueFromSlider(sliders[0]);
+        const target1Raw = extractDSPText(dspButtons[0]);
+        const actionTarget1 = getIndexFromOptions(
+            target1Raw,
+            actionParameterOptions[actionParam1] === "DryLvl" ? dryTargetOptions : dspTargetOptions
+        );
+        //alert(actionParameterOptions[actionParam1])
+
+        const actionParam2 = getIndexFromOptions(actionButtons[1]?.textContent || "", actionParameterOptions);
+        const actionValue2 = getValueFromSlider(sliders[1]);
+        const target2Raw = extractDSPText(dspButtons[1]);
+        const actionTarget2 = getIndexFromOptions(
+            target2Raw,
+            actionParameterOptions[actionParam2] === "DryLvl" ? dryTargetOptions : dspTargetOptions
+        );
+        //alert(actionParameterOptions[actionParam2])
+
+        const result = [
+            footMode, footNameChar0, footNameChar1, footNameChar2, footNameChar3,
+            footColor, footHoldMode, footHoldTarget,
+            actionParam1, actionValue1, actionTarget1,
+            actionParam2, actionValue2, actionTarget2
+        ];
+
+        results.push(result);
+    });
+
+    return results;
+}
+
+function collectCommandCenterPage3Values() {
+    let exprOptions = ["OFF", "Feedback", "DelayMix", "DryLevel", "AlterI", "AlterII"];
+    if (nomeControladora === "spacewalk") exprOptions = ["OFF", "Decay", "ReverbMix", "DryLevel", "Dampening"];
+
+    const wrapper = document.querySelector(".command-center-wrapper.page3");
+    if (!wrapper) {
+        console.warn("Wrapper da página 3 do Command Center não encontrado.");
+        return [];
+    }
+
+    const tableLeft = wrapper.querySelector(".command-center-table-3");
+    const tableRight = wrapper.querySelector(".right-command-table");
+    if (!tableLeft || !tableRight) {
+        console.warn("Tabelas esquerda ou direita da página 3 não encontradas.");
+        return [];
+    }
+
+    // --- Coleta expressão da esquerda ---
+    const buttonExpr = tableLeft.querySelector(".expression-control-button");
+    const exprText = buttonExpr?.textContent || "OFF";
+    const exprIndex = exprOptions.indexOf(exprText) !== -1 ? exprOptions.indexOf(exprText) : 0;
+
+    const targetOptions = exprText === "DryLevel" ? ["DryL+R", "DryL", "DryR"] : ["DSP1", "DSP2", "D1+D2"];
+
+    const sliders = tableLeft.querySelectorAll("input[type=range]");
+    const expFrom = parseInt(sliders[0]?.value || 0);
+    const expTo = parseInt(sliders[1]?.value || 0);
+
+    const buttonTarget = tableLeft.querySelector("tr:last-child button");
+    const expTargetText = buttonTarget?.textContent || "";
+    const expTargetIndex = targetOptions.indexOf(expTargetText) !== -1 ? targetOptions.indexOf(expTargetText) : 0;
+
+    // --- Função auxiliar para codificação ---
+    function BinaryOperationSend(result, deslocamento) {
+        const lsb = result & ((1 << deslocamento) - 1);
+        const msb = result >> deslocamento;
+        return [lsb, msb];
+    }
+
+    // --- Coleta dos controles da tabela da direita ---
+    const binaryOffset = 4;
+    const rowsRight = tableRight.querySelectorAll("tr");
+    const dataRight = Array.from(rowsRight).map(row => {
+        const container = row.querySelector("td > div");
+        const buttons = container?.querySelectorAll("button") || [];
+        const buttonPC = buttons[0];
+        const buttonCh = buttons[1];
+
+        const pcText = buttonPC?.textContent || "OFF";
+        const pcValue = pcText === "OFF" ? 0 : parseInt(pcText) + 1;
+        const [lsb, msb] = BinaryOperationSend(pcValue, binaryOffset);
+
+        const chText = buttonCh?.textContent || "All";
+        const channel = chText === "All" ? 16 : parseInt(chText) - 1;
+
+        return { lsb, msb, channel };
+    });
+
+    const resultArray = [
+        exprIndex,
+        expFrom,
+        expTo,
+        expTargetIndex,
+        dataRight[0].lsb,
+        dataRight[0].msb,
+        dataRight[0].channel,
+        dataRight[1].lsb,
+        dataRight[1].msb,
+        dataRight[1].channel
+    ];
+
+    return resultArray;
+}
+
+function collectPresetConfigValues() {
+    const rows = document.querySelectorAll(".preset-config-row");
+
+    const values = Array.from(rows).map(row => {
+        const buttonText = row.querySelector(".preset-config-button")?.textContent.trim() || "";
+
+        let code;
+
+        if (["Keep Same", "Off", "Inactive"].includes(buttonText)) {
+            code = 0;
+        } else if (["Turn On", "On"].includes(buttonText)) {
+            code = 1;
+        } else if (buttonText === "Turn Off") {
+            code = 1;
+        } else if (!isNaN(parseInt(buttonText))) {
+            code = parseInt(buttonText) - 39;
+        } else {
+            code = -1; // fallback para erro
+        }
+
+        return code;
+    });
+
+    // Aplica BinaryOperationSend no 4º valor
+    const [lsb, msb] = BinaryOperationSend(values[3], 4);
+    values.splice(3, 1, lsb, msb);
+
+    return values;
 }
 
 createPresets();

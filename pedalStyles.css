@@ -31,6 +31,11 @@
     color: white;
 }
 
+.preset.drag-over {
+    outline: 2px dashed #53bfeb;
+    background-color: rgba(83, 191, 235, 0.1);
+}
+
 .preset-number {
     font-size: 18px;
     color: var(--blue);
