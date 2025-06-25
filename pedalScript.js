@@ -10,7 +10,7 @@ const algorithmData = {
     "Quantum Pitch": ["Interval A", "Tone A", "Level A", "Interval B", "Tone B", "Level B", "Mode"],
     "Holo Filter": ["Type", "Ressonance", "Tone", "Envelope", "Sensitivity/Range", "Response/Rate"],
     "RetroVerse": ["Sensitivity", "Release"],
-    "Memory Man": ["Tone", "Compression", "Grit", "Mod Type", "Modulation", "Ducking"],
+    "Memory Man": ["Tone", "Compression", "Grit", "Mod Type ", "Modulation", "Ducking"],
     "Nebula Swel": ["Sensitivity", "Responce"],
     "WhammyDelay": ["Heel", "Toe", "Tone", "Mode ", "Speed"]
 };
@@ -67,6 +67,7 @@ const parameterRanges = {
         tipo: "lista", valores: ["OFF", "Vibrato", "Tremolo", "Chorus", "Phaser", "Flanger"],
         complemento: ""
     },
+    "Mod Type ": { tipo: "lista", valores: ["Vibrato", "Tremolo"], complemento: "" },
     "Tone": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Compression": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Modulation": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
