@@ -49,6 +49,11 @@ let air1 = [];
 let air2 = [];
 let air3 = [];
 
+let savePresetAux = 0;
+let presetFileCreationArray = [];
+let saveBackupAux = 0;
+let backupFileCreationArray = [];
+
 // Função base da inicialização do site
 async function initializeSite() {
 
@@ -859,14 +864,24 @@ async function sendMessage(message) {
         for (let i = 1; i < 32; i++) {
             lastMessage.push(message[1]);
         }
+    } else if (message[1] == 0x4A) {
+        for (let i = 1; i <= 4; i++) {
+            lastMessage.push(message[1]);
+        }
+    } else if (message[1] == 0x14 || message[1] == 0x4D){
+        if (nomeControladora == "timespace" || nomeControladora == "spacewalk") {
+            lastMessage = [];
+            lastMessage.push(message[1])
+        }
     }
+        
 
     console.log('Mensagens enviadas: ', [...lastMessage])
 
     try {
         const outputs = Array.from(midiAccess.outputs.values());
         if (outputs.length === 0) {
-            alert("Nenhum dispositivo MIDI encontrado.");
+            alert("No MIDI device found.");
             return;
         }
 
@@ -952,7 +967,7 @@ async function setupMidiListener() {
         console.log(`Conectado ao dispositivo MIDI: ${input.name}`);
 
         // Configura o evento para escutar as mensagens MIDI
-        input.onmidimessage = (message) => {
+        input.onmidimessage = async (message) => {
 
             // Impede que o heartbeat interfira no funcionamento do site
             if (message.data[1] == 8){
@@ -1109,7 +1124,9 @@ async function setupMidiListener() {
                             break;
 
                         case 0x12:
-                            notify("Changes saved", 'success')
+                            if(nomeControladora == "supernova" || nomeControladora == "titan"){
+                                notify("Changes saved", 'success')
+                            }
                             break;
 
                         case 0x13:
@@ -1307,6 +1324,216 @@ async function setupMidiListener() {
                         case 0x3F:
                             //alert(sysexData.slice(1));
                             updateCommandCenterPage3(sysexData.slice(1));
+                            break;
+                        case 0x4B:
+                            //await delay(2000)
+                            presetAux = Number(activePreset.querySelector(".preset-number").textContent) < 127? Number(activePreset.querySelector(".preset-number").textContent)+1 : Number(activePreset.querySelector(".preset-number").textContent)-1;
+                            sendMessage([0xF0, 0x43, Number(presetAux), 0xF7]);
+                            await delay(100)
+                            sendMessage([0xF0, 0x43, Number(activePreset.querySelector(".preset-number").textContent), 0xF7]);
+                            //alert(activePreset.querySelector(".preset-number").textContent)
+                            reloadActivePreset();
+                            break;
+                        case 0x4A:
+                            //alert(sysexData);
+                            if (sysexData[1] == 0) {
+                                let aux = binaryOperation(sysexData[5], sysexData[6], 7);
+                                //alert (aux);
+                                aux = binaryOperation(aux, sysexData[7], 14);
+                                //alert(aux);
+                                savePresetAux = Math.ceil(aux/44);
+                                presetFileCreationArray = [];
+                                //alert(savePresetAux);
+                                //alert([...sysexData.slice(3)])
+                                presetFileCreationArray.push(...sysexData.slice(3));
+                                break;
+                            }
+                            if (savePresetAux != 0) {
+                                //alert(sysexData[1])
+                                presetFileCreationArray.push(...sysexData.slice(2));
+                                //presetFileCreationArray.push("new message")
+                                //alert(presetFileCreationArray);
+                                //alert(sysexData.length)
+                                savePresetAux--;
+                                if (savePresetAux == 0) {
+                                    console.log("Array original:", presetFileCreationArray);
+
+                                    /*let finalArray = [];
+
+                                    // Mantém os primeiros 11 elementos
+                                    for (let i = 0; i < 11 && i < presetFileCreationArray.length; i++) {
+                                        finalArray.push(presetFileCreationArray[i]);
+                                    }
+
+                                    // Junta os pares
+                                    for (let i = 10; i + 1 < presetFileCreationArray.length; i += 2) {
+                                        let lsb = presetFileCreationArray[i];
+                                        let msb = presetFileCreationArray[i + 1];
+                                        let result = binaryOperation(lsb, msb, 4);
+                                        finalArray.push(result);
+                                    }
+
+                                    console.log("Array processado:", finalArray);*/
+
+                                    let finalArray = encode([0, ...presetFileCreationArray]);
+                                    console.log("Array encriptografado:", finalArray);
+
+                                    // Cria o arquivo
+                                    let fileName = "preset.stnpreset";
+                                    if (nomeControladora == 'timespace' || nomeControladora == 'spacewalk') {
+                                        const selectedPreset = document.querySelector(".preset.selected");  
+                                        if (selectedPreset) {
+                                            const presetNameInput = selectedPreset.querySelector(".preset-name");
+                                            const presetName = presetNameInput.value.trim();
+                                            const presetNumber = selectedPreset.querySelector(".preset-number").textContent;
+                                            
+                                            if (presetName) {
+                                                fileName = `${presetName}_Preset${presetNumber}.stnpreset`;
+                                            } else {
+                                                fileName = `Preset${presetNumber}.stnpreset`;
+                                            }
+                                            //let oldMessage = "Make sure to save a copy of your presets on your computer.\nSaturno Pedais doesn't keep them!";
+                                            Swal.fire({
+                                                toast: true,
+                                                background: "#2a2a40",
+                                                color: "rgb(83, 191, 235)",
+                                                position: "bottom-end",
+                                                text: "Your presets are not stored online.\nAlways keep a copy.",
+                                                icon: "warning",
+                                                showConfirmButton: false,
+                                                timer: 6000,
+                                                timerProgressBar: true
+                                            });
+                                        }
+                                    } else if (nomeControladora == 'titan' || nomeControladora == 'supernova') {
+
+                                    }
+                                    const content = new Uint8Array(finalArray);
+                                    const file = new File([content], fileName, { type: "application/octet-stream" });
+
+                                    // Baixa o arquivo /*
+                                    const url = URL.createObjectURL(file);
+                                    const a = document.createElement("a");
+                                    a.href = url;
+                                    a.download = file.name;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                    URL.revokeObjectURL(url);/**/
+
+                                    // Adiciona o arquivo ao manager
+                                    const existingNames = Object.keys(localStorage)
+                                        .filter(k => k.startsWith('cachedFile_'))
+                                        .map(k => k.replace('cachedFile_', ''));
+
+                                    const safeName = getUniqueFileName(file.name, existingNames);
+
+                                    localStorage.setItem(`cachedFile_${safeName}`, JSON.stringify(Array.from(content)));
+                                    window.addFileToList(safeName, content);
+                                }
+                            }
+                            break;
+                        case 0x4C:
+                            //alert(sysexData)
+                            if (sysexData[1] == 0 && sysexData[2] == 0) {
+                                let aux = binaryOperation(sysexData[5], sysexData[6], 7);
+                                //alert (aux);
+                                aux = binaryOperation(aux, sysexData[7], 14);
+                                //alert(aux);
+                                saveBackupAux = Math.ceil(aux/42)+1;
+                                backupFileCreationArray = [];
+                                //alert(saveBackupAux);
+                            }
+                            if (saveBackupAux != 0) {
+                                backupFileCreationArray.push(...sysexData.slice(3));
+                                //alert([...sysexData.slice(3)]);
+                                saveBackupAux--;
+                                //alert(saveBackupAux)
+                                if (saveBackupAux == 0) {
+                                    console.log("Array original:", backupFileCreationArray);
+
+                                    /*let finalArray = [];
+
+                                    // Mantém os primeiros 11 elementos
+                                    for (let i = 0; i < 11 && i < backupFileCreationArray.length; i++) {
+                                        finalArray.push(backupFileCreationArray[i]);
+                                    }
+
+                                    // Junta os pares
+                                    for (let i = 10; i + 1 < backupFileCreationArray.length; i += 2) {
+                                        let lsb = backupFileCreationArray[i];
+                                        let msb = backupFileCreationArray[i + 1];
+                                        let result = binaryOperation(lsb, msb, 4);
+                                        finalArray.push(result);
+                                    }
+
+                                    console.log("Array processado:", finalArray);*/
+
+                                    let finalArray = encode([1, ...backupFileCreationArray]);
+                                    console.log("Array encriptografado:", finalArray);
+
+                                    // Cria o arquivo
+                                    let fileName = "Backup.stnpreset";
+                                    switch (nomeControladora) {
+                                        case "titan":
+                                            fileName = "Backup_Titan.stnpreset";
+                                            break;
+                                        case "supernova":
+                                            fileName = "Backup_Supernova.stnpreset";
+                                            break;
+                                        case "timespace":
+                                            fileName = "Backup_Timespace.stnpreset";
+                                            break;
+                                        case "spacewalk":
+                                            fileName = "Backup_Spacewalk.stnpreset";
+                                            break;
+                                    }
+                                    if (nomeControladora == 'timespace' || nomeControladora == 'spacewalk') {
+                                            //let oldMessage = "Make sure to save a copy of your presets on your computer.\nSaturno Pedais doesn't keep them!";
+                                            Swal.fire({
+                                                toast: true,
+                                                background: "#2a2a40",
+                                                color: "rgb(83, 191, 235)",
+                                                position: "bottom-end",
+                                                text: "Your backup is not stored online.\nAlways keep a copy.",
+                                                icon: "warning",
+                                                showConfirmButton: false,
+                                                timer: 6000,
+                                                timerProgressBar: true
+                                            });
+                                    } else if (nomeControladora == 'titan' || nomeControladora == 'supernova') {
+
+                                    }
+                                    const content = new Uint8Array(finalArray);
+                                    const file = new File([content], fileName, { type: "application/octet-stream" });
+
+                                    //*
+                                    // Baixa o arquivo 
+                                    const url = URL.createObjectURL(file);
+                                    const a = document.createElement("a");
+                                    a.href = url;
+                                    a.download = file.name;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                    URL.revokeObjectURL(url);/**/
+
+                                    // Adiciona o arquivo ao manager
+                                    const existingNames = Object.keys(localStorage)
+                                        .filter(k => k.startsWith('cachedFile_'))
+                                        .map(k => k.replace('cachedFile_', ''));
+
+                                    const safeName = getUniqueFileName(file.name, existingNames);
+
+                                    localStorage.setItem(`cachedFile_${safeName}`, JSON.stringify(Array.from(content)));
+                                    window.addFileToList(safeName, content); // <-- content é o Uint8Array
+                                }
+                            }
+                            break;
+                        case 0x4D:
+                            await delay(500)
+                            
+                            document.getElementById("loading-overlay").style.display = "none";
                             break;
                     }
                 }
@@ -2256,7 +2483,8 @@ async function toggleConnection(button) {
 
         const outputs = Array.from(midiAccess.outputs.values());
         if (outputs.length !== 0) {
-            sendMessage([0xF0,0x1A,0x00,0xF7])
+            if (nomeControladora == 'titan' || nomeControladora == 'supernova') sendMessage([0xF0,0x1A,0x00,0xF7]);
+            else if (nomeControladora == 'timespace' || nomeControladora == 'spacewalk') sendMessage([0xF0,0x49,0x00,0xF7]);
         }
 
         // Fechar conexão MIDI explicitamente
@@ -2264,9 +2492,7 @@ async function toggleConnection(button) {
             midiAccess.inputs.forEach(input => input.onmidimessage = null); // Remove listeners
             midiAccess = null;
         }
-
-        //sendMessage([0xf0,comando,0x00,0xf7])
-
+        //await delay(1000);
         location.reload();/* pensar bem */
 
         // Remover elementos visuais
@@ -2337,14 +2563,18 @@ async function heartBeat() {
 }
 
 function setupDragAndDrop() {
+    //const saveBlue = "rgb(0, 130, 255)";
+    const saveBlue = "#53bfeb";
     const dropzone = document.getElementById('dropzone');
     const fileList = document.getElementById('file-list');
     const fileInput = document.getElementById('file-input');
     const fileSelectButton = document.getElementById('file-select-button');
     const dropzoneText = document.getElementById('dropzone-text');
 
+    const fileDataList = []; // Array de { name, content }
+
     function toggleDropzoneText() {
-        dropzoneText.style.display = fileList.children.length > 0 ? 'none' : 'block';
+        dropzoneText.style.display = fileDataList.length > 0 ? 'none' : 'block';
     }
 
     function isValidFileType(fileName) {
@@ -2352,53 +2582,391 @@ function setupDragAndDrop() {
         return ext === 'json' || ext === 'stnpreset';
     }
 
-    function addFileToList(name, content) {
-        const li = document.createElement('li');
-        li.style.display = 'flex';
-        li.style.justifyContent = 'space-between';
-        li.style.alignItems = 'center';
-        li.style.gap = '10px';
+    window.addFileToList = function(name, uintArray) {
+        fileDataList.push({ name, content: uintArray });
+        renderFileList();
+    };
 
-        const link = document.createElement('a');
-        link.title = name;
-        const blob = new Blob([content], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        link.href = url;
-        link.download = name;
-        link.textContent = name.replace(/\.(json|stnpreset)$/i, '');
-        link.draggable = true;
+    function renderFileList() {
+        const wasRepoVisible = document.querySelector('ul')?.style.display === 'block';
+        fileList.innerHTML = '';
 
-        link.addEventListener('dragstart', (e) => {
-            const content = localStorage.getItem(`cachedFile_${name}`);
-            e.dataTransfer.setData('application/json', content);
-            e.dataTransfer.setData('text/plain', name);
+        // Cria item da pasta do repositório
+        const repoItem = document.createElement('li');
+        repoItem.style.display = 'inline-flex';
+        repoItem.style.alignItems = 'center';
+        repoItem.style.cursor = 'pointer';
+        repoItem.style.color = saveBlue;
+        repoItem.style.fontWeight = 'bold';
+        repoItem.style.marginBottom = '8px';
+        repoItem.style.width = '241px';
+
+        const repoIcon = document.createElement('i');
+        repoIcon.className = 'fa-regular fa-folder';
+        repoIcon.style.fontSize = '21px';
+        repoIcon.style.padding = '3px';
+
+        const repoText = document.createElement('span');
+        repoText.textContent = 'Saturno Presets [Oficial]';
+        repoText.style.textDecoration = 'underline';
+        repoText.style.marginRight = '25px';
+        repoText.style.fontSize = '14px';
+
+        repoItem.appendChild(repoIcon);
+        repoItem.appendChild(repoText);
+        fileList.appendChild(repoItem);
+
+        const repoList = document.createElement('ul');
+        repoList.style.listStyle = 'none';
+        repoList.style.paddingLeft = '20px';
+        repoList.style.display = 'none';
+        fileList.appendChild(repoList);
+
+        let repoLoaded = false;
+        let repoVisible = false;
+
+        let canToggleRepo = true;
+        repoItem.addEventListener('click', () => {
+            if (!canToggleRepo) return; //Impede multiplos cliques
+            canToggleRepo = false;
+
+            if (!repoLoaded) {
+                loadRepositoryFiles();
+            } else {
+                repoVisible = !repoVisible;
+                repoList.style.display = repoVisible ? 'block' : 'none';
+                repoIcon.className = repoVisible ? 'fa-regular fa-folder-open' : 'fa-regular fa-folder';
+            }
+
+            setTimeout(() => {
+                canToggleRepo = true;
+            }, 300);
         });
 
-        const removeBtn = document.createElement('button');
-        removeBtn.textContent = '❌';
-        removeBtn.style.background = 'transparent';
-        removeBtn.style.border = 'none';
-        removeBtn.style.color = 'red';
-        removeBtn.style.cursor = 'pointer';
-        removeBtn.title = 'Remove File';
-        removeBtn.style.marginBottom = '10px';
+        async function loadRepositoryFiles() {
+            try {
+                //const response = await fetch('https://raw.githubusercontent.com/CarlBetsa/Editor_Saturno/main/Sons_da_Saturno/fileList.json');
+                const response = await fetch('https://raw.githubusercontent.com/thiagothimotti/thiagothimotti.github.io/main/Sons_da_Saturno/fileList.json');
+                if (!response.ok) throw new Error('Falha ao carregar lista de arquivos do repositório.');
 
-        removeBtn.onclick = () => {
-            localStorage.removeItem(`cachedFile_${name}`);
-            li.classList.add('fade-out');
-            setTimeout(() => {
-                li.remove();
-                URL.revokeObjectURL(url);
-                toggleDropzoneText();
-            }, 200);
-        };
+                const fileNames = await response.json();
 
-        li.appendChild(link);
-        li.appendChild(removeBtn);
-        fileList.appendChild(li);
+                fileNames.sort((a, b) => a.localeCompare(b)); // Garante que os arquivos da pasta fiquem em ordem alfabetica
+
+                fileNames.forEach(fileName => {
+                    //const fileUrl = `https://raw.githubusercontent.com/CarlBetsa/Editor_Saturno/main/Sons_da_Saturno/${fileName}`;
+                    const fileUrl = `https://raw.githubusercontent.com/thiagothimotti/thiagothimotti.github.io/main/Sons_da_Saturno/${fileName}`;
+
+                    fetch(fileUrl)
+                        .then(response => response.arrayBuffer())
+                        .then(content => {
+                            const li = document.createElement('li');
+                            li.style.display = 'flex';
+                            li.style.justifyContent = 'space-between';
+                            li.style.alignItems = 'center';
+                            li.style.gap = '10px';
+                            li.style.minHeight = '23px';
+
+                            const byteArray = new Uint8Array(buffer);
+                            const fileTypeFlag = byteArray[0]; // 0 = preset, 1 = backup
+                            const archiveType = document.createElement('button');
+                            archiveType.textContent = fileTypeFlag === 1 ? 'BKP' : 'PRST';
+                            
+                            if(fileTypeFlag === 0){
+                                const fileModelFlag = byteArray[1];
+                                archiveType.style.border = fileModelFlag === 1 ? "1px solid red" : `1px solid ${saveBlue}`;
+                                archiveType.style.color = fileModelFlag === 1 ? "red" : saveBlue;
+                            } else {
+                                archiveType.style.color = "silver";
+                                archiveType.style.border = "1px solid silver";
+                            }
+
+                            archiveType.style.padding = "2px 6px";
+                            archiveType.style.fontSize = "10px";
+                            archiveType.style.borderRadius = "4px";
+                            archiveType.style.background = "transparent";
+                            archiveType.style.cursor = "default";
+                            archiveType.style.minWidth = "40px";
+                            archiveType.style.maxWidth = "40px";
+
+                            const link = document.createElement('a');
+                            link.title = fileName;
+                            const blob = new Blob([content], { type: 'text/plain' });
+                            const url = URL.createObjectURL(blob);
+                            link.href = url;
+                            link.download = fileName;
+                            link.textContent = fileName.replace(/\.(json|stnpreset)$/i, '');
+                            link.draggable = true;
+
+                            link.addEventListener('dragstart', (e) => {
+                                e.dataTransfer.setData('application/json', content);
+                                e.dataTransfer.setData('text/plain', fileName);
+                                e.dataTransfer.setData('isSaturnRepo', 'true');
+                                e.dataTransfer.setData('size', content.length.toString());
+                                console.log(`Tamanho do arquivo do GitHub: ${content.length.toString()}`)
+                            });
+
+                            link.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                console.log("Arquivo lido", content);
+                            });
+
+                            li.appendChild(archiveType);
+                            li.appendChild(link);
+                            repoList.appendChild(li);
+                        })
+                        .catch(() => console.error(`Falha ao carregar ${fileName}`));
+                });
+
+                repoLoaded = true;
+                repoVisible = true;
+                repoList.style.display = 'block';
+                repoIcon.className = 'fa-regular fa-folder-open';
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // Arquivos locais do cache
+        const presets = fileDataList.filter(f => !f.name.toLowerCase().includes('backup')).sort((a, b) => {
+            const nameA = a.name.replace(/\.(json|stnpreset)$/i, '').toLowerCase();
+            const nameB = b.name.replace(/\.(json|stnpreset)$/i, '').toLowerCase();
+            return nameA.localeCompare(nameB);
+        });
+
+        const backups = fileDataList.filter(f => f.name.toLowerCase().includes('backup')).sort((a, b) => {
+            const nameA = a.name.replace(/\.(json|stnpreset)$/i, '').toLowerCase();
+            const nameB = b.name.replace(/\.(json|stnpreset)$/i, '').toLowerCase();
+            return nameA.localeCompare(nameB);
+        });
+
+        const sortedList = [...presets, ...backups];
+
+        sortedList.forEach(file => {
+            const li = document.createElement('li');
+            li.style.display = 'flex';
+            li.style.position = 'relative';
+            li.style.justifyContent = 'space-between';
+            li.style.alignItems = 'center';
+            li.style.gap = '10px';
+
+            let firstByte = 0;
+            let modelByte = 0;
+            try {
+                const bytes = typeof file.content === 'string'
+                    ? new Uint8Array(JSON.parse(file.content))
+                    : new Uint8Array(file.content);
+
+                firstByte = decode([bytes[0]]);
+                modelByte = decode([bytes[1]])
+                console.log(firstByte[0])
+            } catch (e) {
+                console.warn("Erro ao ler primeiro byte do arquivo:", file.name, e);
+            }
+
+            const archiveType = document.createElement('button');
+            archiveType.textContent = firstByte[0] === 1 ? 'BKP' : 'PRST';
+
+            if(firstByte[0] === 0){
+                const fileModelFlag = modelByte[0];
+                //alert(fileModelFlag);
+                archiveType.style.border = fileModelFlag === 1 ? "1px solid #ff3300ff" : `1px solid ${saveBlue}`; //orangered, salmon, LightSalmon, tomato
+                archiveType.style.color = fileModelFlag === 1 ? "#ff3300ff" : saveBlue;
+            } else {
+                archiveType.style.color = "silver";
+                archiveType.style.border = "1px solid silver";
+            }
+            archiveType.style.padding = "2px 6px";
+            archiveType.style.fontSize = "10px";
+            archiveType.style.borderRadius = "4px";
+            archiveType.style.background = "transparent";
+            archiveType.style.cursor = "default";
+            archiveType.style.minWidth = "40px";
+            archiveType.style.maxWidth = "40px";
+
+            const link = document.createElement('a');
+            link.title = file.name;
+            link.textContent = file.name.replace(/\.(json|stnpreset)$/i, '');
+            link.style.cursor = "text";
+            link.style.flexGrow = "1";
+            link.href = "#";
+            link.draggable = true;
+
+            // Arrastavel
+            link.addEventListener('dragstart', (e) => {
+                const content = localStorage.getItem(`cachedFile_${file.name}`);
+                e.dataTransfer.setData('application/json', content);
+                e.dataTransfer.setData('text/plain', file.name);
+                e.dataTransfer.setData('isSaturnRepo', 'false');
+                e.dataTransfer.setData('size', content.length.toString());
+                console.log(`Tamanho do arquivo do manager: ${content.length.toString()}`)
+            });
+
+            // Permite renomear ao clicar
+            link.addEventListener("click", () => {
+                const input = document.createElement("input");
+                input.type = "text";
+                input.value = link.textContent;
+                input.style.fontSize = "14px";
+                input.style.flexGrow = "1";
+                input.style.border = `1px solid ${saveBlue}`;
+                //input.style.border = "none";
+                input.style.outline = "none";
+                input.style.padding = "2px 4px";
+                input.style.borderRadius = "4px";
+                input.style.background = "#242424";
+                input.style.color = "white";
+                input.style.width = "130px";
+                input.style.minWidth = "130px";
+                input.style.maxWidth = "130px";
+                input.style.flexShrink = "0";
+                input.style.marginLeft = "-20px";
+
+                link.replaceWith(input);
+                input.focus();
+
+                let finished = false;
+
+                const finishEdit = () => {
+                    if (finished) return;
+                    finished = true;
+
+                    let newName = input.value.trim();
+                    if (newName === "") {
+                        input.replaceWith(link);
+                        return;
+                    }
+
+                    const oldFullName = file.name;
+                    const extension = oldFullName.split('.').pop();
+                    const newFullName = `${newName}.${extension}`;
+
+                    if (newFullName === oldFullName) {
+                        input.replaceWith(link);
+                        return;
+                    }
+
+                    // Atualiza localStorage
+                    const oldKey = `cachedFile_${oldFullName}`;
+                    const newKey = `cachedFile_${newFullName}`;
+                    const content = localStorage.getItem(oldKey);
+
+                    if (content) {
+                        localStorage.setItem(newKey, content);
+                        localStorage.removeItem(oldKey);
+                    }
+
+                    // Atualiza fileDataList
+                    file.name = newFullName;
+
+                    // Atualiza visual
+                    link.textContent = newName;
+                    input.replaceWith(link);
+
+                    renderFileList();
+                };
+
+                input.addEventListener("blur", finishEdit);
+                input.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter") finishEdit();
+                    if (e.key === "Escape") {
+                        if (!finished) {
+                            finished = true;
+                            input.replaceWith(link);
+                        }
+                    }
+                });
+            });
+
+            const downloadBtn = document.createElement('button');
+            downloadBtn.innerHTML = '<i class="fa-solid fa-download"></i>';
+            downloadBtn.title = 'Download File';
+            downloadBtn.style.background = 'transparent';
+            downloadBtn.style.border = 'none';
+            downloadBtn.style.position = 'absolute';
+            downloadBtn.style.right = '35px';
+            downloadBtn.style.top = '50%';
+            downloadBtn.style.transform = 'translateY(-50%)';
+            downloadBtn.style.color = saveBlue;
+            downloadBtn.style.fontSize = "13px";
+            downloadBtn.style.cursor = 'pointer';
+
+            downloadBtn.onclick = () => {
+                const downloadLink = document.createElement("a");
+                downloadLink.href = URL.createObjectURL(new Blob([file.content], { type: 'application/octet-stream' }));
+                downloadLink.download = file.name;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            };
+
+            const removeBtn = document.createElement('button');
+            const icon = document.createElement('i');
+            icon.className = 'fa-solid fa-xmark';
+            icon.style.fontSize = '25px';
+            icon.style.pointerEvents = 'auto';
+            removeBtn.appendChild(icon);
+            removeBtn.style.background = 'transparent';
+            removeBtn.style.border = 'none';
+            removeBtn.style.color = 'red';
+            removeBtn.style.cursor = 'pointer';
+            removeBtn.title = 'Remove File';
+            removeBtn.style.marginRight = '-5px';
+
+            removeBtn.onclick = () => {
+                Swal.fire({
+                    title: "Remove file?",
+                    html: `
+                        <p>Are you sure you want to remove <strong>${file.name}</strong> from the manager?</p>
+                        <p style="margin-top:10px;">It is <strong style="color: #53bfeb;">recommended to download</strong> the file before removing it.</p>
+                    `,
+                    icon: "warning",
+                    background: "#2a2a40",
+                    color: "white",
+                    width: "500px",
+                    showCancelButton: true,
+                    showDenyButton: true,
+                    confirmButtonText: "Remove File",
+                    denyButtonText: "Download & Remove",
+                    cancelButtonText: "Cancel",
+                    confirmButtonColor: "red",
+                    denyButtonColor: "#53bfeb",
+                    cancelButtonColor: "#4a4a67"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Remove o arqquivo
+                        localStorage.removeItem(`cachedFile_${file.name}`);
+                        const index = fileDataList.findIndex(f => f.name === file.name);
+                        if (index !== -1) fileDataList.splice(index, 1);
+                        renderFileList();
+                        toggleDropzoneText();
+                    } else if (result.isDenied) {
+                        // Baixa e remove o arquivo
+                        const downloadLink = document.createElement("a");
+                        downloadLink.href = URL.createObjectURL(new Blob([file.content], { type: 'application/octet-stream' }));
+                        downloadLink.download = file.name;
+                        document.body.appendChild(downloadLink);
+                        downloadLink.click();
+                        document.body.removeChild(downloadLink);
+
+                        localStorage.removeItem(`cachedFile_${file.name}`);
+                        const index = fileDataList.findIndex(f => f.name === file.name);
+                        if (index !== -1) fileDataList.splice(index, 1);
+                        renderFileList();
+                        toggleDropzoneText();
+                    }
+                    // Cancel não faz nada
+                });
+            };
+
+            li.appendChild(archiveType);
+            li.appendChild(link);
+            li.appendChild(downloadBtn);
+            li.appendChild(removeBtn);
+            fileList.appendChild(li);
+        });
         toggleDropzoneText();
     }
-    window.addFileToList = addFileToList;
 
     fileSelectButton.addEventListener('click', () => {
         fileInput.click();
@@ -2414,24 +2982,29 @@ function setupDragAndDrop() {
 
             const reader = new FileReader();
             reader.onload = function(event) {
-                const key = `cachedFile_${file.name}`;
-                localStorage.setItem(key, event.target.result);
-                addFileToList(file.name, event.target.result);
+                const arrayBuffer = event.target.result;
+                const uintArray = new Uint8Array(arrayBuffer);
+                const existingNames = fileDataList.map(f => f.name);
+                const safeName = getUniqueFileName(file.name, existingNames);
+
+                saveToLocalStorage(safeName, uintArray);
+                addFileToList(safeName, uintArray);
             };
-            reader.readAsText(file);
+            reader.readAsArrayBuffer(file);
         });
         fileInput.value = '';
     });
 
     // Restaura arquivos do cache
-    fileList.innerHTML = '';
     Object.keys(localStorage).forEach((key) => {
         if (key.startsWith('cachedFile_')) {
             const fileName = key.replace('cachedFile_', '');
-            const content = localStorage.getItem(key);
-            addFileToList(fileName, content);
+            const storedArray = JSON.parse(localStorage.getItem(key));
+            const uintArray = new Uint8Array(storedArray);
+            fileDataList.push({ name: fileName, content: uintArray });
         }
     });
+    renderFileList();
 
     // Drag and drop
     window.addEventListener('dragover', e => e.preventDefault());
@@ -2459,15 +3032,47 @@ function setupDragAndDrop() {
 
             const reader = new FileReader();
             reader.onload = function(event) {
-                const key = `cachedFile_${file.name}`;
-                localStorage.setItem(key, event.target.result);
-                addFileToList(file.name, event.target.result);
+                const arrayBuffer = event.target.result;
+                const uintArray = new Uint8Array(arrayBuffer);
+                const existingNames = fileDataList.map(f => f.name);
+                const safeName = getUniqueFileName(file.name, existingNames);
+
+                saveToLocalStorage(safeName, uintArray);
+                addFileToList(safeName, uintArray);
             };
-            reader.readAsText(file);
+            reader.readAsArrayBuffer(file);
         });
     });
 }
 
+function getUniqueFileName(name, existingNames) {
+    const extIndex = name.lastIndexOf('.');
+    const baseName = extIndex !== -1 ? name.slice(0, extIndex) : name;
+    const extension = extIndex !== -1 ? name.slice(extIndex) : '';
+
+    let newName = name;
+    let counter = 1;
+
+    while (existingNames.includes(newName)) {
+        newName = `${baseName} (${counter})${extension}`;
+        counter++;
+    }
+    //alert (newName);
+    return newName;
+}
+
+function saveToLocalStorage(fileName, uintArray) {
+    const key = `cachedFile_${fileName}`;
+    localStorage.setItem(key, JSON.stringify(Array.from(uintArray)));
+}
+
+const mask = 0b01100110;
+function encode(array) {
+    return array.map(byte => byte ^ mask);
+}
+function decode(array) {
+    return array.map(byte => byte ^ mask);
+}
 
 function saveChanges(button) {
     //alert("Changes saved!");
@@ -2480,47 +3085,15 @@ function cancelChanges(button) {
 }
 
 function savePreset() {
-    let allData;
-    let jsonData;
-
-    // Define nome base
-    let fileName = "preset.json";
-
-    // Verifica se a controladora exige nome personalizado
-    if (nomeControladora === "timespace" || nomeControladora === "spacewalk") {
-        const presetElement = document.querySelector(".preset.selected");
-        if (presetElement) {
-            allData = collectAllTableValues();
-            jsonData = JSON.stringify(allData, null, 2); // json formatado
-            const presetNumber = presetElement.querySelector(".preset-number")?.textContent || "000";
-            let presetName = presetElement.querySelector(".preset-name")?.value || "";
-            if (presetName !== "") presetName = `${presetName}_`;
-            fileName = `${presetName}Preset${presetNumber}.json`;
-        } else {
-            notify(`Please select a preset before generating a backup`, "warning");
-            return;
-        }
-    } else if (nomeControladora === "titan" || nomeControladora === "supernova") {
-
-    } else {
-        notify(`No device connected`, "warning");
+    if (nomeControladora == 'titan' || nomeControladora == 'supernova')
         return;
-    }
+    else if (nomeControladora == 'timespace' || nomeControladora == 'spacewalk') pedalSavePreset();
+}
 
-    // Salva no manager
-    localStorage.setItem(`cachedFile_${fileName}`, jsonData);
-    addFileToList(fileName, jsonData);
-
-    // Baixar o arquivo
-    const blob = new Blob([jsonData], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+function generateBackup() {
+    if (nomeControladora == 'titan' || nomeControladora == 'supernova')
+        return;
+    else if (nomeControladora == 'timespace' || nomeControladora == 'spacewalk') sendMessage([0xF0,0x4C,0x00,0xF7]);
 }
 
 function updateDevice() {
@@ -2534,7 +3107,7 @@ function notify(mensagem, icon) {
       color: "rgb(83, 191, 235)",
       position: "bottom-end",
       icon: icon,
-      title: mensagem,
+      text: mensagem,
       showConfirmButton: false,
       timer: 3000,
       timerProgressBar: true

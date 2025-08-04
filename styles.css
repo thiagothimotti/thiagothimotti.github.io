@@ -219,6 +219,10 @@ header p {
     color: #53bfeb;
 }
 
+.fa-folder:hover {
+    transform: none;
+}
+
 .paste-button,
 .bank-paste-icon,
 .swap-button {
@@ -430,7 +434,7 @@ header p {
 
 #manager{
     display: flex;
-    display: none; /**/
+    display: none; /* Aqui */
     flex-direction: column;
     margin-top: 70px;
 }
@@ -489,7 +493,7 @@ header p {
     color: #888;
     text-align: center;
     font-style: italic;
-    padding: 10px;
+    padding: 0px;
 }
 
 #file-list {
@@ -506,7 +510,7 @@ header p {
     justify-content: space-between;
     align-items: center;
     gap: 10px;
-    padding: 8px 10px;
+    padding: 4px 10px;
     margin-bottom: 5px;
     border-radius: 6px;
     transition: background-color 0.2s ease, box-shadow 0.2s ease;

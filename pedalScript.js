@@ -1,7 +1,7 @@
 console.log("Script de fallback ativado!");
 console.log(nomeControladora);
 
-let activePreset = null;
+window.activePreset = null;
 
 const algorithmData = {
     "Glassy Delay": ["High Cut", "Low Cut", "Saturation", "Mod Type"],
@@ -76,13 +76,13 @@ const parameterRanges = {
     "Wow & Flutter": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Degradation": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Interval A": {
-        tipo: "lista", valores: [-12, -11, -10, -9, -8, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3,
+        tipo: "lista", valores: [-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3,
             4, 5, 6, 7, 8, 9, 10, 11, 12], complemento: ""
     },
     "Tone A": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Level A": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Interval B": {
-        tipo: "lista", valores: [-12, -11, -10, -9, -8, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3,
+        tipo: "lista", valores: [-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3,
             4, 5, 6, 7, 8, 9, 10, 11, 12], complemento: ""
     },
     "Tone B": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
@@ -92,7 +92,7 @@ const parameterRanges = {
     "Mode  ": { tipo: "lista", valores: ["Vintage", "Modern"], complemento: "" },
     "Type": { tipo: "lista", valores: ["LPF", "HPF", "BPF"], complemento: "" },
     "Ressonance": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Envelope": { tipo: "lista", valores: ["RMS", "Triangle", "Square", "Sine"], complemento: "" },
+    "Envelope": { tipo: "lista", valores: ["Triangle", "Square", "Sine", "RMS"], complemento: "" },
     "Sensitivity/Range": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Response/Rate": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Sensitivity": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
@@ -112,14 +112,14 @@ const parameterRanges = {
     "Speed": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Depth": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Shape": { tipo: "lista", valores: ["Sine", "Triangle", "Square"], complemento: "" },
-    "Voices": { tipo: "lista", valores: [2, 3, 4, 5], complemento: "" },
+    "Voices": { tipo: "lista", valores: ["", "", 2, 3, 4, 5], complemento: "" },
     "Stages": { tipo: "lista", valores: [2, 3, 4], complemento: "" },
     "Mode    ": { tipo: "lista", valores: ["Vintage", "Modern"], complemento: "" },
     "Regen": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Manual": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     // Spacewalk extras
     "Decay": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Pre-Delay": { tipo: "nenhum", valor_inicial: 0, valor_final: 125, complemento: "ms" },
+    "Pre-Delay": { tipo: "porcentagem", valor_inicial: 0, valor_final: 125, complemento: "ms" },
     "ReverbMix": { tipo: "porcentagem", valor_inicial: 0, valor_final: 120, complemento: "%" },
     "Dampening": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Low Damp": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
@@ -184,7 +184,7 @@ const modTypeValues = {
     "Speed": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Depth": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Shape": { tipo: "lista", valores: ["Sine", "Triangle", "Square"], complemento: "" },
-    "Voices": { tipo: "lista", valores: [2, 3, 4, 5], complemento: "" },
+    "Voices": { tipo: "lista", valores: ["", "", 2, 3, 4, 5], complemento: "" },
     "Stages": { tipo: "lista", valores: [2, 3, 4], complemento: "" },
     "Mode    ": { tipo: "lista", valores: ["Vintage", "Modern"], complemento: "" },
     "Regen": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
@@ -281,9 +281,20 @@ let imageInicialized = 2;
 let copiedPresetIndex = null;
 let originalPresetName = "";
 
-function createPresets() {
+const model = nomeControladora == "timespace"? 0x01 : 0x02;
+const protocoloVersion = 0x01;
+const compatibility = 0x01;
+
+async function createPresets() {
 
     const sidebar = document.getElementById("sidebar");
+    sidebar.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        //sidebar.classList.add("drag-over");
+    });
+    sidebar.addEventListener("dragleave", () => {
+        //sidebar.classList.remove("drag-over");
+    });
 
     for (let i = 0; i < 128; i++) {
         const preset = document.createElement("div");
@@ -448,6 +459,7 @@ function createPresets() {
                 width: "500px"
             }).then((result) => {
                 if (result.isConfirmed) {
+                    imageInicialized = 2;
                     sendMessage([0xF0,0x14,0x00,0xF7]);
                     notify(`Patch ${presetIndex.toString().padStart(3, '0')} has been cleared.`, "success");
 
@@ -455,6 +467,7 @@ function createPresets() {
                     nameInput.value = "";
                     originalPresetName = "";
                     nameInput.dispatchEvent(new Event("input")); // Apaga o nome na lista
+                    patchChanged = false; //aqui
                 }
             });
         });
@@ -502,7 +515,17 @@ function createPresets() {
                 return;
             }
             
+            const autosaveBtn = [...document.querySelectorAll(".preset-config-row")]
+                .find(row => row.querySelector(".preset-config-label")?.textContent === "Auto Save")
+                ?.querySelector(".preset-config-button");
+
+            const autosaveOn = autosaveBtn?.textContent === "On";
             if (patchChanged && activePreset !== preset) {
+                if (autosaveOn) {
+                    patchChanged = false;
+                    proceedToSelectPatch();
+                    return;
+                }
                 Swal.fire({
                     title: "Are you sure?",
                     text: `All changes on Patch ${activePreset ? activePreset.querySelector(".preset-number").textContent : ''} will be lost!`,
@@ -683,6 +706,135 @@ function createPresets() {
             }
         });*/
 
+        preset.addEventListener("drop", async (e) => {
+            e.preventDefault();
+            preset.classList.remove("drag-over");
+
+            const file = e.dataTransfer.files[0];
+
+            // Arrastando diretamente do computador
+            if (file && file.name.endsWith(".stnpreset")) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const arrayBuffer = event.target.result;
+                    const array = new Uint8Array(arrayBuffer);
+                    console.log(`Conteúdo do arquivo ${file.name}:`, array);
+                    window.lastPresetArray = array;
+                };
+                reader.readAsArrayBuffer(file);
+                return;
+            } 
+
+            // Arrastando de dentro do site
+            const content = e.dataTransfer.getData("application/json");
+            const fileName = e.dataTransfer.getData("text/plain");
+            const fromSaturnRepo = e.dataTransfer.getData("isSaturnRepo") === "true";
+
+            if (content && fileName.endsWith(".stnpreset")) {
+                let originalArray;
+
+                if (fromSaturnRepo) {
+                    // Converte o texto do github para int
+                    const asciiArray = [];
+                    for (let i = 0; i < content.length; i++) {
+                        asciiArray.push(content.charCodeAt(i));
+                    }
+                    const fullArray = new Uint8Array(asciiArray);
+                    originalArray = decode(fullArray.slice(1));
+                } else {
+                    const parsed = JSON.parse(content);
+                    const fullArray = new Uint8Array(parsed);
+                    originalArray = decode(fullArray.slice(1));
+                }
+
+                // Verifica a compatibilidade do arquivo
+                if (originalArray[0] !== model || originalArray[1] !== protocoloVersion || originalArray[5] !== compatibility){
+                    //alert([[originalArray[0], originalArray[1], originalArray[5]], [model, protocoloVersion, compatibility]])
+                    Swal.fire({
+                        toast: true,
+                        background: "#2a2a40",
+                        color: "rgb(83, 191, 235)",
+                        position: "bottom-end",
+                        icon: "error",
+                        title: "Incompatible file format.",
+                        text: "Please use a compatible file for your device.",
+                        showConfirmButton: false,
+                        timer: 5000,
+                        timerProgressBar: true
+                    });
+                    //notify ("Incompatible file format. Please use a compatible file for your device.", "error");
+                    return;
+                }
+
+                console.log(`Conteúdo do arquivo ${fileName}:`, originalArray);
+                window.lastPresetArray = originalArray;
+
+                const partes = [];
+                let header = fileName.toLowerCase().includes("backup") ? [...originalArray.slice(0, 9)] : [i, ...originalArray.slice(0, 9)];
+                //alert (header)
+                let resto = originalArray.slice(9);
+
+                
+
+                // Envia as mensagens (você pode substituir alert por sendMessage depois)
+                //alert(`Header: [${[...header]}]`);
+                const command = fileName.toLowerCase().includes("backup") ? 0x4D : 0x4B;
+                if (command == 0x4D) {
+                    document.getElementById("loading-overlay").style.display = "flex";
+                    // Reparte a informação em partes de até 44 bytes
+                    while (resto.length > 0) {
+                        const parte = resto.slice(0, 42);
+                        partes.push(parte);
+                        resto = resto.slice(42);
+                    }
+                    //alert(partes[partes.length-1].length)
+                    sendMessage([0xF0,command,0x00, 0x00,...header,0xF7]);
+                    //alert([0xF0,command,0x00,...header,0xF0]);
+                    //console.log([0xF0,command,0x00, 0x00,...header,0xF7]);
+                    for (let index = 0; index < partes.length; index++) {
+                        //alert(`Parte ${index + 1}: [${[...parte]}]`);
+                        //alert([0xF0,command,index + 1,...parte,0xF7]);
+                        //console.log([0xF0,command,(index+1) % 128,Math.floor(index/128),...partes[i],0xF7])
+                        aux = 1 % 25;
+                        if (aux != 0) {
+                            await delay(100);
+                        }
+                        sendMessage([0xF0,command,(index+1) % 128,Math.floor((index+1)/128),...partes[index],0xF7]);
+                    };
+                    sendMessage([0xF0,0x30,0x00,0xF7]);
+                    /*if (preset !== activePreset) {
+                        preset.click();
+                    }*/
+                    return;
+                }
+                // Reparte a informação em partes de até 44 bytes
+                while (resto.length > 0) {
+                    const parte = resto.slice(0, 44);
+                    partes.push(parte);
+                    resto = resto.slice(44);
+                }
+                
+                sendMessage([0xF0,command,0x00,...header,0xF7]);
+                //alert([0xF0,command,0x00,...header,0xF0]);
+                //console.log([0xF0,command,0x00,...header,0xF0]);
+                partes.forEach((parte, index) => {
+                    //alert(`Parte ${index + 1}: [${[...parte]}]`);
+                    //alert([0xF0,command,index + 1,...parte,0xF7]);
+                    //console.log([0xF0,command,index + 1,...parte,0xF7])
+                    sendMessage([0xF0,command,index + 1,...parte,0xF7]);
+                });
+
+                if (preset !== activePreset) {
+                    preset.click();
+                }
+
+                return;
+            }
+
+            console.log("Arquivo inválido ou nenhum arquivo.");
+        });
+
+
         sidebar.appendChild(preset);
     }
 
@@ -701,6 +853,7 @@ function reloadActivePreset() {
     sendMessage([0xF0, 0x33, 0x00, 0xF7]);
     sendMessage([0xF0, 0x3B, 0x00, 0xF7]);
 }
+window.reloadActivePreset = reloadActivePreset;
 
 function extractPresets(data) {
     if (data.length !== 33) {
@@ -1288,6 +1441,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
 
             // Se encontrar um input, retorna o valor dele
             if (input) {
+                //alert(input.value)
                 return Number(input.value);
             }
 
@@ -1317,8 +1471,8 @@ function createIndividualTable(number, currentAlgorithmIndex) {
         if (nomeControladora === "timespace") {
             const time = displayValues[0];
             const currentAlgorithm = algorithmDisplay.textContent;
-            const minTime = timeAlg[currentAlgorithm]?.min || 0;
-            displayValues[0] = displayValues[0] - minTime;
+            //const minTime = timeAlg[currentAlgorithm]?.min || 0;
+            //displayValues[0] = displayValues[0] - minTime; aqui pode dar ruim
             const [lsb, msb] = BinaryOperationSend(displayValues[0], 5);
 
             displayValues.splice(0, 1, lsb, msb);
@@ -3949,7 +4103,7 @@ function createSystemButtons() {
         sendMessage([0xF0,0x12,0x00,0xF7]);
         const presetNameInput = activePreset.querySelector(".preset-name");
         originalPresetName = presetNameInput.value;
-        //notify("Preset saved", 'success');
+        notify("Changes saved", 'success');
         patchChanged = false;
     });
 
@@ -4112,411 +4266,8 @@ function attachPresetConfig(preset) {
     preset.parentNode.insertBefore(presetConfigSection, preset.nextSibling);
 }
 
-let allTableValues = {
-    product: nomeControladora,
-    topology: 0,
-    drySettings: [],
-    dsp1: [],
-    dsp2: [],
-    stereoImage: [],
-    commandCenterPage1: [],
-    commandCenterPage2: [],
-    commandCenterPage3: [],
-    presetConfig: []
-};
-
-function collectAllTableValues() {
-    allTableValues.topology = window.currentTypeIndex;
-    allTableValues.drySettings = collectDryValues();
-    allTableValues.dsp1 = collectDSPValues(1);
-    allTableValues.dsp2 = collectDSPValues(2);
-    allTableValues.stereoImage = collectStereoImageValues();
-    [allTableValues.commandCenterPage1, allTableValues.commandCenterPage2] = collectCommandCenterValues();
-    allTableValues.commandCenterPage3 = collectCommandCenterPage3Values();
-    allTableValues.presetConfig = collectPresetConfigValues();
-
-    console.log("Todos os valores coletados:", allTableValues);
-    return allTableValues;
-}
-
-function collectDryValues() {
-    const styleLabel = document.querySelector(".table-title span:nth-child(3)");
-    const style = styleLabel ? styleLabel.textContent.trim() : "Unknown";
-
-    const sliders = document.querySelectorAll(".slider");
-    if (sliders.length < 2) {
-        console.warn("Sliders da tabela Dry não encontrados.");
-        return;
-    }
-
-    const value1 = parseInt(sliders[0].value);
-    const rawValue2 = style === "Pan Control" ? parseInt(sliders[1].value)+100 : parseInt(sliders[1].value);
-    const [value2l, value2m] = BinaryOperationSend(rawValue2, 4);
-
-    const type = style === "Pan Control" ? 0 : 1;
-
-    const label1 = sliders[0].closest("tr").querySelector("td:first-child")?.textContent.trim() || "Slider 1";
-    const label2 = sliders[1].closest("tr").querySelector("td:first-child")?.textContent.trim() || "Slider 2";
-
-    //alert(`Style atual: ${style} (tipo ${type})\n\n${label1}: ${value1}\n${label2}: ${value2l} ${value2m}`);
-
-    return [type, value1, value2l, value2m];
-}
-
-function collectDSPValues(number) {
-    const table = document.getElementById(`dsp-table-${number}`);
-    if (!table) {
-        console.warn(`Tabela DSP${number} não encontrada.`);
-        return;
-    }
-
-    const algAux = table.querySelector(".topology-container span:nth-child(3)").textContent.trim();
-    const algorithmValues = nomeControladora === "timespace" ? [
-        "OFF", "Glassy Delay", "Bucket Brigade", "TransistorTape", "Quantum Pitch", "Holo Filter", "RetroVerse", "Memory Man", "Nebula Swel", "WhammyDelay"
-    ] : [
-        "OFF", "SpaceRoom", "HALL 9000", "Star Plate", "GravitySprings", "SunlightWings", "Dark Galaxy", "Sci-fi Shimmer", "Frosted Verb", "Spatial Vowels", "Stellar Swell"
-    ];
-
-    const indexAlg = algorithmValues.indexOf(algAux);
-    if (indexAlg === -1) {
-        if (algAux == "Inactive") {
-            if (nomeControladora == "timespace") return [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-            else return [0,0,0,0,0,0,0,0,0,0,0,0,0];
-        }
-        console.warn("Algoritmo não reconhecido.");
-        return;
-    }
-
-    const paramAlternativo = [0, 0]; // Fig. Rit.
-    const figValues = ["1/1", "1/2 Dot", "1/2", "1/2 Trip", "1/4 Dot", "1/4", "1/4 Trip", "1/8 Dot", "1/8", "1/8 Trip", "1/16 Dot", "1/16", "1/16 Trip"];
-
-    const displayValues = Array.from(table.querySelectorAll("tr")).map(row => {
-        const labelEl = row.querySelector("td:first-child");
-        const td = row.querySelector("td.button");
-        if (!labelEl || !td) return null;
-
-        const label = labelEl.textContent;
-        const input = td.querySelector("input");
-        const span = td.querySelector("span");
-
-        if (label === "TimeFig. Rit." || label === "SpeedFig. Rit.") {
-            const figButton = row.querySelector(".time-toggle-button");
-            if (figButton?.dataset.pressed === "true" && span) {
-                if (label === "TimeFig. Rit.") paramAlternativo[0] = 1;
-                else paramAlternativo[1] = 1;
-
-                const figText = span.textContent.trim();
-                return figValues.indexOf(figText);
-            }
-        }
-
-        if (input) return Number(input.value);
-
-        let rawText = span?.textContent.trim() || td.textContent.trim();
-        const paramInfo = parameterRanges[label];
-        const paramInfo2 = modTypeValues[label];
-        if (paramInfo?.tipo === "lista") {
-            let cleanValue = rawText;
-            if (paramInfo.complemento && rawText.endsWith(paramInfo.complemento)) {
-                cleanValue = rawText.replace(paramInfo.complemento, "").trim();
-            }
-            const testValue = isNaN(cleanValue) ? cleanValue : Number(cleanValue);
-            return paramInfo.valores.indexOf(testValue);
-        } else if (paramInfo2?.tipo === "lista") {
-            let cleanValue = rawText;
-            if (paramInfo2.complemento && rawText.endsWith(paramInfo2.complemento)) {
-                cleanValue = rawText.replace(paramInfo2.complemento, "").trim();
-            }
-            const testValue = isNaN(cleanValue) ? cleanValue : Number(cleanValue);
-            return paramInfo2.valores.indexOf(testValue);
-        }
-        return Number(rawText);
-    }).filter(val => val !== null && val !== "");
-
-    let message;
-
-    if (nomeControladora === "timespace") {
-        const time = displayValues[0];
-        const currentAlgorithm = algAux;
-        const minTime = timeAlg[currentAlgorithm]?.min || 0;
-        displayValues[0] = time - minTime;
-
-        const [lsb, msb] = BinaryOperationSend(displayValues[0], 5);
-        displayValues.splice(0, 1, lsb, msb);
-
-        while (displayValues.length < 13) displayValues.push(0);
-
-        message = [indexAlg, ...displayValues, ...paramAlternativo];
-
-        //alert(`DSP${number}:\nAlgoritmo: ${currentAlgorithm}\nIndex: ${indexAlg}\nValores: ${message.join(", ")}`);
-        return message;
-
-    } else {
-        while (displayValues.length < 12) displayValues.push(0);
-
-        message = [indexAlg, ...displayValues];
-
-        //alert(`DSP${number}:\nAlgoritmo: ${algAux}\nIndex: ${indexAlg}\nValores: ${message.join(", ")}`);
-        return message;
-    }
-}
-
-function collectStereoImageValues() {
-    const imageName = document.getElementById("imageDisplay").textContent || "";
-    //alert(imageName)
-    //const imageOptions = Object.keys(imageStereo); // usa as chaves do objeto imageStereo
-    let imageIndex = imageOptions.indexOf(imageName);
-    //alert(imageIndex)
-
-    if (imageIndex === -1) {
-        imageIndex = 0;
-        //return [];
-    }
-
-    // Localiza os containers pelas classes
-    const leftTable = document.getElementById("imageTable");
-    const rightTable = document.getElementById("DSPPanTable");
-
-    if (!leftTable || !rightTable) {
-        console.warn("Tabelas da imagem estéreo não encontradas.");
-        return [];
-    }
-
-    // Esquerda
-    const leftRows = leftTable.querySelectorAll("tr");
-    const leftValues = [];
-
-    leftRows.forEach(row => {
-        const input = row.querySelector("input");
-        if (input) leftValues.push(Number(input.value));
-    });
-
-    while (leftValues.length < 3) leftValues.push(0);
-
-    // Direita
-    const rightSliders = rightTable.querySelectorAll("input[type='range']");
-    const rightValues = [];
-
-    rightSliders.forEach(slider => {
-        const val = Number(slider.value) + 100;
-        const [lsb, msb] = BinaryOperationSend(val, 4);
-        rightValues.push(lsb, msb);
-    });
-
-    const result = [imageIndex, ...leftValues.slice(0, 3), ...rightValues];
-    return result;
-}
-
-function collectCommandCenterValues() {
-    const tables = [
-        document.getElementById("command-center-table-1"),
-        document.getElementById("command-center-table-2")
-    ];
-
-    const results = [];
-
-    tables.forEach((tableElement, index) => {
-        if (!tableElement) {
-            console.warn(`Tabela command-center-table-${index + 1} não encontrada.`);
-            results.push([]);
-            return;
-        }
-
-        const modeOptions = [
-            "On/Off | Hold", "On/Off | Mmtry", "On/Off | TgAct", "Tap | Scroll", "Tap | On/Off",
-            "Momentary", "Toggle Action", "Scroll Mode", "ScrollUp", "ScrollDown", "Hold"
-        ];
-        const colorOptions = ["Purple", "Pink", "Cyan", "Green", "Orange", "Red", "Yellow", "Blue"];
-        const holdModeOptions = ["Freeze", "Infinite"];
-        const holdTargetOptions = ["DSP1", "DSP2", "DSP1 + DSP2"];
-        let actionParameterOptions = ["OFF", "Fdback", "DlyMix", "DryLvl", "AlterI", "AlterII"];
-        if (nomeControladora === "spacewalk") {
-            actionParameterOptions = ["OFF", "Decay", "RvbMix", "DryLvl", "Dmpng"];
-        }
-        const dspTargetOptions = ["DSP1", "DSP2", "D1+D2"];
-        const dryTargetOptions = ["DryL+R", "DryL", "DryR"];
-
-        function getIndexFromOptions(text, options) {
-            const normalized = String(text || "").trim().replace(/\s+/g, " ");
-            return options.indexOf(normalized) !== -1 ? options.indexOf(normalized) : 0;
-        }
-
-        function getAsciiFromInput(input) {
-            const text = input?.value || "";
-            const padded = text.padEnd(4, '\0').slice(0, 4);
-            return Array.from(padded).map(c => {
-                if (!c || c === ' ' || c === '\0') return 0;
-                return c.charCodeAt(0) - 64;
-            });
-        }
-
-        function getValueFromSlider(slider) {
-            return slider ? parseInt(slider.value) : 0;
-        }
-
-        function extractDSPText(button) {
-            if (!button) return "";
-            const text = button.innerText.trim().replace(/\s+/g, " ");
-            if (text.includes("D1") && text.includes("D2")) return "D1+D2";
-            if (text.includes("DryL") && text.includes("R")) return "DryL+R";
-            return text;
-        }
-
-        const nameInput = tableElement.querySelector('input[type="text"]');
-        const sliders = tableElement.querySelectorAll("input[type='range']");
-
-        const footMode = getIndexFromOptions(
-            tableElement.querySelector(".foot-mode-button")?.textContent || "",
-            modeOptions
-        );
-
-        const [footNameChar0, footNameChar1, footNameChar2, footNameChar3] = getAsciiFromInput(nameInput);
-
-        const footColor = getIndexFromOptions(
-            tableElement.querySelector(".color-button")?.textContent || "",
-            colorOptions
-        );
-
-        const holdButtons = tableElement.querySelectorAll(".command-extra-row button");
-        const footHoldMode = getIndexFromOptions(holdButtons[0]?.textContent || "", holdModeOptions);
-        const footHoldTarget = getIndexFromOptions(holdButtons[1]?.textContent || "", holdTargetOptions);
-
-        const actionButtons = tableElement.querySelectorAll(".outer-row .action-button");
-        const dspButtons = tableElement.querySelectorAll(".outer-row button:not(.action-button)");
-
-        const actionParam1 = getIndexFromOptions(actionButtons[0]?.textContent || "", actionParameterOptions);
-        const actionValue1 = getValueFromSlider(sliders[0]);
-        const target1Raw = extractDSPText(dspButtons[0]);
-        const actionTarget1 = getIndexFromOptions(
-            target1Raw,
-            actionParameterOptions[actionParam1] === "DryLvl" ? dryTargetOptions : dspTargetOptions
-        );
-        //alert(actionParameterOptions[actionParam1])
-
-        const actionParam2 = getIndexFromOptions(actionButtons[1]?.textContent || "", actionParameterOptions);
-        const actionValue2 = getValueFromSlider(sliders[1]);
-        const target2Raw = extractDSPText(dspButtons[1]);
-        const actionTarget2 = getIndexFromOptions(
-            target2Raw,
-            actionParameterOptions[actionParam2] === "DryLvl" ? dryTargetOptions : dspTargetOptions
-        );
-        //alert(actionParameterOptions[actionParam2])
-
-        const result = [
-            footMode, footNameChar0, footNameChar1, footNameChar2, footNameChar3,
-            footColor, footHoldMode, footHoldTarget,
-            actionParam1, actionValue1, actionTarget1,
-            actionParam2, actionValue2, actionTarget2
-        ];
-
-        results.push(result);
-    });
-
-    return results;
-}
-
-function collectCommandCenterPage3Values() {
-    let exprOptions = ["OFF", "Feedback", "DelayMix", "DryLevel", "AlterI", "AlterII"];
-    if (nomeControladora === "spacewalk") exprOptions = ["OFF", "Decay", "ReverbMix", "DryLevel", "Dampening"];
-
-    const wrapper = document.querySelector(".command-center-wrapper.page3");
-    if (!wrapper) {
-        console.warn("Wrapper da página 3 do Command Center não encontrado.");
-        return [];
-    }
-
-    const tableLeft = wrapper.querySelector(".command-center-table-3");
-    const tableRight = wrapper.querySelector(".right-command-table");
-    if (!tableLeft || !tableRight) {
-        console.warn("Tabelas esquerda ou direita da página 3 não encontradas.");
-        return [];
-    }
-
-    // --- Coleta expressão da esquerda ---
-    const buttonExpr = tableLeft.querySelector(".expression-control-button");
-    const exprText = buttonExpr?.textContent || "OFF";
-    const exprIndex = exprOptions.indexOf(exprText) !== -1 ? exprOptions.indexOf(exprText) : 0;
-
-    const targetOptions = exprText === "DryLevel" ? ["DryL+R", "DryL", "DryR"] : ["DSP1", "DSP2", "D1+D2"];
-
-    const sliders = tableLeft.querySelectorAll("input[type=range]");
-    const expFrom = parseInt(sliders[0]?.value || 0);
-    const expTo = parseInt(sliders[1]?.value || 0);
-
-    const buttonTarget = tableLeft.querySelector("tr:last-child button");
-    const expTargetText = buttonTarget?.textContent || "";
-    const expTargetIndex = targetOptions.indexOf(expTargetText) !== -1 ? targetOptions.indexOf(expTargetText) : 0;
-
-    // --- Função auxiliar para codificação ---
-    function BinaryOperationSend(result, deslocamento) {
-        const lsb = result & ((1 << deslocamento) - 1);
-        const msb = result >> deslocamento;
-        return [lsb, msb];
-    }
-
-    // --- Coleta dos controles da tabela da direita ---
-    const binaryOffset = 4;
-    const rowsRight = tableRight.querySelectorAll("tr");
-    const dataRight = Array.from(rowsRight).map(row => {
-        const container = row.querySelector("td > div");
-        const buttons = container?.querySelectorAll("button") || [];
-        const buttonPC = buttons[0];
-        const buttonCh = buttons[1];
-
-        const pcText = buttonPC?.textContent || "OFF";
-        const pcValue = pcText === "OFF" ? 0 : parseInt(pcText) + 1;
-        const [lsb, msb] = BinaryOperationSend(pcValue, binaryOffset);
-
-        const chText = buttonCh?.textContent || "All";
-        const channel = chText === "All" ? 16 : parseInt(chText) - 1;
-
-        return { lsb, msb, channel };
-    });
-
-    const resultArray = [
-        exprIndex,
-        expFrom,
-        expTo,
-        expTargetIndex,
-        dataRight[0].lsb,
-        dataRight[0].msb,
-        dataRight[0].channel,
-        dataRight[1].lsb,
-        dataRight[1].msb,
-        dataRight[1].channel
-    ];
-
-    return resultArray;
-}
-
-function collectPresetConfigValues() {
-    const rows = document.querySelectorAll(".preset-config-row");
-
-    const values = Array.from(rows).map(row => {
-        const buttonText = row.querySelector(".preset-config-button")?.textContent.trim() || "";
-
-        let code;
-
-        if (["Keep Same", "Off", "Inactive"].includes(buttonText)) {
-            code = 0;
-        } else if (["Turn On", "On"].includes(buttonText)) {
-            code = 1;
-        } else if (buttonText === "Turn Off") {
-            code = 1;
-        } else if (!isNaN(parseInt(buttonText))) {
-            code = parseInt(buttonText) - 39;
-        } else {
-            code = -1; // fallback para erro
-        }
-
-        return code;
-    });
-
-    // Aplica BinaryOperationSend no 4º valor
-    const [lsb, msb] = BinaryOperationSend(values[3], 4);
-    values.splice(3, 1, lsb, msb);
-
-    return values;
+function pedalSavePreset() {
+    sendMessage([0xF0,0x4A, parseInt(activePreset.querySelector(".preset-number").textContent),0xF7])
 }
 
 createPresets();

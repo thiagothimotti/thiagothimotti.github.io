@@ -96,15 +96,15 @@
             <button class="system-button" id="connectButton" onclick="toggleConnection(this)">Connect</button>
             <div id="manager">
                 <div id="dropzone">
-                    <p id="dropzone-text">Arraste e solte um arquivo aqui</p>
                     <ul id="file-list"></ul>
+                    <p id="dropzone-text">Arraste e solte um arquivo aqui</p>
                     <button id="file-select-button" class="system-button">Select File</button>
                     <label for="file-input" class="sr-only">Select File</label>
                     <input type="file" id="file-input" accept=".json,.stnpreset" multiple>
                 </div>
                 <div class="buttons-container" id="managerButtons">
                     <button class="system-button" id="savePresetButton" onclick="savePreset()">Generate Preset File</button>
-                    <button class="system-button" id="backupButton" onclick="updateDevice()">Generate Backup File</button>
+                    <button class="system-button" id="backupButton" onclick="generateBackup()">Generate Backup File</button>
                 </div>
                 <button class="system-button" id="updateButton" onclick="updateDevice()">Check for updates</button>
             </div>
