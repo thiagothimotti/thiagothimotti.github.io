@@ -2647,7 +2647,8 @@ function setupDragAndDrop() {
             canToggleRepo = false;
 
             if (!repoLoaded) {
-                loadRepositoryFiles();
+                //loadRepositoryFiles();
+                notify(`Under maintenance.`, "warning")
             } else {
                 repoVisible = !repoVisible;
                 repoList.style.display = repoVisible ? 'block' : 'none';
