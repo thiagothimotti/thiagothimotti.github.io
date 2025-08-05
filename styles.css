@@ -301,6 +301,11 @@ header p {
     width: calc(100vw - 700px);
     /*max-width: 1000px;*/
     margin: auto;
+    user-select: none;          /* Padrão moderno */
+    -webkit-user-select: none;  /* Safari e Chrome */
+    -ms-user-select: none;      /* IE/Edge antigos */
+    -moz-user-select: none;     /* Firefox */
+    -webkit-user-drag: none;
 }
 
 #mainContent::-webkit-scrollbar {
@@ -334,6 +339,11 @@ header p {
     border-radius: 10px;
     padding: 0px;
     text-align: center;
+    user-select: none;          /* Padrão moderno */
+    -webkit-user-select: none;  /* Safari e Chrome */
+    -ms-user-select: none;      /* IE/Edge antigos */
+    -moz-user-select: none;     /* Firefox */
+    -webkit-user-drag: none;
 }
 
 #table-1,
@@ -347,6 +357,11 @@ header p {
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     padding: 20px;
+    user-select: none;          /* Padrão moderno */
+    -webkit-user-select: none;  /* Safari e Chrome */
+    -ms-user-select: none;      /* IE/Edge antigos */
+    -moz-user-select: none;     /* Firefox */
+    -webkit-user-drag: none;
 }
 
 #table-6 {

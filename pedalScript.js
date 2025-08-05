@@ -908,6 +908,12 @@ async function createTable(index, presetName) {
     sendMessage([0xF0, 0x3E, 0x00, 0xF7]);
     await delay(waitMessage)
     sendMessage([0xF0,0x3F,0x00,0xF7]);
+    await delay(waitPresetChange)
+
+    const allElements = mainContent.querySelectorAll("*");
+    allElements.forEach(el => {
+        el.setAttribute("draggable", "false");
+    });
 }
 
 function updatePanVisibility(selectedImage, topology) {
@@ -984,12 +990,19 @@ function createTopologySection(onTopologyChange) {
         if (dsp2 && dsp2.updateLabels) {
             dsp2.updateLabels(true);
         }
+
+        const imageDisplay = document.getElementById("imageDisplay");
+        const selectedImage = imageDisplay.textContent.trim();
+        //console.log(selectedImage)
         if (selectedOption === "Mixed") {
-            setPanDisplayVisibility([false, true]);
+            updatePanVisibility(selectedImage, "Mixed")
+            //setPanDisplayVisibility([false, true]);
         } else if (selectedOption === "Single") {
-            setPanDisplayVisibility([true, false]);
+            updatePanVisibility(selectedImage, "Single")
+            //setPanDisplayVisibility([true, false]);
         } else {
-            setPanDisplayVisibility([true, true]);
+            updatePanVisibility(selectedImage, "Dual")
+            //setPanDisplayVisibility([true, true]);
         }
 
         if (selectedOption != "Single") sendMessage([0xF0,0x38,0x00,0xF7])
