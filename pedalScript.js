@@ -967,9 +967,10 @@ function createTopologySection(onTopologyChange) {
     const topologyOptions = ["Single", "Dual", "Series", "Mixed", "Cascade"];
 
     function handleTopologyChange(selectedOption) {
-        //window.currentTypeIndex = topologyOptions.indexOf(selectedOption);
+        window.currentTypeIndex = topologyOptions.indexOf(selectedOption);
         typeDisplay.textContent = selectedOption;
         sendMessage([0xF0, 0x32, window.currentTypeIndex, 0xF7]);
+        //alert([0xF0, 0x32, window.currentTypeIndex, 0xF7])
         patchChanged = true;
 
         const dsp2 = document.getElementById("dsp-table-2");
