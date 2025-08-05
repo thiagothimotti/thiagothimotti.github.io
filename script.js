@@ -1549,7 +1549,18 @@ async function setupMidiListener() {
                             }
                             break;
                         case 0x4D:
-                            await delay(500)
+                            await delay(200)
+
+                            presetAux = Number(activePreset.querySelector(".preset-number").textContent) < 127? Number(activePreset.querySelector(".preset-number").textContent)+1 : Number(activePreset.querySelector(".preset-number").textContent)-1;
+                            sendMessage([0xF0, 0x43, Number(presetAux), 0xF7]);
+                            await delay(100)
+                            sendMessage([0xF0, 0x43, Number(activePreset.querySelector(".preset-number").textContent), 0xF7]);
+                            //alert(activePreset.querySelector(".preset-number").textContent)
+                            reloadActivePreset();
+                            await delay(200);
+
+                            lastMessage = [0x4D];
+                            sendMessage([0xF0,0x06,0x00,0xF7]);
                             
                             document.getElementById("loading-overlay").style.display = "none";
                             break;
@@ -2564,7 +2575,7 @@ async function heartBeat() {
 
         let aux = 0;
         let output = null;
-        while(aux >= 0){
+        while(aux >= 0){ //aqui não usar >=
             if (outputs[aux].name === 'Saturno Pedais'){
                 output = outputs[aux];
                 aux = -1;

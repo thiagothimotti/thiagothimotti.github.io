@@ -280,6 +280,8 @@ let patchChanged = false;
 let imageInicialized = 2;
 let copiedPresetIndex = null;
 window.originalPresetName = "";
+let waitPresetChange = 40;
+let waitMessage = 2;
 
 const model = nomeControladora == "timespace"? 0x01 : 0x02;
 const protocoloVersion = 0x01;
@@ -581,7 +583,7 @@ async function createPresets() {
                 proceedToSelectPatch();
             }
 
-            function proceedToSelectPatch() {
+            async function proceedToSelectPatch() {
                 document.querySelectorAll(".preset").forEach(p => {
                     p.classList.remove("selected");
                     p.style.backgroundColor = "";
@@ -601,6 +603,7 @@ async function createPresets() {
                 document.querySelectorAll(".swap-to").forEach(btn => btn.remove());
 
                 sendMessage([0xF0, 0x43, i, 0xF7]);
+                await delay(waitPresetChange)
                 attachPresetConfig(preset);
                 preset.classList.add("selected");
                 arrow.style.transform = "rotate(90deg) scale(1.8)";
@@ -839,9 +842,9 @@ async function createTable(index, presetName) {
     mainContent.innerHTML = "";
 
     sendMessage([0xF0, 0x37, 0x00, 0xF7]);
-    //await delay(1000)
+    await delay(waitMessage)
     sendMessage([0xF0, 0x38, 0x00, 0xF7]);
-    //await delay(1000)
+    await delay(waitMessage)
 
     const presetTitle = createPresetTitle(presetName);
     mainContent.appendChild(presetTitle);
@@ -868,6 +871,7 @@ async function createTable(index, presetName) {
     const imageTable = createImageTable();
     mainContent.appendChild(imageTable.container);
     sendMessage([0xF0, 0x33, 0x00, 0xF7]);
+    await delay(waitMessage)
     
     updateImageRowsFunct = imageTable.updateImageRows;
     const topology = document.querySelector(".type-display")?.textContent || "Single";
@@ -884,6 +888,7 @@ async function createTable(index, presetName) {
     }
 
     sendMessage([0xF0, 0x3B, 0x00, 0xF7]);
+    await delay(waitMessage)
 
     const commandCenterTitle = document.createElement("h2");
     commandCenterTitle.textContent = "Command Center";
@@ -899,7 +904,9 @@ async function createTable(index, presetName) {
     mainContent.appendChild(createSystemButtons())
 
     sendMessage([0xF0, 0x3D, 0x00, 0xF7]);
+    await delay(waitMessage)
     sendMessage([0xF0, 0x3E, 0x00, 0xF7]);
+    await delay(waitMessage)
     sendMessage([0xF0,0x3F,0x00,0xF7]);
 }
 
