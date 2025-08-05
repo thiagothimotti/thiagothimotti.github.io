@@ -307,6 +307,11 @@ header p {
     width: 0px;
 }
 
+#mainContent.drag-over {
+    background-color: rgba(83, 191, 235, 0.1); /* ou qualquer cor de destaque */
+    border: 2px dashed rgba(83, 191, 235, 0.6);
+}
+
 #selectedPatch {
     font-size: 22px;
 }
@@ -434,7 +439,7 @@ header p {
 
 #manager{
     display: flex;
-    display: none; /* Aqui */
+    /*display: none;  Aqui */
     flex-direction: column;
     margin-top: 70px;
 }

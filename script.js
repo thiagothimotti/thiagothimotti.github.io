@@ -1008,7 +1008,20 @@ async function setupMidiListener() {
                             console.log('remotes ', remotes)
                             break;
                         case 6:
-                            sendMessage([0xF0,0x0A,currentBankLetter.charCodeAt(0)-65,0xF7]);
+                            //alert(sysexData);
+                            if (nomeControladora == 'titan' || nomeControladora == "supernova"){
+                                sendMessage([0xF0,0x0A,currentBankLetter.charCodeAt(0)-65,0xF7]);
+                            } else {
+                                let newName = String.fromCharCode(...sysexData);
+                                //if (!window.activePreset) return;
+                                const nameInput = activePreset.querySelector(".preset-name");
+                                if (nameInput) {
+                                    nameInput.value = newName;
+                                    window.originalPresetName = newName;
+                                    nameInput.dispatchEvent(new Event("input")); // Atualiza a interface
+                                    nameInput.dispatchEvent(new Event("blur"));  // Envia o nome via sendMessage
+                                }
+                            }
                             break;
                         case 10:
                             console.log(Array.from(sysexData).map(num => String.fromCharCode(num)).join(''));
@@ -1333,6 +1346,9 @@ async function setupMidiListener() {
                             sendMessage([0xF0, 0x43, Number(activePreset.querySelector(".preset-number").textContent), 0xF7]);
                             //alert(activePreset.querySelector(".preset-number").textContent)
                             reloadActivePreset();
+                            await delay(200);
+                            lastMessage = [0x4B];
+                            sendMessage([0xF0,0x06,0x00,0xF7]);
                             break;
                         case 0x4A:
                             //alert(sysexData);
@@ -2667,15 +2683,17 @@ function setupDragAndDrop() {
                             li.style.gap = '10px';
                             li.style.minHeight = '23px';
 
-                            const byteArray = new Uint8Array(buffer);
-                            const fileTypeFlag = byteArray[0]; // 0 = preset, 1 = backup
+                            const byteArray = new Uint8Array(content);
+                            //alert(byteArray)
+                            const fileTypeFlag = byteArray[0]; // 102 = preset, 103 = backup
                             const archiveType = document.createElement('button');
-                            archiveType.textContent = fileTypeFlag === 1 ? 'BKP' : 'PRST';
+                            archiveType.textContent = fileTypeFlag === 103 ? 'BKP' : 'PRST';
+                            //alert(fileTypeFlag)
                             
-                            if(fileTypeFlag === 0){
+                            if(fileTypeFlag === 102){
                                 const fileModelFlag = byteArray[1];
-                                archiveType.style.border = fileModelFlag === 1 ? "1px solid red" : `1px solid ${saveBlue}`;
-                                archiveType.style.color = fileModelFlag === 1 ? "red" : saveBlue;
+                                archiveType.style.border = fileModelFlag === 1 ? "1px solid #ff3300ff" : `1px solid ${saveBlue}`;
+                                archiveType.style.color = fileModelFlag === 1 ? "#ff3300ff" : saveBlue;
                             } else {
                                 archiveType.style.color = "silver";
                                 archiveType.style.border = "1px solid silver";
@@ -3097,7 +3115,7 @@ function generateBackup() {
 }
 
 function updateDevice() {
-    notify("Em breve", "warning")
+    notify("Coming soon", "warning")
 }
 
 function notify(mensagem, icon) {

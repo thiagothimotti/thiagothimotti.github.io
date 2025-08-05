@@ -279,13 +279,43 @@ let saveBlue = "rgb(0, 130, 255)";
 let patchChanged = false;
 let imageInicialized = 2;
 let copiedPresetIndex = null;
-let originalPresetName = "";
+window.originalPresetName = "";
 
 const model = nomeControladora == "timespace"? 0x01 : 0x02;
 const protocoloVersion = 0x01;
 const compatibility = 0x01;
 
 async function createPresets() {
+
+    const mainContent = document.getElementById("mainContent");
+
+    mainContent.addEventListener("dragover", (e) => {
+        e.preventDefault(); // necessário para permitir o drop
+        mainContent.classList.add("drag-over");
+    });
+
+    mainContent.addEventListener("dragleave", () => {
+        mainContent.classList.remove("drag-over");
+    });
+
+    mainContent .addEventListener("drop", async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!window.activePreset) return;
+
+        mainContent.classList.remove("drag-over");
+
+        // Redireciona para o drop do preset
+        const dropEvent = new DragEvent("drop", {
+            dataTransfer: e.dataTransfer,
+            bubbles: true,
+            cancelable: true
+        });
+
+        window.activePreset.dispatchEvent(dropEvent);
+    });
+
 
     const sidebar = document.getElementById("sidebar");
     sidebar.addEventListener("dragover", (e) => {
@@ -465,7 +495,7 @@ async function createPresets() {
 
                     const nameInput = preset.querySelector(".preset-name");
                     nameInput.value = "";
-                    originalPresetName = "";
+                    window.originalPresetName = "";
                     nameInput.dispatchEvent(new Event("input")); // Apaga o nome na lista
                     patchChanged = false; //aqui
                 }
@@ -542,7 +572,7 @@ async function createPresets() {
                     if (result.isConfirmed) {
                         patchChanged = false;  // Reseta o flag
                         const previousInput = activePreset.querySelector(".preset-name");
-                        previousInput.value = originalPresetName;
+                        previousInput.value = window.originalPresetName;
                         previousInput.dispatchEvent(new Event("input"));
                         proceedToSelectPatch();
                     }
@@ -559,7 +589,7 @@ async function createPresets() {
                 });
 
                 const presetNameInput = preset.querySelector(".preset-name");
-                originalPresetName = presetNameInput.value;
+                window.originalPresetName = presetNameInput.value;
 
                 const existingConfig = document.getElementById("preset-config-table");
                 if (existingConfig) {
@@ -630,81 +660,6 @@ async function createPresets() {
         preset.addEventListener("dragleave", () => {
             preset.classList.remove("drag-over");
         });
-        /*
-        preset.addEventListener("drop", (e) => {
-            e.preventDefault();
-            preset.classList.remove("drag-over");
-
-            const jsonText = e.dataTransfer.getData("application/json");
-            if (!jsonText) return;
-
-            try {
-                const data = JSON.parse(jsonText);
-                const presetIndex = i;
-
-                // Salva o JSON para facilitar o uso
-                const product = data.product ?? '';
-                window.currentTypeIndex = data.topology ?? null;
-                const drySettings = data.drySettings || [];
-                const presetConfig = data.presetConfig || [];
-                const dsp1 = data.dsp1 || [];
-                const dsp2 = data.dsp2 || [];
-                const stereoImage = data.stereoImage || [];
-                const commandCenterPage1 = data.commandCenterPage1 || [];
-                const commandCenterPage2 = data.commandCenterPage2 || [];
-                const commandCenterPage3 = data.commandCenterPage3 || [];
-
-                if (product == nomeControladora) {
-                    sendMessage([0xF0,0x43,presetIndex,0xF7]);
-
-                    sendMessage([0xF0, 0x32, window.currentTypeIndex, 0xF7]);
-                    sendMessage([0xF0,0x31,0x00,0xF7]);
-
-                    sendMessage([0xF0,0x34,...drySettings,0xF7]);
-                    sendMessage([0xF0,0x33,0x00,0xF7]);
-
-                    sendMessage([0xF0,0x36,...presetConfig,0xF7]);
-                    sendMessage([0xF0,0x35,0x00,0xF7]);
-
-                    sendMessage([0xF0,0x44,dsp1[0],0x00,0xF7]);
-                    sendMessage([0xF0,0x39,...dsp1.slice(1),0xF7]);
-                    sendMessage([0xF0,0x37,0x00,0xF7]);
-                    sendMessage([0xF0,0x44,dsp2[0],0x01,0xF7]);
-                    sendMessage([0xF0,0x3A,...dsp2.slice(1),0xF7]);
-                    sendMessage([0xF0,0x38,0x00,0xF7]);
-
-                    sendMessage([0xF0,0x3C,...stereoImage,0xF7]);
-                    sendMessage([0xF0,0x3B,0x00,0xF7]);
-
-                    sendMessage([0xF0,0x40,...commandCenterPage1,0xF7]);
-                    sendMessage([0xF0,0x3D,0x00,0xF7]);
-                    sendMessage([0xF0,0x41,...commandCenterPage2,0xF7]);
-                    sendMessage([0xF0,0x3E,0x00,0xF7]);
-                    sendMessage([0xF0,0x42,...commandCenterPage3,0xF7]);
-                    sendMessage([0xF0,0x3F,0x00,0xF7]);
-                } else {
-                    alert("Arquivo invalido")
-                }
-
-                /*alert(
-                    `Preset ${presetIndex} importado!\n\n` +
-                    `commandCenterPage1: ${commandCenterPage1.join(', ')}\n` +
-                    `commandCenterPage2: ${commandCenterPage2.join(', ')}\n` +
-                    `commandCenterPage3: ${commandCenterPage3.join(', ')}\n` +
-                    `drySettings: ${drySettings.join(', ')}\n` +
-                    `dsp1: ${dsp1.join(', ')}\n` +
-                    `dsp2: ${dsp2.join(', ')}\n` +
-                    `presetConfig: ${presetConfig.join(', ')}\n` +
-                    `stereoImage: ${stereoImage.join(', ')}\n` +
-                    `topology: ${topology}\n` +
-                    `product: ${product}`
-                );*a/
-
-            } catch (err) {
-                console.error("Erro ao interpretar o JSON arrastado:", err);
-                alert("Erro ao interpretar o arquivo JSON.");
-            }
-        });*/
 
         preset.addEventListener("drop", async (e) => {
             e.preventDefault();
@@ -741,6 +696,8 @@ async function createPresets() {
                     }
                     const fullArray = new Uint8Array(asciiArray);
                     originalArray = decode(fullArray.slice(1));
+                    alert(originalArray)
+                    alert(fullArray)
                 } else {
                     const parsed = JSON.parse(content);
                     const fullArray = new Uint8Array(parsed);
@@ -4102,7 +4059,7 @@ function createSystemButtons() {
     saveButton.addEventListener("click", () => {
         sendMessage([0xF0,0x12,0x00,0xF7]);
         const presetNameInput = activePreset.querySelector(".preset-name");
-        originalPresetName = presetNameInput.value;
+        window.originalPresetName = presetNameInput.value;
         notify("Changes saved", 'success');
         patchChanged = false;
     });
@@ -4122,10 +4079,10 @@ function createSystemButtons() {
         }
 
         // Atualiza o nome do preset caso cancele as mudanças
-        if (activePreset && originalPresetName !== undefined) {
+        if (activePreset && window.originalPresetName !== undefined) {
             const input = activePreset.querySelector(".preset-name");
             //alert(originalPresetName);
-            input.value = originalPresetName;
+            input.value = window.originalPresetName;
             input.dispatchEvent(new Event("input"));
         }
 
