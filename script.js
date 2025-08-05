@@ -1258,6 +1258,8 @@ async function setupMidiListener() {
                         case 0x33:
                             //alert(sysexData);
                             //alert(binaryOperation(sysexData[3], sysexData[4], 4))
+                            if (sysexData[1] == 1)
+                                window.setDryMode("Indiv. Level");
                             updateSliders(sysexData[2], binaryOperation(sysexData[3], sysexData[4], 4))
                             //updateSliders(10, 20)
                             break;

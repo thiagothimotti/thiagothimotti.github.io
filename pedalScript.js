@@ -1102,6 +1102,7 @@ function createFormattedTable() {
         }
         patchChanged = true;
     }
+    window.setDryMode = setMode;
 
     function toggleMode() {
         const current = modeLabel.textContent.trim();
