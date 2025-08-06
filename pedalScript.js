@@ -168,7 +168,7 @@ const modTypeData = {
     "Tremolo": ["Speed", "Depth", "Shape"],
     "Chorus": ["Speed", "Depth", "Voices"],
     "Phaser": ["Speed", "Depth", "Stages"],
-    "Flanger": ["Speed", "Depth", "Mode  ", "Regen", "Manual"]
+    "Flanger": ["Speed", "Depth", "Mode    ", "Regen", "Manual"]
 };
 
 const modTypeDataStart = {
@@ -1796,7 +1796,7 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                 valueCell.style.cursor = "pointer";
                 valueCell.addEventListener("click", (e) => {
                     const options = range.valores.map(v => v === "OFF" ? "OFF" : `${v} ${range.complemento}`);
-                    createPopup(options, sel => {
+                    createPopup(options, async sel => {
                         valueCell.textContent = sel;
 
                         if (label === "Mod Type" && algorithmDisplay.textContent === "Glassy Delay") {
@@ -1804,7 +1804,9 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                             const optionsMT = ["OFF", "Vibrato", "Tremolo", "Chorus", "Phaser", "Flanger"];
                             const cleanSel = sel.replace(range.complemento, "").trim();
                             //alert([0xF0, 0x47, optionsMT.indexOf(cleanSel), number-1, 0xF7]);
+                            await delay(waitPresetChange)
                             sendMessage([0xF0, 0x47, optionsMT.indexOf(cleanSel), number-1, 0xF7]);
+                            await delay(waitPresetChange)
                             //alert([0xF0,0x36+number,0x00,0xF7]);
                             sendMessage([0xF0,0x36+number,0x00,0xF7]);
                             patchChanged = true;
@@ -4078,8 +4080,10 @@ function createSystemButtons() {
     saveButton.className = "system-button";
     saveButton.textContent = "Save";
     saveButton.style.width = "100px";
-    saveButton.addEventListener("click", () => {
+    saveButton.addEventListener("click", async () => {
+        await delay(waitPresetChange)
         sendMessage([0xF0,0x12,0x00,0xF7]);
+        await delay(waitPresetChange)
         const presetNameInput = activePreset.querySelector(".preset-name");
         window.originalPresetName = presetNameInput.value;
         notify("Changes saved", 'success');
