@@ -3052,30 +3052,47 @@ function setupDragAndDrop() {
         dropzone.classList.remove('dragover');
     });
 
-    dropzone.addEventListener('drop', (e) => {
+    function readFileAsUint8Array(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(new Uint8Array(e.target.result));
+            reader.onerror = e => reject(e);
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    dropzone.addEventListener('drop', async (e) => {
         e.preventDefault();
         dropzone.classList.remove('dragover');
 
-        const files = e.dataTransfer.files;
-        Array.from(files).forEach((file) => {
+        const files = Array.from(e.dataTransfer.files);
+        for (const file of files) {
             if (!isValidFileType(file.name)) {
                 notify(`Invalid file. Please make sure you are uploading a Saturno Pedais backup file.`, "warning");
-                return;
+                continue;
             }
+            try {
+                const uintArray = await readFileAsUint8Array(file);
 
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const arrayBuffer = event.target.result;
-                const uintArray = new Uint8Array(arrayBuffer);
+                // Validar os dois primeiros caracteres
+                const firstChar = String.fromCharCode(uintArray[0]);
+                const secondChar = String.fromCharCode(uintArray[1]);
+                if (!((firstChar === 'f' || firstChar === 'g') && (secondChar === 'g' || secondChar === 'h'))) {
+                    notify(`Invalid file. Please make sure you are using an updated file.`, "warning");
+                    continue;
+                }
+
                 const existingNames = fileDataList.map(f => f.name);
                 const safeName = getUniqueFileName(file.name, existingNames);
 
                 saveToLocalStorage(safeName, uintArray);
                 addFileToList(safeName, uintArray);
-            };
-            reader.readAsArrayBuffer(file);
-        });
+            } catch (err) {
+                console.error("Erro ao ler arquivo:", file.name, err);
+            }
+        }
     });
+
 }
 
 function getUniqueFileName(name, existingNames) {
