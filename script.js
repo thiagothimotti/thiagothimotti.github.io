@@ -2487,8 +2487,22 @@ async function toggleConnection(button) {
             const outputs = Array.from(midiAccess.outputs.values());
             if (outputs.length === 0) {
                 alert("Nenhum dispositivo MIDI encontrado. Abortando conexão.");
-                return; // Sai da função e impede a conexão
+                return;
             }
+
+            // Caso o site perca a conexão com o pedal o heartbeat é interrompido
+            midiAccess.onstatechange = (event) => {
+                if (
+                    event.port.type === "output" &&
+                    event.port.name === "Saturno Pedais" &&
+                    event.port.state === "disconnected"
+                ) {
+                    console.warn("Dispositivo 'Saturno Pedais' desconectado, parando heartbeat.");
+                    clearInterval(intervalId);
+                    intervalId = null;
+                    location.reload();
+                }
+            };
 
             initializeSite();
 
@@ -2518,78 +2532,65 @@ async function toggleConnection(button) {
 
         // Fechar conexão MIDI explicitamente
         if (midiAccess) {
-            midiAccess.inputs.forEach(input => input.onmidimessage = null); // Remove listeners
+            midiAccess.inputs.forEach(input => input.onmidimessage = null);
             midiAccess = null;
         }
-        //await delay(1000);
-        location.reload();/* pensar bem */
 
-        // Remover elementos visuais
+        location.reload();
+
+        // Limpeza visual e variáveis
         document.querySelectorAll('.bank').forEach(bank => bank.remove());
         document.querySelectorAll('.bank-details').forEach(details => details.style.display = 'none');
         document.querySelector('.gear-icon')?.remove();
         document.querySelectorAll('.table-section').forEach(details => details.style.display = 'none');
         document.getElementById('patchTitle').style.display = 'none';
-        if (document.getElementById('bnkCfg')) {
-            document.getElementById('bnkCfg')?.remove();
-        }
+        document.getElementById('bnkCfg')?.remove();
         document.getElementById('saveButton').style.display = 'none';
         document.getElementById('cancelButton').style.display = 'none';
-        lastMessage = []
-        const patchCopyIcon = document.getElementById('patch-copy-icon');
-        if (patchCopyIcon) {
-            patchCopyIcon.remove();
-        }
-        const patchSwapIcon = document.getElementById('patch-swap-icon');
-        if (patchSwapIcon) {
-            patchSwapIcon.remove();
-        }
-        const patchClearIcon = document.getElementById('patch-clear-icon');
-        if (patchClearIcon) {
-            patchClearIcon.remove();
-        }
+        lastMessage = [];
+        document.getElementById('patch-copy-icon')?.remove();
+        document.getElementById('patch-swap-icon')?.remove();
+        document.getElementById('patch-clear-icon')?.remove();
 
         document.getElementById('editor-title').textContent = 'Saturno Web Editor';
-        
+
         // Alterar o texto do botão
         button.textContent = "Connect";
 
         activePatch = null;
-        isProcessingPatch = false; // Flag para impedir cliques multiplos
+        isProcessingPatch = false;
     }
 }
 
 async function heartBeat() {
     try {
-        isExecuting = true;  // Marcar a execução em andamento
+        isExecuting = true;
 
         const outputs = Array.from(midiAccess.outputs.values());
-        if (outputs.length === 0) {
-            //alert("Nenhum dispositivo MIDI encontrado. Abortando conexão.");
-            toggleConnection(document.getElementById('connectButton'));
-            notify ("Nenhum dispositivo MIDI encontrado. Abortando conexão.", 'error');
-            //await(10000)
-            //window.location.reload();
+        const output = outputs.find(o => o.name === 'Saturno Pedais');
+
+        if (!output) {
+            console.warn("Dispositivo não encontrado, interrompendo heartbeat.");
+            clearInterval(intervalId);
+            intervalId = null;
             return;
         }
 
-        let aux = 0;
-        let output = null;
-        while(aux >= 0){ //aqui não usar >=
-            if (outputs[aux].name === 'Saturno Pedais'){
-                output = outputs[aux];
-                aux = -1;
-            } else aux++;
-        }
-        output.send([0xF0, 0x08, 0x00, 0xF7]); // Envia mensagem MIDI para o dispositivo
-        console.log('heartbeat')
+        /* Exibe COM, PID e VID
+        console.log("Porta:", output.name);
+        console.log("Fabricante (COM):", output.manufacturer || "N/A");
+        console.log("PID:", output.version || "N/A");
+        console.log("VID:", output.id || "N/A");*/
 
+        output.send([0xF0, 0x08, 0x00, 0xF7]);
+        console.log('heartbeat');
     } catch (error) {
         alert("Erro ao enviar mensagem MIDI: " + error);
     } finally {
-        isExecuting = false;  // Marcar a execução como finalizada
+        isExecuting = false;
     }
 }
+
 
 function setupDragAndDrop() {
     //const saveBlue = "rgb(0, 130, 255)";
