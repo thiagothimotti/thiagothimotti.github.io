@@ -651,7 +651,10 @@ async function createPresets() {
                 }
             }
             sendMessage([0xF0, 0x07, ...asciiArray, 0xF7]);
-            patchChanged = true;
+            //alert([this.value, window.originalPresetName])
+            if (this.value != window.originalPresetName){
+                patchChanged = true;    // Aqui ele muda para true mesmo que nenhuma mudança tenha sido feita no nome
+            }
         });
 
         // Lida com o import de presets
