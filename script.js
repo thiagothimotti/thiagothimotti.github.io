@@ -100,6 +100,89 @@ async function initializeSite() {
         sidebar.appendChild(bankDetails);
     }
 
+    const mainContent = document.getElementById("mainContent");
+
+    mainContent.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        mainContent.classList.add("drag-over");
+    });
+
+    mainContent.addEventListener("dragleave", () => {
+        mainContent.classList.remove("drag-over");
+    });
+
+    mainContent.addEventListener("drop", async (e) => {
+        e.preventDefault();
+        mainContent.classList.remove("drag-over");
+
+        const content = e.dataTransfer.getData("application/json");
+        const fileName = e.dataTransfer.getData("text/plain");
+        const fromSaturnRepo = e.dataTransfer.getData("isSaturnRepo") === "true";
+
+        if (!content || !fileName.endsWith(".stnpreset") || fromSaturnRepo) {
+            console.log("Invalid drop or file not from manager.");
+            return;
+        }
+
+        const result = await Swal.fire({
+            title: "Load backup?",
+            text: `Do you want to load the backup? The current settings will be lost.`,
+            icon: "question",
+            background: "#2a2a40",
+            color: "white",
+            width: "500px",
+            showCancelButton: true,
+            confirmButtonText: "Yes, load backup",
+            cancelButtonText: "Cancel",
+            cancelButtonColor: "red",
+            confirmButtonColor: "#53bfeb",
+        });
+
+        if (!result.isConfirmed) return;
+
+        Swal.fire({
+            toast: true,
+            position: "bottom-end",
+            background: "#2a2a40",
+            color: "rgb(83, 191, 235)",
+            icon: "info",
+            title: "Loading backup...",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+
+        const parsed = JSON.parse(content);
+        const fullArray = new Uint8Array(parsed);
+        const originalArray = decode(fullArray.slice(1));
+
+        console.log(`Backup content of ${fileName}:`, originalArray);
+
+        const header = [...originalArray.slice(0, 9)];
+        let resto = originalArray.slice(9);
+        const partes = [];
+
+        const command = 0x4D;
+
+        while (resto.length > 0) {
+            const parte = resto.slice(0, 42);
+            partes.push(parte);
+            resto = resto.slice(42);
+        }
+
+        document.getElementById("loading-overlay").style.display = "flex";
+
+
+        // Header
+        sendMessage([0xF0, command, 0x00, 0x00, ...header, 0xF7]);
+
+        // Resto
+        for (let index = 0; index < partes.length; index++) {
+            const parte = partes[index];
+            await delay(1);
+            sendMessage([0xF0, command, (index + 1) % 128, Math.floor((index + 1) / 128), ...parte, 0xF7]);
+        }
+    });
 }
 
 // Cria um banco
@@ -1549,20 +1632,30 @@ async function setupMidiListener() {
                             }
                             break;
                         case 0x4D:
-                            await delay(200)
+                            if (nomeControladora == "timespace" || nomeControladora == "spacewalk"){
+                                await delay(200)
+                                presetAux = Number(activePreset.querySelector(".preset-number").textContent) < 127? Number(activePreset.querySelector(".preset-number").textContent)+1 : Number(activePreset.querySelector(".preset-number").textContent)-1;
+                                sendMessage([0xF0, 0x43, Number(presetAux), 0xF7]);
+                                await delay(100)
+                                sendMessage([0xF0, 0x43, Number(activePreset.querySelector(".preset-number").textContent), 0xF7]);
+                                //alert(activePreset.querySelector(".preset-number").textContent)
+                                reloadActivePreset();
+                                await delay(200);
 
-                            presetAux = Number(activePreset.querySelector(".preset-number").textContent) < 127? Number(activePreset.querySelector(".preset-number").textContent)+1 : Number(activePreset.querySelector(".preset-number").textContent)-1;
-                            sendMessage([0xF0, 0x43, Number(presetAux), 0xF7]);
-                            await delay(100)
-                            sendMessage([0xF0, 0x43, Number(activePreset.querySelector(".preset-number").textContent), 0xF7]);
-                            //alert(activePreset.querySelector(".preset-number").textContent)
-                            reloadActivePreset();
-                            await delay(200);
+                                lastMessage = [0x4D];
+                                sendMessage([0xF0,0x06,0x00,0xF7]);
+                                
+                                document.getElementById("loading-overlay").style.display = "none";
+                            } else {
+                                await delay(200)
 
-                            lastMessage = [0x4D];
-                            sendMessage([0xF0,0x06,0x00,0xF7]);
+                                lastMessage = [0x4D];
+                                //alert(currentBankLetter)
+                                if (currentBankLetter !== null) sendMessage([0xF0,0x0A,currentBankLetter.charCodeAt(0)-65,0xF7]);
+                                
+                                document.getElementById("loading-overlay").style.display = "none";
+                            }
                             
-                            document.getElementById("loading-overlay").style.display = "none";
                             break;
                     }
                 }
@@ -2841,42 +2934,7 @@ function setupDragAndDrop() {
                 e.dataTransfer.setData('size', content.length.toString());
                 console.log(`Tamanho do arquivo do manager: ${content.length.toString()}`)
             });
-            /*
-            link.addEventListener('dragend', (e) => {
-                let isControladora = false;
-                if (nomeControladora == "titan" || nomeControladora == "supernova")
-                    isControladora = true;
-
-                const fileListRect = fileList.getBoundingClientRect();
-                const outside =
-                    e.clientX < fileListRect.left ||
-                    e.clientX > fileListRect.right ||
-                    e.clientY < fileListRect.top ||
-                    e.clientY > fileListRect.bottom;
-
-                if (outside) {
-                    Swal.fire({
-                        title: "Load backup?",
-                        text: `Do you want to load the backup of "${file.name}" before moving it?`,
-                        icon: "question",
-                        icon: "warning",
-                        background: "#2a2a40",
-                        color: "white",
-                        width: "500px",
-                        showCancelButton: true,
-                        confirmButtonText: "Yes, load backup",
-                        denyButtonText: "Download & Remove",
-                        cancelButtonText: "Cancel",
-                        cancelButtonColor: "red",
-                        confirmButtonColor: "#53bfeb",
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            //aqui
-                        }
-                    });
-                }
-            });
-            */
+            
             // Permite renomear ao clicar
             link.addEventListener("click", () => {
                 const input = document.createElement("input");
