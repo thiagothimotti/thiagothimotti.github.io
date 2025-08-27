@@ -1577,6 +1577,13 @@ async function setupMidiListener() {
     }
 }
 
+function binaryOperation(lsb, msb, deslocamento) {
+    let newMsb = msb << deslocamento;
+    let result = lsb + newMsb;
+
+    return result;
+}
+
 function fillMidiTable(values, tableId, saved) {
     if (values.length !== 30) {
         console.error("A função requer exatamente 30 valores.");
@@ -2834,7 +2841,42 @@ function setupDragAndDrop() {
                 e.dataTransfer.setData('size', content.length.toString());
                 console.log(`Tamanho do arquivo do manager: ${content.length.toString()}`)
             });
+            /*
+            link.addEventListener('dragend', (e) => {
+                let isControladora = false;
+                if (nomeControladora == "titan" || nomeControladora == "supernova")
+                    isControladora = true;
 
+                const fileListRect = fileList.getBoundingClientRect();
+                const outside =
+                    e.clientX < fileListRect.left ||
+                    e.clientX > fileListRect.right ||
+                    e.clientY < fileListRect.top ||
+                    e.clientY > fileListRect.bottom;
+
+                if (outside) {
+                    Swal.fire({
+                        title: "Load backup?",
+                        text: `Do you want to load the backup of "${file.name}" before moving it?`,
+                        icon: "question",
+                        icon: "warning",
+                        background: "#2a2a40",
+                        color: "white",
+                        width: "500px",
+                        showCancelButton: true,
+                        confirmButtonText: "Yes, load backup",
+                        denyButtonText: "Download & Remove",
+                        cancelButtonText: "Cancel",
+                        cancelButtonColor: "red",
+                        confirmButtonColor: "#53bfeb",
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            //aqui
+                        }
+                    });
+                }
+            });
+            */
             // Permite renomear ao clicar
             link.addEventListener("click", () => {
                 const input = document.createElement("input");
@@ -3135,14 +3177,12 @@ function cancelChanges(button) {
 }
 
 function savePreset() {
-    if (nomeControladora == 'titan' || nomeControladora == 'supernova')
-        return;
+    if (nomeControladora == 'titan' || nomeControladora == 'supernova') notify("Unavailable for your device", "warning");
     else if (nomeControladora == 'timespace' || nomeControladora == 'spacewalk') pedalSavePreset();
 }
 
 function generateBackup() {
-    if (nomeControladora == 'titan' || nomeControladora == 'supernova')
-        return;
+    if (nomeControladora == 'titan' || nomeControladora == 'supernova') sendMessage([0xF0,0x4C,0x00,0xF7]);
     else if (nomeControladora == 'timespace' || nomeControladora == 'spacewalk') sendMessage([0xF0,0x4C,0x00,0xF7]);
 }
 

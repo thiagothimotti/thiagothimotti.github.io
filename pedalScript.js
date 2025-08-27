@@ -113,7 +113,7 @@ const parameterRanges = {
     "Depth": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Shape": { tipo: "lista", valores: ["Sine", "Triangle", "Square"], complemento: "" },
     "Voices": { tipo: "lista", valores: ["", "", 2, 3, 4, 5], complemento: "" },
-    "Stages": { tipo: "lista", valores: [2, 3, 4], complemento: "" },
+    "Stages": { tipo: "lista", valores: ["", "", 2, 3, 4], complemento: "" },
     "Mode    ": { tipo: "lista", valores: ["Vintage", "Modern"], complemento: "" },
     "Regen": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Manual": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
@@ -185,7 +185,7 @@ const modTypeValues = {
     "Depth": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Shape": { tipo: "lista", valores: ["Sine", "Triangle", "Square"], complemento: "" },
     "Voices": { tipo: "lista", valores: ["", "", 2, 3, 4, 5], complemento: "" },
-    "Stages": { tipo: "lista", valores: [2, 3, 4], complemento: "" },
+    "Stages": { tipo: "lista", valores: ["", "", 2, 3, 4], complemento: "" },
     "Mode    ": { tipo: "lista", valores: ["Vintage", "Modern"], complemento: "" },
     "Regen": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Manual": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" }
