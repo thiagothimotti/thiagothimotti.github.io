@@ -67,7 +67,7 @@ const parameterRanges = {
         tipo: "lista", valores: ["OFF", "Vibrato", "Tremolo", "Chorus", "Phaser", "Flanger"],
         complemento: ""
     },
-    "Mod Type ": { tipo: "lista", valores: ["Vibrato", "Tremolo"], complemento: "" },
+    "Mod Type ": { tipo: "lista", valores: ["", "Vibrato", "Tremolo"], complemento: "" },
     "Tone": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Compression": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Modulation": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
@@ -653,7 +653,7 @@ async function createPresets() {
             sendMessage([0xF0, 0x07, ...asciiArray, 0xF7]);
             //alert([this.value, window.originalPresetName])
             if (this.value != window.originalPresetName){
-                patchChanged = true;    // Aqui ele muda para true mesmo que nenhuma mudança tenha sido feita no nome
+                patchChanged = true;
             }
         });
 
@@ -4126,6 +4126,8 @@ function createSystemButtons() {
 }
 
 function createPopup(options, callback, event) {
+    options = options.filter(opt => opt.trim() !== "");
+
     const popup = document.createElement("div");
     popup.className = "popup-container";
 
