@@ -4126,7 +4126,9 @@ function createSystemButtons() {
 }
 
 function createPopup(options, callback, event) {
-    options = options.filter(opt => opt.trim() !== "");
+    options = options
+        .map(opt => String(opt).trim())  // força string
+        .filter(opt => opt !== "");
 
     const popup = document.createElement("div");
     popup.className = "popup-container";
