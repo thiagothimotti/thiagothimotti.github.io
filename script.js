@@ -2756,13 +2756,16 @@ function setupDragAndDrop() {
         let repoVisible = false;
 
         let canToggleRepo = true;
-        repoItem.addEventListener('click', () => {
+        repoItem.addEventListener('click', (e) => {
             if (!canToggleRepo) return; //Impede multiplos cliques
             canToggleRepo = false;
 
             if (!repoLoaded) {
-                //loadRepositoryFiles();
-                notify(`Under maintenance.`, "warning")
+                if (e.ctrlKey) {
+                    loadRepositoryFiles();
+                } else {
+                    notify(`Under maintenance.`, "warning");
+                }
             } else {
                 repoVisible = !repoVisible;
                 repoList.style.display = repoVisible ? 'block' : 'none';
@@ -2776,17 +2779,16 @@ function setupDragAndDrop() {
 
         async function loadRepositoryFiles() {
             try {
-                //const response = await fetch('https://raw.githubusercontent.com/CarlBetsa/Editor_Saturno/main/Sons_da_Saturno/fileList.json');
-                const response = await fetch('https://raw.githubusercontent.com/thiagothimotti/thiagothimotti.github.io/main/Sons_da_Saturno/fileList.json');
+                const response = await fetch('https://thiagothimotti.github.io/Sons_da_Saturno/fileList.json');
                 if (!response.ok) throw new Error('Falha ao carregar lista de arquivos do repositório.');
 
                 const fileNames = await response.json();
 
-                fileNames.sort((a, b) => a.localeCompare(b)); // Garante que os arquivos da pasta fiquem em ordem alfabetica
+                // Ordena alfabeticamente
+                fileNames.sort((a, b) => a.localeCompare(b));
 
                 fileNames.forEach(fileName => {
-                    //const fileUrl = `https://raw.githubusercontent.com/CarlBetsa/Editor_Saturno/main/Sons_da_Saturno/${fileName}`;
-                    const fileUrl = `https://raw.githubusercontent.com/thiagothimotti/thiagothimotti.github.io/main/Sons_da_Saturno/${fileName}`;
+                    const fileUrl = `https://thiagothimotti.github.io/Sons_da_Saturno/${fileName}`;
 
                     fetch(fileUrl)
                         .then(response => response.arrayBuffer())
@@ -2799,13 +2801,11 @@ function setupDragAndDrop() {
                             li.style.minHeight = '23px';
 
                             const byteArray = new Uint8Array(content);
-                            //alert(byteArray)
                             const fileTypeFlag = byteArray[0]; // 102 = preset, 103 = backup
                             const archiveType = document.createElement('button');
                             archiveType.textContent = fileTypeFlag === 103 ? 'BKP' : 'PRST';
-                            //alert(fileTypeFlag)
                             
-                            if(fileTypeFlag === 102){
+                            if (fileTypeFlag === 102) {
                                 const fileModelFlag = byteArray[1];
                                 archiveType.style.border = fileModelFlag === 1 ? "1px solid #ff3300ff" : `1px solid ${saveBlue}`;
                                 archiveType.style.color = fileModelFlag === 1 ? "#ff3300ff" : saveBlue;
@@ -2836,7 +2836,7 @@ function setupDragAndDrop() {
                                 e.dataTransfer.setData('text/plain', fileName);
                                 e.dataTransfer.setData('isSaturnRepo', 'true');
                                 e.dataTransfer.setData('size', content.length.toString());
-                                console.log(`Tamanho do arquivo do GitHub: ${content.length.toString()}`)
+                                console.log(`Tamanho do arquivo do GitHub: ${content.length.toString()}`);
                             });
 
                             link.addEventListener('click', (e) => {
