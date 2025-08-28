@@ -2779,7 +2779,7 @@ function setupDragAndDrop() {
 
         async function loadRepositoryFiles() {
             try {
-                const response = await fetch('https://thiagothimotti.github.io/Sons_da_Saturno/fileList.json');
+                const response = await fetch('https://editor.saturnopedais.com.br/Sons_da_Saturno/fileList.json');
                 if (!response.ok) throw new Error('Falha ao carregar lista de arquivos do repositório.');
 
                 const fileNames = await response.json();
@@ -2788,7 +2788,7 @@ function setupDragAndDrop() {
                 fileNames.sort((a, b) => a.localeCompare(b));
 
                 fileNames.forEach(fileName => {
-                    const fileUrl = `https://thiagothimotti.github.io/Sons_da_Saturno/${fileName}`;
+                    const fileUrl = `https://editor.saturnopedais.com.br/Sons_da_Saturno/${fileName}`;
 
                     fetch(fileUrl)
                         .then(response => response.arrayBuffer())
