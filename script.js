@@ -2832,11 +2832,13 @@ function setupDragAndDrop() {
                             link.draggable = true;
 
                             link.addEventListener('dragstart', (e) => {
-                                e.dataTransfer.setData('application/json', content);
+                                const base64 = arrayBufferToBase64(content);
+                                e.dataTransfer.setData('application/octet-stream', base64);
                                 e.dataTransfer.setData('text/plain', fileName);
                                 e.dataTransfer.setData('isSaturnRepo', 'true');
-                                e.dataTransfer.setData('size', content.length.toString());
-                                console.log(`Tamanho do arquivo do GitHub: ${content.length.toString()}`);
+                                e.dataTransfer.setData('size', content.byteLength.toString());
+                                e.dataTransfer.setData('application/json', JSON.stringify([...new Uint8Array(content)]));
+                                console.log(`Arquivo arrastado (${fileName}) com ${content.byteLength} bytes`);
                             });
 
                             link.addEventListener('click', (e) => {
@@ -2858,6 +2860,16 @@ function setupDragAndDrop() {
             } catch (error) {
                 console.error(error);
             }
+        }
+
+        function arrayBufferToBase64(buffer) {
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            const len = bytes.byteLength;
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary); // converte para Base64
         }
 
         // Arquivos locais do cache

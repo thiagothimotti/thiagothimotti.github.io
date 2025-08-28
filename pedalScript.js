@@ -690,6 +690,9 @@ async function createPresets() {
             const content = e.dataTransfer.getData("application/json");
             const fileName = e.dataTransfer.getData("text/plain");
             const fromSaturnRepo = e.dataTransfer.getData("isSaturnRepo") === "true";
+            const arr = JSON.parse(e.dataTransfer.getData('application/json'));
+            const uint8 = new Uint8Array(arr).slice(0, -1);
+            //alert(uint8)
 
             if (content && fileName.endsWith(".stnpreset")) {
                 let originalArray;
@@ -697,13 +700,19 @@ async function createPresets() {
                 if (fromSaturnRepo) {
                     // Converte o texto do github para int
                     const asciiArray = [];
-                    for (let i = 0; i < content.length; i++) {
-                        asciiArray.push(content.charCodeAt(i));
+                    const byteArray = new Uint8Array(uint8); // <- transforma em array de bytes direto
+
+                    for (let i = 0; i < byteArray.length; i++) {
+                        asciiArray.push(byteArray[i]);
                     }
+
                     const fullArray = new Uint8Array(asciiArray);
                     originalArray = decode(fullArray.slice(1));
-                    alert(originalArray)
-                    alert(fullArray)
+
+                    //alert([...byteArray]);     // correto
+                    //alert([...originalArray]); // também correto
+                    //alert([...fullArray]);     // idem
+                    //return;
                 } else {
                     const parsed = JSON.parse(content);
                     const fullArray = new Uint8Array(parsed);
