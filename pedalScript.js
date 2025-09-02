@@ -88,7 +88,7 @@ const parameterRanges = {
     "Tone B": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Level B": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Mode": { tipo: "lista", valores: ["Fixed", "Gradual"], complemento: "" },
-    "Mode ": { tipo: "lista", valores: ["Auto", "CC"], complemento: "" },
+    "Mode ": { tipo: "lista", valores: ["CC", "Auto"], complemento: "" },
     "Mode  ": { tipo: "lista", valores: ["Vintage", "Modern"], complemento: "" },
     "Type": { tipo: "lista", valores: ["LPF", "HPF", "BPF"], complemento: "" },
     "Ressonance": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
