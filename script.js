@@ -1634,6 +1634,13 @@ async function setupMidiListener() {
                         case 0x4D:
                             if (nomeControladora == "timespace" || nomeControladora == "spacewalk"){
                                 await delay(200)
+                                if (activePreset == null){
+                                    delay(200)
+                                    lastMessage = [0x4D];
+                                    //sendMessage([0xF0,0x06,0x00,0xF7]);
+                                    document.getElementById("loading-overlay").style.display = "none";
+                                    break;
+                                }
                                 presetAux = Number(activePreset.querySelector(".preset-number").textContent) < 127? Number(activePreset.querySelector(".preset-number").textContent)+1 : Number(activePreset.querySelector(".preset-number").textContent)-1;
                                 sendMessage([0xF0, 0x43, Number(presetAux), 0xF7]);
                                 await delay(100)
@@ -1643,7 +1650,7 @@ async function setupMidiListener() {
                                 await delay(200);
 
                                 lastMessage = [0x4D];
-                                sendMessage([0xF0,0x06,0x00,0xF7]);
+                                //sendMessage([0xF0,0x06,0x00,0xF7]);
                                 
                                 document.getElementById("loading-overlay").style.display = "none";
                             } else {

@@ -771,10 +771,11 @@ async function createPresets() {
                         //alert(`Parte ${index + 1}: [${[...parte]}]`);
                         //alert([0xF0,command,(index+1) % 128,Math.floor((index+1)/128),...partes[index],0xF7]);
                         //console.log([0xF0,command,(index+1) % 128,Math.floor(index/128),...partes[i],0xF7])
-                        aux = 1 % 25;
+                        /*aux = 1 % 25;
                         if (aux != 0) {
                             await delay(100);
-                        }
+                        }*/
+                        await delay(10);
                         sendMessage([0xF0,command,(index+1) % 128,Math.floor((index+1)/128),...partes[index],0xF7]);
                     };
                     sendMessage([0xF0,0x30,0x00,0xF7]);
