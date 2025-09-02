@@ -696,9 +696,11 @@ async function createPresets() {
 
             if (content && fileName.endsWith(".stnpreset")) {
                 let originalArray;
+                let isBackup;
                 //alert([...content]);
 
                 if (fromSaturnRepo) {
+                    //aqui to enviando o ultimo valor como 0 por algum motivo eu estou perdendo ele na leitura (por hora todos os sons oficiais são 0 então tudo certo)
                     // Converte o texto do github para int
                     const byteArray = new Uint8Array(uint8); // já é array de bytes
                     const fullArray = new Uint8Array(byteArray); // cópia (poderia até usar byteArray direto)
@@ -716,6 +718,8 @@ async function createPresets() {
                 } else {
                     const parsed = JSON.parse(content);
                     const fullArray = new Uint8Array(parsed);
+                    isBackup = parsed[0]
+                    //alert(isBackup)
                     originalArray = decode(fullArray.slice(1));
                 }
 
@@ -742,7 +746,7 @@ async function createPresets() {
                 window.lastPresetArray = originalArray;
 
                 const partes = [];
-                let header = fileName.toLowerCase().includes("backup") ? [...originalArray.slice(0, 9)] : [i, ...originalArray.slice(0, 9)];
+                let header = isBackup == 103 ? [...originalArray.slice(0, 9)] : [i, ...originalArray.slice(0, 9)];
                 //alert (header)
                 let resto = originalArray.slice(9);
                 console.log(resto)
@@ -750,7 +754,7 @@ async function createPresets() {
 
                 // Envia as mensagens (você pode substituir alert por sendMessage depois)
                 //alert(`Header: [${[...header]}]`);
-                const command = fileName.toLowerCase().includes("backup") ? 0x4D : 0x4B;
+                const command = isBackup == 103 ? 0x4D : 0x4B;
                 if (command == 0x4D) {
                     document.getElementById("loading-overlay").style.display = "flex";
                     // Reparte a informação em partes de até 44 bytes
@@ -761,11 +765,11 @@ async function createPresets() {
                     }
                     //alert(partes[partes.length-1].length)
                     sendMessage([0xF0,command,0x00, 0x00,...header,0xF7]);
-                    //alert([0xF0,command,0x00,...header,0xF0]);
+                    //alert([0xF0,command,0x00, 0x00,...header,0xF7]);
                     //console.log([0xF0,command,0x00, 0x00,...header,0xF7]);
                     for (let index = 0; index < partes.length; index++) {
                         //alert(`Parte ${index + 1}: [${[...parte]}]`);
-                        //alert([0xF0,command,index + 1,...parte,0xF7]);
+                        //alert([0xF0,command,(index+1) % 128,Math.floor((index+1)/128),...partes[index],0xF7]);
                         //console.log([0xF0,command,(index+1) % 128,Math.floor(index/128),...partes[i],0xF7])
                         aux = 1 % 25;
                         if (aux != 0) {
