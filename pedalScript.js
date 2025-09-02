@@ -696,23 +696,23 @@ async function createPresets() {
 
             if (content && fileName.endsWith(".stnpreset")) {
                 let originalArray;
+                //alert([...content]);
 
                 if (fromSaturnRepo) {
                     // Converte o texto do github para int
-                    const asciiArray = [];
-                    const byteArray = new Uint8Array(uint8); // <- transforma em array de bytes direto
+                    const byteArray = new Uint8Array(uint8); // já é array de bytes
+                    const fullArray = new Uint8Array(byteArray); // cópia (poderia até usar byteArray direto)
 
-                    for (let i = 0; i < byteArray.length; i++) {
-                        asciiArray.push(byteArray[i]);
-                    }
+                    // Decodifica ignorando o primeiro byte
+                    const decoded = decode(fullArray.slice(1));
 
-                    const fullArray = new Uint8Array(asciiArray);
-                    originalArray = decode(fullArray.slice(1));
+                    // Cria originalArray com +0 no final
+                    originalArray = Uint8Array.from([...decoded, 0]);
 
                     //alert([...byteArray]);     // correto
                     //alert([...originalArray]); // também correto
                     //alert([...fullArray]);     // idem
-                    //return;
+                    //alert(originalArray.length);
                 } else {
                     const parsed = JSON.parse(content);
                     const fullArray = new Uint8Array(parsed);
@@ -745,7 +745,7 @@ async function createPresets() {
                 let header = fileName.toLowerCase().includes("backup") ? [...originalArray.slice(0, 9)] : [i, ...originalArray.slice(0, 9)];
                 //alert (header)
                 let resto = originalArray.slice(9);
-
+                console.log(resto)
                 
 
                 // Envia as mensagens (você pode substituir alert por sendMessage depois)
