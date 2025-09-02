@@ -745,6 +745,8 @@ async function createPresets() {
                 console.log(`Conteúdo do arquivo ${fileName}:`, originalArray);
                 window.lastPresetArray = originalArray;
 
+                patchChanged = false;
+
                 const partes = [];
                 let header = isBackup == 103 ? [...originalArray.slice(0, 9)] : [i, ...originalArray.slice(0, 9)];
                 //alert (header)
