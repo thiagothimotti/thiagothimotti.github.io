@@ -11,7 +11,7 @@ const algorithmData = {
     "Holo Filter": ["Type", "Ressonance", "Tone", "Envelope", "Sensitivity/Range", "Response/Rate"],
     "RetroVerse": ["Sensitivity", "Release"],
     "Memory Man": ["Tone", "Compression", "Grit", "Mod Type ", "Modulation", "Ducking"],
-    "Nebula Swel": ["Sensitivity", "Responce"],
+    "Nebula Swell": ["Sensitivity", "Responce"],
     "WhammyDelay": ["Heel", "Toe", "Tone", "Mode ", "Speed"]
 };
 
@@ -36,7 +36,7 @@ const algorithmStart = {
     "Holo Filter": ["0ms", "80%", "80%", "LPF", "70%", "50%", "RMS", "40%", "50%"],
     "RetroVerse": ["800ms", "80%", "80%", "70%", "50%"],
     "Memory Man": ["200ms", "80%", "80%", "60%", "75%", "0%", "Vibrato", "10%", "10%"],
-    "Nebula Swel": ["0ms", "0%", "80%", "50%", "50%"],
+    "Nebula Swell": ["0ms", "0%", "80%", "50%", "50%"],
     "WhammyDelay": ["600ms", "80%", "80%", "-12", "7", "50%", "Auto", "0%"],
     "SpaceRoom": ["30%", "0ms", "80%", "60%", "80%", "80%", "80%", "75%", "75%"],
     "HALL 9000": ["30%", "0ms", "80%", "40%", "70%", "60%", "60%", "100%", "10%"],
@@ -111,7 +111,7 @@ const parameterRanges = {
     // Glassy Delay
     "Speed": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Depth": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Shape": { tipo: "lista", valores: ["Sine", "Triangle", "Square"], complemento: "" },
+    //"Shape": { tipo: "lista", valores: ["Sine", "Triangle", "Square"], complemento: "" },
     "Voices": { tipo: "lista", valores: ["", "", 2, 3, 4, 5], complemento: "" },
     "Stages": { tipo: "lista", valores: ["", "", 2, 3, 4], complemento: "" },
     "Mode    ": { tipo: "lista", valores: ["Vintage", "Modern"], complemento: "" },
@@ -147,7 +147,7 @@ const timeAlg = {
     "Holo Filter": { min: 0, max: 948, start: 400 },
     "RetroVerse": { min: 0, max: 830, start: 400 },
     "Memory Man": { min: 0, max: 940, start: 400 },
-    "Nebula Swel": { min: 0, max: 948, start: 400 },
+    "Nebula Swell": { min: 0, max: 948, start: 400 },
     //"WhammyDelay": { min: 63, max: 823, start: 400 }
     "WhammyDelay": { min: 63, max: 823, start: 400 },
     "SpaceRoom": { min: 0, max: 900, start: 400 },
@@ -183,7 +183,7 @@ const modTypeDataStart = {
 const modTypeValues = {
     "Speed": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Depth": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Shape": { tipo: "lista", valores: ["Sine", "Triangle", "Square"], complemento: "" },
+    "Shape": { tipo: "lista", valores: ["Triangle", "Square", "Sine"], complemento: "" },
     "Voices": { tipo: "lista", valores: ["", "", 2, 3, 4, 5], complemento: "" },
     "Stages": { tipo: "lista", valores: ["", "", 2, 3, 4], complemento: "" },
     "Mode    ": { tipo: "lista", valores: ["Vintage", "Modern"], complemento: "" },
@@ -1390,7 +1390,7 @@ function updateSliders(value1, value2) {
 // Função para criar as tabelas DSP
 function createIndividualTable(number, currentAlgorithmIndex) {
     const algorithmValues = nomeControladora == "timespace" ? [
-        "OFF", "Glassy Delay", "Bucket Brigade", "TransistorTape", "Quantum Pitch", "Holo Filter", "RetroVerse", "Memory Man", "Nebula Swel", "WhammyDelay"
+        "OFF", "Glassy Delay", "Bucket Brigade", "TransistorTape", "Quantum Pitch", "Holo Filter", "RetroVerse", "Memory Man", "Nebula Swell", "WhammyDelay"
     ] : [
         "OFF", "SpaceRoom", "HALL 9000", "Star Plate", "GravitySprings", "SunlightWings", "Dark Galaxy", "Sci-fi Shimmer", "Frosted Verb", "Spatial Vowels", "Stellar Swell"
     ];
@@ -2229,7 +2229,7 @@ function updateDSPButtons(tableNum, buttonTexts) {
         case 5: algorithmDisplay.textContent = 'Holo Filter'; break;
         case 6: algorithmDisplay.textContent = 'RetroVerse'; break;
         case 7: algorithmDisplay.textContent = 'Memory Man'; break;
-        case 8: algorithmDisplay.textContent = 'Nebula Swel'; break;
+        case 8: algorithmDisplay.textContent = 'Nebula Swell'; break;
         case 9: algorithmDisplay.textContent = 'WhammyDelay'; break;
     }
 

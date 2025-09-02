@@ -2761,11 +2761,11 @@ function setupDragAndDrop() {
             canToggleRepo = false;
 
             if (!repoLoaded) {
-                if (e.ctrlKey) {
+                //if (e.ctrlKey) {
                     loadRepositoryFiles();
-                } else {
-                    notify(`Under maintenance.`, "warning");
-                }
+                //} else {
+                //    notify(`Under maintenance.`, "warning");
+                //}
             } else {
                 repoVisible = !repoVisible;
                 repoList.style.display = repoVisible ? 'block' : 'none';
