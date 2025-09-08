@@ -835,6 +835,7 @@ function reloadActivePreset() {
 window.reloadActivePreset = reloadActivePreset;
 
 function extractPresets(data) {
+    //alert(data)
     if (data.length !== 33) {
         console.error("O array não possui 33 elementos");
         return;
@@ -3545,13 +3546,47 @@ function extractCommandCenterData(tableElement) {
         return options.indexOf(normalized) !== -1 ? options.indexOf(normalized) : 0;
     }
 
+    function charToPresetValue(c) {
+        if (!c || c === '\0') return 0;
+        else if (c === ' ') return 0; // case 0
+
+        const code = c.charCodeAt(0);
+
+        // A-Z
+        if (code >= 65 && code <= 90) {
+            return code - 65 + 1; // 1...26
+        }
+        // a-z
+        else if (code >= 97 && code <= 122) {
+            return code - 97 + 27; // 27...52
+        }
+        // 0-9
+        else if (code >= 48 && code <= 57) {
+            return code - 48 + 53; // 53...62
+        }
+        // ! " # $ % & '
+        else if (code >= 33 && code <= 39) {
+            return code - 33 + 63; // 63...69
+        }
+        // * +
+        else if (code >= 42 && code <= 43) {
+            return code - 42 + 70; // 70...71
+        }
+        // -
+        else if (code === 45) return 72;
+        // _
+        else if (code === 95) return 73;
+        // ? @
+        else if (code >= 63 && code <= 64) {
+            return code - 63 + 74; // 74...75
+        }
+        else return 0;
+    }
+
     function getAsciiFromInput(input) {
         const text = input?.value || "";
         const padded = text.padEnd(4, '\0').slice(0, 4);
-        return Array.from(padded).map(c => {
-            if (!c || c === ' ' || c === '\0') return 0;
-            return c.charCodeAt(0) - 64;
-        });
+        return Array.from(padded).map(charToPresetValue);
     }
 
     function getValueFromSlider(slider) {

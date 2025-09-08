@@ -1395,10 +1395,11 @@ async function setupMidiListener() {
                                 return;
                             }
                             
-                            sysexData[2] = sysexData[2] !== 0 ? sysexData[2] + 64 : sysexData[2]+32;
-                            sysexData[3] = sysexData[3] !== 0 ? sysexData[3] + 64 : sysexData[3]+32;
-                            sysexData[4] = sysexData[4] !== 0 ? sysexData[4] + 64 : sysexData[4]+32;
-                            sysexData[5] = sysexData[5] !== 0 ? sysexData[5] + 64 : sysexData[5]+32;
+                            sysexData[2] = presetValueToChar(sysexData[2]).charCodeAt(0);
+                            sysexData[3] = presetValueToChar(sysexData[3]).charCodeAt(0);
+                            sysexData[4] = presetValueToChar(sysexData[4]).charCodeAt(0);
+                            sysexData[5] = presetValueToChar(sysexData[5]).charCodeAt(0);
+                            //alert(sysexData)
                             //alert(`Tipos: ${Array.from(sysexData.slice(1)).map(c => typeof c)}`);
                             updateCommandCenter(Array.from(sysexData.slice(1)), commandCenter)
                             //alert(sysexData.slice(1))
@@ -1411,10 +1412,10 @@ async function setupMidiListener() {
                                 return;
                             }
                             
-                            sysexData[2] = sysexData[2] !== 0 ? sysexData[2] + 64 : sysexData[2]+32;
-                            sysexData[3] = sysexData[3] !== 0 ? sysexData[3] + 64 : sysexData[3]+32;
-                            sysexData[4] = sysexData[4] !== 0 ? sysexData[4] + 64 : sysexData[4]+32;
-                            sysexData[5] = sysexData[5] !== 0 ? sysexData[5] + 64 : sysexData[5]+32;
+                            sysexData[2] = presetValueToChar(sysexData[2]).charCodeAt(0);
+                            sysexData[3] = presetValueToChar(sysexData[3]).charCodeAt(0);
+                            sysexData[4] = presetValueToChar(sysexData[4]).charCodeAt(0);
+                            sysexData[5] = presetValueToChar(sysexData[5]).charCodeAt(0);
                             //alert(`Tipos: ${Array.from(sysexData.slice(1)).map(c => typeof c)}`);
                             updateCommandCenter(Array.from(sysexData.slice(1)), commandCenter2)
                             //alert(sysexData.slice(1))
@@ -1675,6 +1676,40 @@ async function setupMidiListener() {
     } catch (error) {
         console.error("Erro ao configurar o listener MIDI:", error);
     }
+}
+
+function presetValueToChar(value) {
+    if (value === 0) return ' '; // espaço
+
+    // A-Z
+    if (value >= 1 && value <= 26) {
+        return String.fromCharCode(value + 65 - 1);
+    }
+    // a-z
+    if (value >= 27 && value <= 52) {
+        return String.fromCharCode(value + 97 - 27);
+    }
+    // 0-9
+    if (value >= 53 && value <= 62) {
+        return String.fromCharCode(value + 48 - 53);
+    }
+    // ! " # $ % & '
+    if (value >= 63 && value <= 69) {
+        return String.fromCharCode(value + 33 - 63);
+    }
+    // * +
+    if (value >= 70 && value <= 71) {
+        return String.fromCharCode(value + 42 - 70);
+    }
+    // -
+    if (value === 72) return '-';
+    // _
+    if (value === 73) return '_';
+    // ? @
+    if (value >= 74 && value <= 75) {
+        return String.fromCharCode(value + 63 - 74);
+    }
+    return '';
 }
 
 function binaryOperation(lsb, msb, deslocamento) {
