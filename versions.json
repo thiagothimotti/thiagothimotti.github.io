@@ -1,0 +1,16 @@
+{
+  "devices": {
+    "supernova": {
+      "version": [0, 0, 0, 0]
+    },
+    "titan": {
+      "version": [0, 0, 0, 0]
+    },
+    "timespace": {
+      "version": [3, 3, 0, 0]
+    },
+    "spacewalk": {
+      "version": [3, 3, 0, 0]
+    }
+  }
+}
