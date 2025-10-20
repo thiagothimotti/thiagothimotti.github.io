@@ -1792,7 +1792,12 @@ function fillMidiTable(values, tableId, saved) {
                         }
                         break;
                 }
-            } else detailButton.textContent = values[i + j + 1];  //voltar
+            } else {
+                const currentValue = values[i + j + 1];
+                if (currentValue === 128) detailButton.textContent = 'EXP1';
+                else if (currentValue === 129) detailButton.textContent = 'EXP2';
+                else detailButton.textContent = currentValue;
+            }
             detailButton.className = 'midi-detail';
             detailButton.style.cursor = 'pointer';
             detailButton.style.marginTop = '-5px';
