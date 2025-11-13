@@ -2834,72 +2834,97 @@ function setupDragAndDrop() {
                 // Ordena alfabeticamente
                 fileNames.sort((a, b) => a.localeCompare(b));
 
-                fileNames.forEach(fileName => {
+                // Arrays separados por modelo
+                const timeSpaceFiles = [];
+                const spaceWalkFiles = [];
+
+                for (const fileName of fileNames) {
                     const fileUrl = `https://editor.saturnopedais.com.br/Sons_da_Saturno/${fileName}`;
+                    try {
+                        const fileResponse = await fetch(fileUrl);
+                        const content = await fileResponse.arrayBuffer();
+                        const byteArray = new Uint8Array(content);
 
-                    fetch(fileUrl)
-                        .then(response => response.arrayBuffer())
-                        .then(content => {
-                            const li = document.createElement('li');
-                            li.style.display = 'flex';
-                            li.style.justifyContent = 'space-between';
-                            li.style.alignItems = 'center';
-                            li.style.gap = '10px';
-                            li.style.minHeight = '23px';
+                        const fileTypeFlag = byteArray[0]; // 102 = preset, 103 = backup
+                        const fileModelFlag = byteArray[1]; // 100 = TimeSpace, 103 = SpaceWalk
 
-                            const byteArray = new Uint8Array(content);
-                            const fileTypeFlag = byteArray[0]; // 102 = preset, 103 = backup
-                            const archiveType = document.createElement('button');
-                            archiveType.textContent = fileTypeFlag === 103 ? 'BKP' : 'PRST';
-                            
-                            if (fileTypeFlag === 102) {
-                                const fileModelFlag = byteArray[1];
-                                archiveType.style.border = fileModelFlag === 1 ? "1px solid #ff3300ff" : `1px solid ${saveBlue}`;
-                                archiveType.style.color = fileModelFlag === 1 ? "#ff3300ff" : saveBlue;
-                            } else {
-                                archiveType.style.color = "silver";
-                                archiveType.style.border = "1px solid silver";
-                            }
+                        const li = document.createElement('li');
+                        li.style.display = 'flex';
+                        li.style.justifyContent = 'space-between';
+                        li.style.alignItems = 'center';
+                        li.style.gap = '10px';
+                        li.style.minHeight = '23px';
 
-                            archiveType.style.padding = "2px 6px";
-                            archiveType.style.fontSize = "10px";
-                            archiveType.style.borderRadius = "4px";
-                            archiveType.style.background = "transparent";
-                            archiveType.style.cursor = "default";
-                            archiveType.style.minWidth = "40px";
-                            archiveType.style.maxWidth = "40px";
+                        const archiveType = document.createElement('button');
+                        archiveType.textContent = fileTypeFlag === 103 ? 'BKP' : 'PRST';
 
-                            const link = document.createElement('a');
-                            link.title = fileName;
-                            const blob = new Blob([content], { type: 'text/plain' });
-                            const url = URL.createObjectURL(blob);
-                            link.href = url;
-                            link.download = fileName;
-                            link.textContent = fileName.replace(/\.(json|stnpreset)$/i, '');
-                            link.draggable = true;
+                        if (fileTypeFlag === 102) {
+                            archiveType.style.border = fileModelFlag === 103 ? "1px solid #ff3300ff" : `1px solid ${saveBlue}`;
+                            archiveType.style.color = fileModelFlag === 103 ? "#ff3300ff" : saveBlue;
+                        } else {
+                            archiveType.style.color = "silver";
+                            archiveType.style.border = "1px solid silver";
+                        }
 
-                            link.addEventListener('dragstart', (e) => {
-                                const base64 = arrayBufferToBase64(content);
-                                e.dataTransfer.setData('application/octet-stream', base64);
-                                e.dataTransfer.setData('text/plain', fileName);
-                                e.dataTransfer.setData('isSaturnRepo', 'true');
-                                e.dataTransfer.setData('size', content.byteLength.toString());
-                                e.dataTransfer.setData('application/json', JSON.stringify([...new Uint8Array(content)]));
-                                console.log(`Arquivo arrastado (${fileName}) com ${content.byteLength} bytes`);
-                            });
+                        archiveType.style.padding = "2px 6px";
+                        archiveType.style.fontSize = "10px";
+                        archiveType.style.borderRadius = "4px";
+                        archiveType.style.background = "transparent";
+                        archiveType.style.cursor = "default";
+                        archiveType.style.minWidth = "40px";
+                        archiveType.style.maxWidth = "40px";
 
-                            link.addEventListener('click', (e) => {
-                                e.preventDefault();
-                                console.log("Arquivo lido", content);
-                            });
+                        const link = document.createElement('a');
+                        link.title = fileName;
+                        const blob = new Blob([content], { type: 'text/plain' });
+                        const url = URL.createObjectURL(blob);
+                        link.href = url;
+                        link.download = fileName;
+                        link.textContent = fileName.replace(/\.(json|stnpreset)$/i, '');
+                        link.draggable = true;
 
-                            li.appendChild(archiveType);
-                            li.appendChild(link);
-                            repoList.appendChild(li);
-                        })
-                        .catch(() => console.error(`Falha ao carregar ${fileName}`));
-                });
+                        link.addEventListener('dragstart', (e) => {
+                            const base64 = arrayBufferToBase64(content);
+                            e.dataTransfer.setData('application/octet-stream', base64);
+                            e.dataTransfer.setData('text/plain', fileName);
+                            e.dataTransfer.setData('isSaturnRepo', 'true');
+                            e.dataTransfer.setData('size', content.byteLength.toString());
+                            e.dataTransfer.setData('application/json', JSON.stringify([...new Uint8Array(content)]));
+                            console.log(`Arquivo arrastado (${fileName}) com ${content.byteLength} bytes`);
+                        });
 
+                        link.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            console.log("Arquivo lido", content);
+                        });
+
+                        li.appendChild(archiveType);
+                        li.appendChild(link);
+
+                        // Separa por modelo
+                        if (fileModelFlag === 100) {
+                            timeSpaceFiles.push({ name: fileName, element: li });
+                        } else if (fileModelFlag === 103) {
+                            spaceWalkFiles.push({ name: fileName, element: li });
+                        } else {
+                            // Fallback joga no grupo SpaceWalk
+                            spaceWalkFiles.push({ name: fileName, element: li });
+                        }
+
+                    } catch (err) {
+                        console.error(`Falha ao carregar ${fileName}`, err);
+                    }
+                }
+
+                // Ordena alfabeticamente cada modelo
+                timeSpaceFiles.sort((a, b) => a.name.localeCompare(b.name));
+                spaceWalkFiles.sort((a, b) => a.name.localeCompare(b.name));
+
+                repoList.innerHTML = '';
+
+                timeSpaceFiles.forEach(file => repoList.appendChild(file.element));
+                spaceWalkFiles.forEach(file => repoList.appendChild(file.element));
+                
                 repoLoaded = true;
                 repoVisible = true;
                 repoList.style.display = 'block';
