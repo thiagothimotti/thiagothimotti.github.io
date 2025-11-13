@@ -2922,8 +2922,8 @@ function setupDragAndDrop() {
 
                 repoList.innerHTML = '';
 
-                timeSpaceFiles.forEach(file => repoList.appendChild(file.element));
                 spaceWalkFiles.forEach(file => repoList.appendChild(file.element));
+                timeSpaceFiles.forEach(file => repoList.appendChild(file.element));
                 
                 repoLoaded = true;
                 repoVisible = true;
