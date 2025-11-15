@@ -19,5 +19,8 @@
     "POGDown.stnpreset",
     "ICE0.stnpreset",
     "ICE1.stnpreset",
-    "ICE2.stnpreset"
+    "ICE2.stnpreset",
+    "Lo-FiDrySignal.stnpreset",
+    "Lo-FiFullDelay.stnpreset",
+    "Lo-FiOnlyRepeats.stnpreset"
 ]
