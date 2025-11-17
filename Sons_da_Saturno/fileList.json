@@ -22,5 +22,6 @@
     "ICE2.stnpreset",
     "Lo-FiDrySignal.stnpreset",
     "Lo-FiFullDelay.stnpreset",
-    "Lo-FiOnlyRepeats.stnpreset"
+    "Lo-FiOnlyRepeats.stnpreset",
+    "SoftHall.stnpreset"
 ]
