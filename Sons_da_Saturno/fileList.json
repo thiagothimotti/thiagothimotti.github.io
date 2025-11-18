@@ -24,5 +24,8 @@
     "Lo-FiFullDelay.stnpreset",
     "Lo-FiOnlyRepeats.stnpreset",
     "SoftHall.stnpreset",
-    "Cloud.stnpreset"
+    "Cloud.stnpreset",
+    "RoomLarge.stnpreset",
+    "RoomMedium.stnpreset",
+    "RoomSmall.stnpreset"
 ]
