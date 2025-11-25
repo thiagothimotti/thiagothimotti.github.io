@@ -59,16 +59,19 @@ async function initializeSite() {
 
     nomeControladora = null;
 
-    setupMidiListener();
+    let response = await fetch('https://editor.saturnopedais.com.br/versions.json');
+    versions = await response.json();
+
+    await setupMidiListener();
 
     let lim = 0;
     while (nomeControladora === null) {
         console.log('Aguardando nomeControladora...');
         sendMessage([0xF0,0x01,0x00,0xF7])
         // Aqui você pode aguardar algum tempo antes de verificar novamente
-        await new Promise(resolve => setTimeout(resolve, 300)); // espera 1 segundo
+        await new Promise(resolve => setTimeout(resolve, 400));
         lim++;
-        if (lim > 10) return;
+        if (lim > 10) location.reload();
     }
     lastMessage = [];
 
@@ -183,6 +186,7 @@ async function initializeSite() {
             sendMessage([0xF0, command, (index + 1) % 128, Math.floor((index + 1) / 128), ...parte, 0xF7]);
         }
     });
+    return
 }
 
 // Cria um banco
@@ -970,6 +974,7 @@ async function sendMessage(message) {
 
         let aux = 0;
         let output = null;
+        //alert(dispositivoConectado)
         while(aux >= 0){
             if (outputs[aux].name === 'Saturno Pedais'){
                 output = outputs[aux];
@@ -979,7 +984,7 @@ async function sendMessage(message) {
 
         output.send(message); 
     } catch (error) {
-        alert("Erro ao enviar mensagem MIDI: " + error);
+        console.log("Erro ao enviar mensagem MIDI: " + error);
     }
 }
 
@@ -1014,7 +1019,7 @@ async function patchChange(letter, j) {
         sendMessage([0xF0,0x09,valorASCII - 65,j,0xF7]); // Muda patch
         //alert([0xF0,0x09,valorASCII - 65,j,0xF7])
     } catch (error) {
-        alert("Erro ao enviar mensagem MIDI: " + error);
+        console.log("Erro ao enviar mensagem MIDI: " + error);
     }
 }
 
@@ -1029,11 +1034,9 @@ async function setupMidiListener() {
 
         // Obtém as entradas MIDI
         const inputs = Array.from(midiAccess.inputs.values());
-        // alert (inputs[0].name)
-        // alert (inputs[0].manufacturer)
 
         if (inputs.length === 0) {
-            console.log("Nenhum dispositivo MIDI de entrada encontrado.");
+            await Swal.fire("Nenhum dispositivo MIDI encontrado.");
             return;
         }
 
@@ -2628,7 +2631,8 @@ let isExecuting = false; // Flag para garantir que não execute em paralelo
 async function toggleConnection(button) {
     if (intervalId === null) {
         try {
-            midiAccess = await navigator.requestMIDIAccess({ sysex: true });
+            if (!midiAccess)
+                midiAccess = await navigator.requestMIDIAccess({ sysex: true });
 
             // Verifica se há dispositivos MIDI disponíveis
             const outputs = Array.from(midiAccess.outputs.values());
@@ -2732,7 +2736,7 @@ async function heartBeat() {
         output.send([0xF0, 0x08, 0x00, 0xF7]);
         console.log('heartbeat');
     } catch (error) {
-        alert("Erro ao enviar mensagem MIDI: " + error);
+        console.log("Erro ao enviar mensagem MIDI: " + error);
     } finally {
         isExecuting = false;
     }
@@ -3634,13 +3638,13 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
                 ];
                 
                 let results = novaOrdem.map(index => midiValues2[index]);
-
+                //console.log(`pre ${[...results]}`)
                 for (let i = 0; i < 10; i++) {
                     results[i*3+2]=results[i*3+2]+((results[i*3+0]&0b10000000)>>3)+((results[i*3+1]&0b10000000)>>2)
                     results[i*3+0]=results[i*3+0]&0b01111111
                     results[i*3+1]=results[i*3+1]&0b01111111
                 }
-
+                //console.log(`after ${[...results]}`)
                 //alert([...results])
 
                 //alert([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7])
@@ -3729,12 +3733,13 @@ function createMidiPopup(midiButton, patchId, index, tableId) {
                 ];
                 
                 const results = novaOrdem.map(index => midiValues2[index]);
+                //console.log([...results])
                 for (let i = 0; i < 10; i++) {
                     results[i*3+2]=results[i*3+2]+((results[i*3+0]&0b10000000)>>3)+((results[i*3+1]&0b10000000)>>2)
                     results[i*3+0]=results[i*3+0]&0b01111111
                     results[i*3+1]=results[i*3+1]&0b01111111
                 }
-                //alert([...results])
+                //console.log([...results])
                 // Envia os valores da tabela específica
                 sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
             });
@@ -3971,11 +3976,13 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
             ];
             
             const results = novaOrdem.map(index => midiValues2[index]);
+            //console.log(`pre ${[...results]}`)
             for (let i = 0; i < 10; i++) {
                 results[i*3+2]=results[i*3+2]+((results[i*3+0]&0b10000000)>>3)+((results[i*3+1]&0b10000000)>>2)
                 results[i*3+0]=results[i*3+0]&0b01111111
                 results[i*3+1]=results[i*3+1]&0b01111111
             }
+            //console.log(`after ${[...results]}`)
             //alert([...results])
             // Envia os valores da tabela específica
             sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);
@@ -4116,12 +4123,14 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
             ];
     
             const results = novaOrdem.map(index => midiValues2[index]);
+            //console.log(`pre ${[...results]}`)
             //alert([...results])
             for (let i = 0; i < 10; i++) {
                 results[i * 3 + 2] = results[i * 3 + 2] + ((results[i * 3 + 0] & 0b10000000) >> 3) + ((results[i * 3 + 1] & 0b10000000) >> 2);
                 results[i * 3 + 0] = results[i * 3 + 0] & 0b01111111;
                 results[i * 3 + 1] = results[i * 3 + 1] & 0b01111111;
             }
+            //console.log(`after ${[...results]}`)
             //alert([...results]);
             
             // Envia os valores da tabela específica
@@ -4215,11 +4224,13 @@ function createValuePopup(detailButton, rangeStart, rangeEnd, onSelectCallback) 
                 ];
                 
                 const results = novaOrdem.map(index => midiValues2[index]);
+                //console.log(`pre ${[...results]}`)
                 for (let i = 0; i < 10; i++) {
                     results[i*3+2]=results[i*3+2]+((results[i*3+0]&0b10000000)>>3)+((results[i*3+1]&0b10000000)>>2)
                     results[i*3+0]=results[i*3+0]&0b01111111
                     results[i*3+1]=results[i*3+1]&0b01111111
                 }
+                //console.log(`after ${[...results]}`)
                 //alert([...results])
                 // Envia os valores da tabela específica
                 sendMessage([0xF0, 0x0E, tableAux, selectedButtonIndices[midiTable.id], ...results, 0xF7]);

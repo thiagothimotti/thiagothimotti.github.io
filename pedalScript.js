@@ -11,7 +11,7 @@ const algorithmData = {
     "Holo Filter": ["Type", "Ressonance", "Tone", "Envelope", "Sensitivity/Range", "Response/Rate"],
     "RetroVerse": ["Sensitivity", "Release"],
     "Memory Man": ["Tone", "Compression", "Grit", "Mod Type ", "Modulation", "Ducking"],
-    "Nebula Swell": ["Sensitivity", "Responce"],
+    "Nebula Swell": ["Sensitivity", "Response"],
     "WhammyDelay": ["Heel", "Toe", "Tone", "Mode ", "Speed"]
 };
 
@@ -24,7 +24,7 @@ const algorithmDataSpacewalk = {
     "Dark Galaxy": ["Fundamental", "Harmonics", "Regeneration", "Tone"],
     "Sci-fi Shimmer": ["Fundamental", "Harmonics", "Regeneration", "Tone"],
     "Frosted Verb": ["Mode   ", "Velocity", "Modulation", "Harmonics"],
-    "Spatial Vowels": ["Home Vowel", "Target Vowel", "Resonance", "Sensitivity", "Responce"],
+    "Spatial Vowels": ["Home Vowel", "Target Vowel", "Resonance", "Sensitivity", "Response"],
     "Stellar Swell": ["Sensitivity", "Response"]
 };
 
@@ -97,7 +97,7 @@ const parameterRanges = {
     "Response/Rate": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Sensitivity": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Release": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
-    "Responce": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Response": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Heel": {
         tipo: "lista", valores: [-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5,
             6, 7, 8, 9, 10, 11, 12], complemento: ""
@@ -300,7 +300,7 @@ async function createPresets() {
         mainContent.classList.remove("drag-over");
     });
 
-    mainContent .addEventListener("drop", async (e) => {
+    mainContent.addEventListener("drop", async (e) => {
         e.preventDefault();
         e.stopPropagation();
 
@@ -308,7 +308,21 @@ async function createPresets() {
 
         mainContent.classList.remove("drag-over");
 
-        // Redireciona para o drop do preset
+        // Tenta identificar se o arquivo arrastado é um backup
+        let isBackup = false;
+        try {
+            const jsonData = e.dataTransfer.getData('application/json');
+            if (jsonData) {
+                const byteArray = JSON.parse(jsonData);
+                const fileTypeFlag = byteArray[0];
+                if (fileTypeFlag === 103) isBackup = true;
+            }
+        } catch (err) {
+            console.warn("Falha ao ler tipo de arquivo no drop:", err);
+        }
+
+        if (!window.activePreset && !isBackup) return;
+
         const dropEvent = new DragEvent("drop", {
             dataTransfer: e.dataTransfer,
             bubbles: true,
@@ -628,12 +642,26 @@ async function createPresets() {
             }
         });
 
-        presetInput.addEventListener("input", function () {
-            const presetTitle = document.querySelector(".preset-title"); // Seleciona o título globalmente
+        presetInput.addEventListener("input", function (event) {
+            // Regex para limitar characteres
+            const allowedRegex = /^[A-Za-z0-9!"#$%&'*\+\-_.?@ ]*$/;
+            const currentValue = this.value;
+
+            // Se algum caractere inválido for digitado, remove-o
+            if (!allowedRegex.test(currentValue)) {
+                this.value = currentValue
+                    .split("")
+                    .filter(c => allowedRegex.test(c))
+                    .join("");
+            }
+
+            // Atualiza o título do preset se estiver selecionado
+            const presetTitle = document.querySelector(".preset-title");
             if (preset.classList.contains("selected")) {
                 if (this.value)
-                    presetTitle.textContent = `${presetNumber.textContent} | ${this.value}`
-                else presetTitle.textContent = this.placeholder;
+                    presetTitle.textContent = `${presetNumber.textContent} | ${this.value}`;
+                else
+                    presetTitle.textContent = this.placeholder;
             }
         });
 
@@ -709,18 +737,23 @@ async function createPresets() {
                     const decoded = decode(fullArray.slice(1));
 
                     // Cria originalArray com +0 no final
-                    originalArray = Uint8Array.from([...decoded, 0]);
+                    if (decoded.length == 152)
+                        originalArray = Uint8Array.from([...decoded, 0]);
+                    else originalArray = Uint8Array.from([...decoded.slice(0, -1), 0]);
 
                     //alert([...byteArray]);     // correto
                     //alert([...originalArray]); // também correto
-                    //alert([...fullArray]);     // idem
+                    //alert([...decoded]);     // idem
                     //alert(originalArray.length);
+                    //alert(decoded.length);
                 } else {
                     const parsed = JSON.parse(content);
                     const fullArray = new Uint8Array(parsed);
                     isBackup = parsed[0]
                     //alert(isBackup)
                     originalArray = decode(fullArray.slice(1));
+                    //alert([...fullArray])
+                    //alert([...originalArray]);
                 }
 
                 // Verifica a compatibilidade do arquivo
@@ -820,6 +853,33 @@ async function createPresets() {
     sendMessage([0xF0, 0x30, 0x00, 0xF7]);
 }
 
+function charToSaturnValue(char) {
+    if (char === ' ') return 0; // espaço
+
+    const code = char.charCodeAt(0);
+
+    // A-Z
+    if (code >= 65 && code <= 90) return code - 65 + 1;
+    // a-z
+    if (code >= 97 && code <= 122) return code - 97 + 27;
+    // 0-9
+    if (code >= 48 && code <= 57) return code - 48 + 53;
+    // ! " # $ % & '
+    if (code >= 33 && code <= 39) return code - 33 + 63;
+    // * +
+    if (code >= 42 && code <= 43) return code - 42 + 70;
+    // -
+    if (char === '-') return 72;
+    // _
+    if (char === '_') return 73;
+    // ? @
+    if (code >= 63 && code <= 64) return code - 63 + 74;
+    // .
+    if (char === '.') return 76;
+
+    return 0; // padrão: espaço se for caractere inválido
+}
+
 function reloadActivePreset() {
     if (!activePreset) return;
 
@@ -838,7 +898,7 @@ function extractPresets(data) {
     //alert(data)
     if (data.length !== 33) {
         console.error("O array não possui 33 elementos");
-        return;
+        //return;
     }
 
     let index = data[0];
@@ -1322,6 +1382,24 @@ function createTableRow(name) {
         const [lsb, msb] = BinaryOperationSend(sliderValues[1], 4);
         sendMessage([0xf0, 0x34, type, sliderValues[0], lsb, msb, 0xf7]);
         patchChanged = true;
+    });
+
+    // Resetar para o centro com double click (somente para Dry Pan)
+    slider.addEventListener("dblclick", () => {
+        if (nameCell.textContent === "Dry Pan") {
+            slider.value = 0;
+            valueCell.textContent = "Center";
+            valueCell.style.color = green;
+            slider.style.background = "white";
+
+            // Recalcula valores para enviar mensagem MIDI
+            const sliders = document.querySelectorAll(".slider");
+            const sliderValues = Array.from(sliders).map(s => parseInt(s.value));
+            sliderValues[1] = sliderValues[1] + 100; // Dry Pan tratado como type 0
+            const [lsb, msb] = BinaryOperationSend(sliderValues[1], 4);
+            sendMessage([0xf0, 0x34, 0, sliderValues[0], lsb, msb, 0xf7]);
+            patchChanged = true;
+        }
     });
 
     row.appendChild(nameCell);
