@@ -192,12 +192,12 @@ const modTypeValues = {
 };
 
 const imageStereo = {
-    "The Haas Effect": { Linhas: ["Delay"], start: [44] },
+    "The Haas Effect": { Linhas: ["Delay"], start: [40] },
     "Spill by the Edge": { Linhas: ["Spill", "Distance"], start: [50, 40] },
     "Ping-Pong": { Linhas: ["Spread"], start: [50] },
     "Wet-Panning": { Linhas: ["Speed", "Depth"], start: [30, 100] },
-    "Dry-Panning": { Linhas: ["Speed", "Depth"], start: [40, 100] },
-    "Cross-Panning": { Linhas: ["Speed", "Depth"], start: [25, 100] },
+    "Dry-Panning": { Linhas: ["Speed", "Depth"], start: [40, 70] },
+    "Cross-Panning": { Linhas: ["Speed", "Depth"], start: [25, 80] },
     "Transverse": { Linhas: ["Speed", "Depth"], start: [30, 100] }
 }
 
@@ -840,6 +840,7 @@ async function createPresets() {
                     preset.click();
                 }
 
+                flagPreset();
                 return;
             }
 
@@ -851,6 +852,18 @@ async function createPresets() {
     }
 
     sendMessage([0xF0, 0x30, 0x00, 0xF7]);
+}
+
+function flagPreset() {
+    loadingDelay = setInterval(() => {
+        //console.log(patchChanged)
+        patchChanged = false;
+    }, 5); //cada 5 mili
+
+    setTimeout(() => {
+        clearInterval(loadingDelay);
+        loadingDelay = null;
+    }, 1000);
 }
 
 function charToSaturnValue(char) {
@@ -1953,6 +1966,19 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                     scheduleDSPAlert();
                 });
 
+                slider.addEventListener("dblclick", () => {
+                    const tr = slider.closest("tr");
+                    if (!tr) return;
+
+                    const tbody = tr.parentNode;
+                    const rows = Array.from(tbody.querySelectorAll("tr"));
+
+                    const index = rows.indexOf(tr);
+                    //alert(index);
+                    patchChanged = true;
+                    sendMessage([0xF0,0x4E,index,number-1,0xF7]);
+                });
+
                 valueCell.innerHTML = "";
                 valueCell.appendChild(slider);
                 valueCell.appendChild(display);
@@ -2128,6 +2154,19 @@ function createIndividualTable(number, currentAlgorithmIndex) {
                         const newPct = (slider.value - slider.min) / (slider.max - slider.min) * 100;
                         slider.style.background = `linear-gradient(to right, ${blue} ${newPct}%, white ${newPct}%)`;
                         scheduleDSPAlert();
+                    });
+
+                    slider.addEventListener("dblclick", () => {
+                        const tr = slider.closest("tr");
+                        if (!tr) return;
+
+                        const tbody = tr.parentNode;
+                        const rows = Array.from(tbody.querySelectorAll("tr"));
+
+                        const index = rows.indexOf(tr);
+                        //alert(index);
+                        patchChanged = true;
+                        sendMessage([0xF0,0x4E,index,number-1,0xF7]);
                     });
 
                     extraValueCell.appendChild(slider);
@@ -2683,6 +2722,19 @@ function createImageTable() {
                 scheduleImageAlert();
             });
 
+            miniSlider.addEventListener("dblclick", () => {
+                const tr = miniSlider.closest("tr");
+                if (!tr) return;
+
+                const tbody = tr.parentNode;
+                const rows = Array.from(tbody.querySelectorAll("tr"));
+
+                const index = rows.indexOf(tr);
+                //alert(index+10);
+                sendMessage([0xF0, 0x4E, index+11, 0, 0xF7])
+            });
+
+
             buttonCell.appendChild(miniSlider);
             buttonCell.appendChild(sliderValue);
             row.appendChild(labelCell);
@@ -2782,6 +2834,14 @@ function createImageTable() {
             newValue = Math.max(parseInt(slider.min), Math.min(parseInt(slider.max), newValue));
             slider.value = newValue;
             updateDisplay(newValue);
+            scheduleImageAlert();
+        });
+
+        slider.addEventListener("dblclick", () => {
+            const mid = 0;
+            slider.value = mid;
+
+            updateDisplay(mid);
             scheduleImageAlert();
         });
 

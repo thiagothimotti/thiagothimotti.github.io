@@ -667,6 +667,15 @@ header p {
     animation: spin 1s linear infinite;
 }
 
+.swal2-dark-select {
+  background: #1e1e2f !important;
+  color: white !important;
+  border: 1px solid #444;
+  padding: 5px;
+  border-radius: 4px;
+}
+
+
 @keyframes spin {
     0% {
         transform: rotate(0deg);

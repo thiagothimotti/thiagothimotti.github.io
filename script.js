@@ -1,3 +1,5 @@
+const { SamBA, Device, Flasher } = window.bossa;
+
 let midiAccess;
 
 let lastMessage = [];
@@ -54,8 +56,19 @@ let presetFileCreationArray = [];
 let saveBackupAux = 0;
 let backupFileCreationArray = [];
 
+let dispositivoConectado;
+let precisaAtualizar;
+let deviceVersion;
+let versions;
+let latestVersion;
+let ignorarDesconexao = false;
+let nomeControladora = "timespace"
+//updateDevice()
+
 // Função base da inicialização do site
 async function initializeSite() {
+
+    //updateDevice()
 
     nomeControladora = null;
 
@@ -976,7 +989,7 @@ async function sendMessage(message) {
         let output = null;
         //alert(dispositivoConectado)
         while(aux >= 0){
-            if (outputs[aux].name === 'Saturno Pedais'){
+            if (outputs[aux].name === dispositivoConectado){
                 output = outputs[aux];
                 aux = -1;
             } else aux++;
@@ -1022,17 +1035,12 @@ async function patchChange(letter, j) {
         console.log("Erro ao enviar mensagem MIDI: " + error);
     }
 }
-
-let nomeControladora = null
+    //'https://editor.saturnopedais.com.br/Sons_da_Saturno/fileList.json'
+//let nomeControladora = null
 async function setupMidiListener() {
     try {
-        console.log("Solicitando acesso aos dispositivos MIDI...");
-
-        // Solicita o acesso ao MIDI
-        
-        console.log("Acesso ao MIDI concedido.");
-
-        // Obtém as entradas MIDI
+        if (!midiAccess)
+            midiAccess = await navigator.requestMIDIAccess({ sysex: true });
         const inputs = Array.from(midiAccess.inputs.values());
 
         if (inputs.length === 0) {
@@ -1040,17 +1048,47 @@ async function setupMidiListener() {
             return;
         }
 
-        // Detecta se é um dispositivo saturno
-        let aux = 0;
-        let input = null;
-        while(aux >= 0){
-            if (inputs[aux].name === 'Saturno Pedais'){
-                input = inputs[aux];
-                aux = -1;
-            } else aux++;
+        const deviceOptions = {};
+        inputs.forEach((input, index) => {
+            // mostra o nome e os 4 últimos caracteres do id (sufixo único)
+            //alert(input.name)
+            console.log(`===== Dispositivo #${index} =====`);
+            console.log("ID:", input.id);
+            console.log("Nome:", input.name);
+            console.log("Fabricante:", input.manufacturer);
+            console.log("Tipo:", input.type);
+            console.log("Estado:", input.state);
+            console.log("Conexão:", input.connection);
+
+            deviceOptions[index] = `${input.name || "Dispositivo sem nome"}`;
+        });
+
+        const { value: chosenIndex } = await Swal.fire({
+            title: "Select a MIDI device",
+            input: "select",
+            inputOptions: deviceOptions,
+            background: "#2a2a40",
+            color: "white",
+            width: 600,
+            inputPlaceholder: "Choose a device",
+            showCancelButton: true,
+            cancelButtonColor: "red",
+            confirmButtonText: "Connect",
+            confirmButtonColor: "#53bfeb",
+            customClass: {
+                input: 'swal2-dark-select'
+            }
+        });
+
+        if (chosenIndex === undefined) {
+            console.log("Usuário cancelou a seleção.");
+            return;
         }
 
-        console.log(`Conectado ao dispositivo MIDI: ${input.name}`);
+        
+        const input = inputs[chosenIndex];
+        dispositivoConectado = input.name;
+        console.log(`Conectado ao dispositivo MIDI: ${input.name}, ID: ${input.id}, Fabricante: ${input.manufacturer}`);
 
         // Configura o evento para escutar as mensagens MIDI
         input.onmidimessage = async (message) => {
@@ -1084,6 +1122,20 @@ async function setupMidiListener() {
                                 document.getElementById('editor-title').textContent = 'Web Editor - SpaceWalk';
                             }
                             console.log(nomeControladora)
+
+                            // Verifica a versão
+                            latestVersion = versions.devices[nomeControladora].version;
+                            deviceVersion = [
+                                sysexData[1],
+                                sysexData[2],
+                                sysexData[3],
+                                sysexData[4]
+                            ];
+
+                            if (deviceVersion[0] == latestVersion[0] && deviceVersion[1] == latestVersion[1] && deviceVersion[2] == latestVersion[2] && deviceVersion[3] == latestVersion[3]) {
+                                precisaAtualizar = false;
+                            } else precisaAtualizar = true;
+                            //alert(precisaAtualizar);
                             break;
                         case 2:
                             loops = Array.from(sysexData);
@@ -2645,9 +2697,13 @@ async function toggleConnection(button) {
             midiAccess.onstatechange = (event) => {
                 if (
                     event.port.type === "output" &&
-                    event.port.name === "Saturno Pedais" &&
+                    event.port.name === dispositivoConectado &&
                     event.port.state === "disconnected"
                 ) {
+                    if (ignorarDesconexao) {
+                        console.log("Dispositivo ainda está aqui, apenas entrou em bootloader");
+                        return;
+                    }
                     console.warn("Dispositivo 'Saturno Pedais' desconectado, parando heartbeat.");
                     clearInterval(intervalId);
                     intervalId = null;
@@ -2655,7 +2711,9 @@ async function toggleConnection(button) {
                 }
             };
 
-            initializeSite();
+            await initializeSite();
+
+            //alert(intervalId)
 
             // Iniciar a execução repetida
             intervalId = setInterval(() => {
@@ -2663,6 +2721,8 @@ async function toggleConnection(button) {
                     heartBeat();
                 }
             }, 200);
+
+            //alert(intervalId)
 
             // Alterar o texto do botão
             button.textContent = "Disconnect";
@@ -2686,8 +2746,9 @@ async function toggleConnection(button) {
             midiAccess.inputs.forEach(input => input.onmidimessage = null);
             midiAccess = null;
         }
-
-        location.reload();
+        if (!ignorarDesconexao) {
+            location.reload();
+        }
 
         // Limpeza visual e variáveis
         document.querySelectorAll('.bank').forEach(bank => bank.remove());
@@ -2718,7 +2779,8 @@ async function heartBeat() {
         isExecuting = true;
 
         const outputs = Array.from(midiAccess.outputs.values());
-        const output = outputs.find(o => o.name === 'Saturno Pedais');
+        const output = outputs.find(o => o.name === dispositivoConectado);
+
 
         if (!output) {
             console.warn("Dispositivo não encontrado, interrompendo heartbeat.");
