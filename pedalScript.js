@@ -12,7 +12,7 @@ const algorithmData = {
     "RetroVerse": ["Sensitivity", "Release"],
     "Memory Man": ["Tone", "Compression", "Grit", "Mod Type ", "Modulation", "Ducking"],
     "Nebula Swell": ["Sensitivity", "Response"],
-    "WhammyDelay": ["Heel", "Toe", "Tone", "Mode ", "Speed"]
+    "WhammyDelay": ["Heel", "Toe", "Tone", "Mode ", "Speed", "Wh. Routing"]
 };
 
 const algorithmDataSpacewalk = {
@@ -20,7 +20,7 @@ const algorithmDataSpacewalk = {
     "HALL 9000": ["EarlyR. Level", "EarlyR. Tone", "Diffusion"],
     "Star Plate": ["Plate Size", "Modulation"],
     "GravitySprings": ["Shape", "Speed", "Depth"],
-    "SunlightWings": ["Speed", "Depth", "Diffusion"],
+    "SunlightWings": ["Speed", "Depth", "Diffusion", "Trem. Speed", "Trem. Depth"],
     "Dark Galaxy": ["Fundamental", "Harmonics", "Regeneration", "Tone"],
     "Sci-fi Shimmer": ["Fundamental", "Harmonics", "Regeneration", "Tone"],
     "Frosted Verb": ["Mode   ", "Velocity", "Modulation", "Harmonics"],
@@ -37,12 +37,12 @@ const algorithmStart = {
     "RetroVerse": ["800ms", "80%", "80%", "70%", "50%"],
     "Memory Man": ["200ms", "80%", "80%", "60%", "75%", "0%", "Vibrato", "10%", "10%"],
     "Nebula Swell": ["0ms", "0%", "80%", "50%", "50%"],
-    "WhammyDelay": ["600ms", "80%", "80%", "-12", "7", "50%", "Auto", "0%"],
+    "WhammyDelay": ["600ms", "80%", "80%", "-12", "7", "50%", "Auto", "0%", "Pre"],
     "SpaceRoom": ["30%", "0ms", "80%", "60%", "80%", "80%", "80%", "75%", "75%"],
     "HALL 9000": ["30%", "0ms", "80%", "40%", "70%", "60%", "60%", "100%", "10%"],
     "Star Plate": ["30%", "0ms", "80%", "50%", "60%", "20%", "40%", "0%"],
     "GravitySprings": ["70%", "0ms", "80%", "15%", "60%", "40%", "Sine", "60%", "0%"],
-    "SunlightWings": ["70%", "0ms", "80%", "20%", "15%", "15%", "40%", "40%", "60%"],
+    "SunlightWings": ["70%", "0ms", "80%", "20%", "15%", "15%", "40%", "40%", "60%", "70%", "70%"],
     "Dark Galaxy": ["70%", "0ms", "80%", "40%", "10%", "10%", "80%", "20%", "0%", "60%"],
     "Sci-fi Shimmer": ["70%", "0ms", "80%", "40%", "10%", "10%", "80%", "20%", "0%", "40%"],
     "Frosted Verb": ["70%", "0ms", "80%", "20%", "30%", "30%", "Soft", "Slow", "60%", "80%"],
@@ -108,6 +108,7 @@ const parameterRanges = {
     },
     "Shape": { tipo: "lista", valores: ["Triangle", "Square", "Sine"], complemento: "" },
     "Speed": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Wh. Routing": { tipo: "lista", valores: ["Pre", "Post"], complemento: "" },
     // Glassy Delay
     "Speed": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
     "Depth": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
@@ -136,7 +137,9 @@ const parameterRanges = {
     "Velocity": { tipo: "lista", valores: ["Slow", "Fast"], complemento: "" },
     "Home Vowel": { tipo: "lista", valores: ["A", "E", "I", "O", "U"], complemento: "" },
     "Target Vowel": { tipo: "lista", valores: ["A", "E", "I", "O", "U"], complemento: "" },
-    "Resonance": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" }
+    "Resonance": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Trem. Speed": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" },
+    "Trem. Depth": { tipo: "porcentagem", valor_inicial: 0, valor_final: 100, complemento: "%" }
 };
 
 const timeAlg = {
