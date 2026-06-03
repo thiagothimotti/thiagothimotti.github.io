@@ -2900,89 +2900,112 @@ function setupDragAndDrop() {
                 // Ordena alfabeticamente
                 fileNames.sort((a, b) => a.localeCompare(b));
 
-                // Arrays separados por modelo
                 const timeSpaceFiles = [];
                 const spaceWalkFiles = [];
 
-                for (const fileName of fileNames) {
-                    const fileUrl = `https://editor.saturnopedais.com.br/Sons_da_Saturno/${fileName}`;
-                    try {
-                        const fileResponse = await fetch(fileUrl);
-                        const content = await fileResponse.arrayBuffer();
-                        const byteArray = new Uint8Array(content);
+                // Downloads em paralelo para acelerar o carregamento
+                const fileData = await Promise.all(
+                    fileNames.map(async (fileName) => {
+                        try {
+                            const fileUrl = `https://editor.saturnopedais.com.br/Sons_da_Saturno/${fileName}`;
+                            const fileResponse = await fetch(fileUrl);
+                            const content = await fileResponse.arrayBuffer();
 
-                        const fileTypeFlag = byteArray[0]; // 102 = preset, 103 = backup
-                        const fileModelFlag = byteArray[1]; // 100 = TimeSpace, 103 = SpaceWalk
-
-                        const li = document.createElement('li');
-                        li.style.display = 'flex';
-                        li.style.justifyContent = 'space-between';
-                        li.style.alignItems = 'center';
-                        li.style.gap = '10px';
-                        li.style.minHeight = '23px';
-
-                        const archiveType = document.createElement('button');
-                        archiveType.textContent = fileTypeFlag === 103 ? 'BKP' : 'PRST';
-
-                        if (fileTypeFlag === 102) {
-                            archiveType.style.border = fileModelFlag === 103 ? "1px solid #ff3300ff" : `1px solid ${saveBlue}`;
-                            archiveType.style.color = fileModelFlag === 103 ? "#ff3300ff" : saveBlue;
-                        } else {
-                            archiveType.style.color = "silver";
-                            archiveType.style.border = "1px solid silver";
+                            return { fileName, content };
+                        } catch (err) {
+                            console.error(`Falha ao carregar ${fileName}`, err);
+                            return null;
                         }
+                    })
+                );
 
-                        archiveType.style.padding = "2px 6px";
-                        archiveType.style.fontSize = "10px";
-                        archiveType.style.borderRadius = "4px";
-                        archiveType.style.background = "transparent";
-                        archiveType.style.cursor = "default";
-                        archiveType.style.minWidth = "40px";
-                        archiveType.style.maxWidth = "40px";
+                for (const file of fileData) {
 
-                        const link = document.createElement('a');
-                        link.title = fileName;
-                        const blob = new Blob([content], { type: 'text/plain' });
-                        const url = URL.createObjectURL(blob);
-                        link.href = url;
-                        link.download = fileName;
-                        link.textContent = fileName.replace(/\.(json|stnpreset)$/i, '');
-                        link.draggable = true;
+                    if (!file) continue;
 
-                        link.addEventListener('dragstart', (e) => {
-                            const base64 = arrayBufferToBase64(content);
-                            e.dataTransfer.setData('application/octet-stream', base64);
-                            e.dataTransfer.setData('text/plain', fileName);
-                            e.dataTransfer.setData('isSaturnRepo', 'true');
-                            e.dataTransfer.setData('size', content.byteLength.toString());
-                            e.dataTransfer.setData('application/json', JSON.stringify([...new Uint8Array(content)]));
-                            console.log(`Arquivo arrastado (${fileName}) com ${content.byteLength} bytes`);
-                        });
+                    const { fileName, content } = file;
 
-                        link.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            console.log("Arquivo lido", content);
-                        });
+                    const byteArray = new Uint8Array(content);
 
-                        li.appendChild(archiveType);
-                        li.appendChild(link);
+                    const fileTypeFlag = byteArray[0];
+                    const fileModelFlag = byteArray[1];
 
-                        // Separa por modelo
-                        if (fileModelFlag === 100) {
-                            timeSpaceFiles.push({ name: fileName, element: li });
-                        } else if (fileModelFlag === 103) {
-                            spaceWalkFiles.push({ name: fileName, element: li });
-                        } else {
-                            // Fallback joga no grupo SpaceWalk
-                            spaceWalkFiles.push({ name: fileName, element: li });
-                        }
+                    const li = document.createElement('li');
+                    li.style.display = 'flex';
+                    li.style.justifyContent = 'space-between';
+                    li.style.alignItems = 'center';
+                    li.style.gap = '10px';
+                    li.style.minHeight = '23px';
 
-                    } catch (err) {
-                        console.error(`Falha ao carregar ${fileName}`, err);
+                    const archiveType = document.createElement('button');
+                    archiveType.textContent = fileTypeFlag === 103 ? 'BKP' : 'PRST';
+
+                    if (fileTypeFlag === 102) {
+                        archiveType.style.border = fileModelFlag === 103
+                            ? "1px solid #ff3300ff"
+                            : `1px solid ${saveBlue}`;
+
+                        archiveType.style.color = fileModelFlag === 103
+                            ? "#ff3300ff"
+                            : saveBlue;
+
+                    } else {
+                        archiveType.style.color = "silver";
+                        archiveType.style.border = "1px solid silver";
+                    }
+
+                    archiveType.style.padding = "2px 6px";
+                    archiveType.style.fontSize = "10px";
+                    archiveType.style.borderRadius = "4px";
+                    archiveType.style.background = "transparent";
+                    archiveType.style.cursor = "default";
+                    archiveType.style.minWidth = "40px";
+                    archiveType.style.maxWidth = "40px";
+
+                    const link = document.createElement('a');
+
+                    link.title = fileName;
+
+                    const blob = new Blob([content], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+
+                    link.href = url;
+                    link.download = fileName;
+                    link.textContent = fileName.replace(/\.(json|stnpreset)$/i, '');
+                    link.draggable = true;
+
+                    link.addEventListener('dragstart', (e) => {
+
+                        const base64 = arrayBufferToBase64(content);
+
+                        e.dataTransfer.setData('application/octet-stream', base64);
+                        e.dataTransfer.setData('text/plain', fileName);
+                        e.dataTransfer.setData('isSaturnRepo', 'true');
+                        e.dataTransfer.setData('size', content.byteLength.toString());
+                        e.dataTransfer.setData('application/json', JSON.stringify([...new Uint8Array(content)]));
+
+                        console.log(`Arquivo arrastado (${fileName}) com ${content.byteLength} bytes`);
+                    });
+
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        console.log("Arquivo lido", content);
+                    });
+
+                    li.appendChild(archiveType);
+                    li.appendChild(link);
+
+                    // Separa por modelo
+                    if (fileModelFlag === 100) {
+                        timeSpaceFiles.push({ name: fileName, element: li });
+                    } else if (fileModelFlag === 103) {
+                        spaceWalkFiles.push({ name: fileName, element: li });
+                    } else {
+                        // Fallback joga no grupo SpaceWalk
+                        spaceWalkFiles.push({ name: fileName, element: li });
                     }
                 }
 
-                // Ordena alfabeticamente cada modelo
                 timeSpaceFiles.sort((a, b) => a.name.localeCompare(b.name));
                 spaceWalkFiles.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -3009,6 +3032,207 @@ function setupDragAndDrop() {
             }
             return btoa(binary); // converte para Base64
         }
+
+        // presets de parceiros
+        const partnersItem = document.createElement('li');
+        partnersItem.style.display = 'inline-flex';
+        partnersItem.style.alignItems = 'center';
+        partnersItem.style.gap = '15px';
+        partnersItem.style.justifyContent = 'start';
+        partnersItem.style.cursor = 'pointer';
+        partnersItem.style.color = saveBlue;
+        partnersItem.style.fontWeight = 'bold';
+        partnersItem.style.marginBottom = '8px';
+        partnersItem.style.width = '241px';
+
+        const partnersIcon = document.createElement('i');
+        partnersIcon.className = 'fa-regular fa-folder';
+        partnersIcon.style.fontSize = '21px';
+        partnersIcon.style.padding = '3px';
+        partnersIcon.style.width = '22px';
+
+        const partnersText = document.createElement('span');
+        partnersText.textContent = 'Saturno Partner\'s Presets';
+        partnersText.style.textDecoration = 'underline';
+        partnersText.style.fontSize = '14px';
+
+        partnersItem.appendChild(partnersIcon);
+        partnersItem.appendChild(partnersText);
+        fileList.appendChild(partnersItem);
+
+        const partnersList = document.createElement('ul');
+        partnersList.style.listStyle = 'none';
+        partnersList.style.paddingLeft = '20px';
+        partnersList.style.display = 'none';
+        fileList.appendChild(partnersList);
+
+        let partnersLoaded = false;
+        let partnersVisible = false;
+
+        partnersItem.addEventListener('click', async () => {
+            if (!partnersLoaded) {
+                await loadPartnerFolders();
+            }
+
+            partnersVisible = !partnersVisible;
+            partnersList.style.display = partnersVisible ? 'block' : 'none';
+            partnersIcon.className = partnersVisible ? 'fa-regular fa-folder-open' : 'fa-regular fa-folder';
+        });
+
+        // carrega as apstas dos parceiros
+        async function loadPartnerFolders() {
+            try {
+                const response = await fetch('https://editor.saturnopedais.com.br/Sons_da_Comunidade/folderList.json');
+                if (!response.ok) throw new Error("Erro ao carregar parceiros");
+
+                const folders = await response.json();
+
+                for (const folderName of folders) {
+
+                    const folderItem = document.createElement('li');
+                    folderItem.style.display = 'inline-flex';
+                    folderItem.style.alignItems = 'center';
+                    folderItem.style.gap = '10px';
+                    folderItem.style.justifyContent = 'start';
+                    folderItem.style.cursor = 'pointer';
+                    folderItem.style.color = saveBlue;
+                    folderItem.style.fontWeight = 'bold';
+                    folderItem.style.marginBottom = '6px';
+                    folderItem.style.width = '220px';
+
+                    const folderIcon = document.createElement('i');
+                    folderIcon.className = 'fa-regular fa-folder';
+                    folderIcon.style.fontSize = '20px';
+                    folderIcon.style.padding = '3px';
+                    folderIcon.style.width = '20px';
+
+                    const folderText = document.createElement('span');
+                    folderText.textContent = folderName;
+                    folderText.style.textDecoration = 'underline';
+                    folderText.style.fontSize = '14px';
+                    //folderText.style.fontWeight = 'bold';
+
+                    folderItem.appendChild(folderIcon);
+                    folderItem.appendChild(folderText);
+                    partnersList.appendChild(folderItem);
+
+                    const innerList = document.createElement('ul');
+                    innerList.style.display = 'none';
+                    innerList.style.paddingLeft = '20px';
+                    innerList.style.listStyle = 'none';
+                    partnersList.appendChild(innerList);
+
+                    let loaded = false;
+                    let visible = false;
+
+                    folderItem.addEventListener('click', async () => {
+
+                        if (!loaded) {
+                            await loadPartnerFiles(folderName, innerList);
+                            loaded = true;
+                        }
+
+                        visible = !visible;
+                        innerList.style.display = visible ? 'block' : 'none';
+                        folderIcon.className = visible ? 'fa-regular fa-folder-open' : 'fa-regular fa-folder';
+                    });
+                }
+
+                partnersLoaded = true;
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // carrega presets de parceiros
+        async function loadPartnerFiles(folderName, targetList) {
+            try {
+                const response = await fetch(`https://editor.saturnopedais.com.br/Sons_da_Comunidade/${folderName}/fileList.json`);
+                const fileNames = await response.json();
+
+                fileNames.sort((a, b) => a.localeCompare(b));
+
+                const filesData = await Promise.all(
+                    fileNames.map(async (fileName) => {
+                        try {
+                            const res = await fetch(`https://editor.saturnopedais.com.br/Sons_da_Comunidade/${folderName}/${fileName}`);
+                            const content = await res.arrayBuffer();
+                            return { fileName, content };
+                        } catch {
+                            return null;
+                        }
+                    })
+                );
+
+                filesData.forEach(file => {
+                    if (!file) return;
+
+                    const li = document.createElement('li');
+                    li.style.display = 'flex';
+                    li.style.justifyContent = 'space-between';
+                    li.style.alignItems = 'center';
+                    li.style.gap = '10px';
+                    li.style.minHeight = '23px';
+
+                    const byteArray = new Uint8Array(file.content);
+                    const fileTypeFlag = byteArray[0];
+                    const fileModelFlag = byteArray[1];
+
+                    const archiveType = document.createElement('button');
+                    archiveType.textContent = fileTypeFlag === 103 ? 'BKP' : 'PRST';
+
+                    if (fileTypeFlag === 102) {
+                        archiveType.style.border = fileModelFlag === 103
+                            ? "1px solid #ff3300ff"
+                            : `1px solid ${saveBlue}`;
+
+                        archiveType.style.color = fileModelFlag === 103
+                            ? "#ff3300ff"
+                            : saveBlue;
+                    } else {
+                        archiveType.style.color = "silver";
+                        archiveType.style.border = "1px solid silver";
+                    }
+
+                    archiveType.style.padding = "2px 6px";
+                    archiveType.style.fontSize = "10px";
+                    archiveType.style.borderRadius = "4px";
+                    archiveType.style.background = "transparent";
+                    archiveType.style.cursor = "default";
+                    archiveType.style.minWidth = "40px";
+                    archiveType.style.maxWidth = "40px";
+
+                    const link = document.createElement('a');
+                    link.title = file.fileName;
+                    link.textContent = file.fileName.replace(/\.(json|stnpreset)$/i, '');
+                    link.href = "#";
+                    link.draggable = true;
+
+                    link.addEventListener('dragstart', (e) => {
+                        const base64 = arrayBufferToBase64(file.content);
+
+                        e.dataTransfer.setData('application/octet-stream', base64);
+                        e.dataTransfer.setData('text/plain', file.fileName);
+                        e.dataTransfer.setData('isSaturnRepo', 'true');
+                        e.dataTransfer.setData('size', file.content.byteLength.toString());
+
+                        e.dataTransfer.setData(
+                            'application/json',
+                            JSON.stringify([...new Uint8Array(file.content)])
+                        );
+                    });
+
+                    li.appendChild(archiveType);
+                    li.appendChild(link);
+                    targetList.appendChild(li);
+                });
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
 
         // Arquivos locais do cache
         const presets = fileDataList.filter(f => !f.name.toLowerCase().includes('backup')).sort((a, b) => {
@@ -3394,8 +3618,143 @@ function generateBackup() {
     else if (nomeControladora == 'timespace' || nomeControladora == 'spacewalk') sendMessage([0xF0,0x4C,0x00,0xF7]);
 }
 
-function updateDevice() {
-    notify("Coming soon", "warning")
+async function updateDevice() {
+
+    notify ("Coming soon");
+    return;
+    //if (!precisaAtualizar) return;
+
+    const deviceNameFormatted = nomeControladora.charAt(0).toUpperCase() + nomeControladora.slice(1);
+    const latestVersionText = "3.3.3"//formatVersion(latestVersion);
+    const currentVersionText = "3.2.3"//formatVersion(deviceVersion);
+
+    function formatVersion(versionArray) {
+        const letters = ["", "a", "b", "c", "d"];
+        const [major, minor, patch, build] = versionArray;
+        let text = `${major}.${minor}.${patch}`;
+        if (build > 0 && build <= 4) {
+            text += letters[build];
+        }
+        return text;
+    }
+
+    const result = await Swal.fire({
+        title: "Update available",
+        text: `You have version ${currentVersionText}, latest is ${latestVersionText} for ${deviceNameFormatted}. Do you want to update now?`,
+        icon: "question",
+        background: "#2a2a40",
+        color: "white",
+        width: "500px",
+        showCancelButton: true,
+        confirmButtonText: "Yes, update",
+        cancelButtonText: "Cancel",
+        cancelButtonColor: "red",
+        confirmButtonColor: "#53bfeb"
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+        // Pausa o heartbeat e informa que a desconexão é controlada
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+        ignorarDesconexao = true;
+
+        // Passo 1: abre/fecha a porta a 1200bps (reset para bootloader)
+        const port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 1200 });
+        await port.close();
+        console.log("Serial aberta e fechada em 1200bps com sucesso.");
+
+        // Passo 2: aguarda o dispositivo reiniciar no modo bootloader
+        await new Promise(r => setTimeout(r, 1000));
+
+        // Passo 3: seleciona novamente a porta (agora deve estar em bootloader)
+        const bootloaderPort = await navigator.serial.requestPort();
+        await bootloaderPort.open({ dataBits: 8,
+                                    stopBits: 1,
+                                    parity: 'none',
+                                    bufferSize: 63,
+                                    flowControl: 'hardware',
+                                    baudRate: 921600 });
+
+        // Passo 4: conecta com SamBA
+        const logger = {
+            log: (...args) => console.log(...args),
+            debug: (...args) => console.debug(...args)
+        };
+
+        const samba = new SamBA(bootloaderPort, {
+            logger,
+            debug: true
+        });
+
+        await samba.connect(1000);
+
+        // Passo 5: cria o device
+        const dev = new Device(samba);
+        await dev.create();
+
+        console.log("Conectado ao bootloader:", dev);
+        console.log("Flash info:", dev.flash);
+
+        // Passo 6: baixa o firmware
+        const response = await fetch("https://editor.saturnopedais.com.br/bins/TimeSpaceTela.bin");
+        const firmwareArrayBuffer = await response.arrayBuffer();
+        const firmwareBytes = new Uint8Array(firmwareArrayBuffer);
+
+        console.log("Firmware carregado:", firmwareBytes.length, "bytes");
+
+        // Passo 7: flash
+        if (dev && samba && dev.flash) {
+            try {
+                const flasher = new Flasher(samba, dev.flash, {
+                    onStatus: (msg) => console.log("STATUS:", msg),
+                    onProgress: (page, total) => console.log(`Progresso: ${page}/${total}`)
+                    //onProgress: (addr, size) => console.log(`Escrevendo página no endereço 0x${addr.toString(16)}, tamanho ${size}`)
+                });
+
+                const offset = 0x2000;
+
+                console.log("Page size:", dev.flash.pageSize);
+                //console.log("Offset 0x2000 % pageSize =", 0x2000 % dev.flash.pageSize);
+
+                //await flasher.erase(offset);
+                await flasher.write(firmwareBytes, offset);
+
+                console.log("Firmware gravado com sucesso!");
+
+                // Tenta resetar o device
+                try {
+                    if (dev.reset) {
+                        await dev.reset();
+                        console.log("Device resetado.");
+                    }
+                } catch (resetErr) {
+                    console.warn("Falha ao resetar, pode ser normal:", resetErr);
+                }
+
+                Swal.fire("Success", "Device updated successfully!", "success");
+
+            } catch (flashErr) {
+                console.error("Erro ao gravar firmware:", flashErr);
+                Swal.fire("Error", "Falha no processo de flash: " + flashErr.message, "error");
+            }
+        } else {
+            Swal.fire("Error", "Device ou flash não inicializados.", "error");
+        }
+        
+        
+        /*Swal.fire("Success", "Device updated successfully!", "success");*/
+
+    } catch (err) {
+        console.error("Erro no update:", err);
+        Swal.fire("Error", "Update failed: " + err.message, "error");
+    } finally {
+        //ignorarDesconexao = false;
+    }
 }
 
 function notify(mensagem, icon) {

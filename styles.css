@@ -94,7 +94,7 @@ header p {
     background-color: #00000063;
     padding: 20px;
     height: calc(100vh - 10vh);
-    overflow-y: auto;
+    overflow-y: hidden;
     border-right: 2px solid #6c2ca7;
 }
 
@@ -582,6 +582,62 @@ header p {
 
 #file-select-button:active {
     transform: scale(0.98);
+}
+
+/* ITEM DE ARQUIVO (preset) */
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  min-height: 23px;
+}
+
+/* BOTÃO PRST / BKP */
+.file-badge {
+  padding: 2px 6px;
+  font-size: 10px;
+  border-radius: 4px;
+  background: transparent;
+  cursor: default;
+  min-width: 40px;
+  max-width: 40px;
+}
+
+/* LINK DO NOME */
+.file-link {
+  cursor: pointer;
+  flex-grow: 1;
+  text-decoration: none;
+  color: white;
+  font-size: 14px;
+}
+
+/* BOTÕES (download / remover) */
+.file-action-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* BOTÃO DOWNLOAD */
+.file-download {
+  position: absolute;
+  right: 35px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #53bfeb;
+}
+
+/* BOTÃO REMOVER */
+.file-remove {
+  color: red;
+}
+
+/* ITEM COM POSIÇÃO RELATIVA (para alinhar botões) */
+.file-item-wrapper {
+  position: relative;
 }
 
 .sr-only {
